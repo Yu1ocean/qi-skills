@@ -1,0 +1,13 @@
+{
+    "skill_id": "SKILL-04280034",
+    "name": "smart-scheduler",
+    "description": "当用户要求寻找多人空闲时间、安排复杂排期、生成忙闲重叠矩阵、或者需要抢占未接受（Tentative）的会议档期时，用于调用智能约会助手（smart-scheduler）来自动完成日历盘点和免会议室创建。",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Opy0dNOidowl3jxJFkqc6f9Vn0f",
+    "date": "2026-04-28",
+    "updated_at": "2026-04-28 00:34",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/smart-scheduler",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/smart-scheduler.zip",
+    "zip_name": "smart-scheduler.zip",
+    "drive_file_token": "",
+    "drive_file_url": "https://bytedance.larkoffice.com/docx/Opy0dNOidowl3jxJFkqc6f9Vn0f"
+}
