@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.3
-description: 自动化技能创建、升级、打包发布与归档流水线。强制执行 Forge、Celebrate、Archive 闭环，并在 Forge 阶段新增 CDA Guardrails（三层防御：认知-默认-断言）强制自检 Checkpoint，失败即熔断。支持技能 zip 自动发布到飞书云盘、回挂说明文档 File Block。
+version: 5.4
+description: 自动化技能创建、升级、打包发布与归档流水线。强制执行 Forge、Celebrate、Archive 闭环，并在 Forge 阶段新增 CDA Guardrails（三层防御：认知-默认-断言）强制自检 Checkpoint，失败即熔断。支持技能 zip 自动发布到飞书云盘、回挂说明文档 File Block，并对报告/归档类技能强制校验“文档生动化标准”。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.3)
+# 技能锻造流水线 (Forge Pipeline V5.4)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -24,6 +24,7 @@ description: 自动化技能创建、升级、打包发布与归档流水线。�
 
 - 没有执行 `CDA-Guardrails-Selfcheck`，就要进入打包/发布/归档。
 - 升级技能只改了代码（`.py`）但没有同步修改说明书（`SKILL.md`）。
+- 涉及“复盘报告 / 故障修复报告 / 架构演进报告 / 归档”类技能升级，但 `SKILL.md` 的 Workflow / SOP 中没有显式写入【文档生动化标准】。
 - 涉及飞书资产写入/赋权/文件块挂载但没有 `include_secrets=true`。
 - 输出中出现“应该/大概/可能/我猜/先跳过”，但没有可验证的 RAW 回读证据。
 
@@ -36,6 +37,7 @@ description: 自动化技能创建、升级、打包发布与归档流水线。�
 3. **Zip 发布闭环**：`scripts/register_skill.py` 生成的 `metadata.json` 中必须包含 `zip_path`、`drive_file_url`、`doc_link`。
 4. **说明文档回挂验收**：回捞下载最新文档，确认标题下方存在最新 zip 的原生 File Block（非纯文本链接）。
 5. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
+6. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
 
 ## 适用场景
 
@@ -51,6 +53,7 @@ description: 自动化技能创建、升级、打包发布与归档流水线。�
 作为顶层代理，直接向下调起内置技能 `inner_skills/aime-skill-creator`。
 
 - **执行目标**：按照 `aime-skill-creator` 的 SOP 完成核心 `SKILL.md` 编写、目录初始化、验证及打包（Pack）。
+- **报告类技能附加要求**：若目标技能负责复盘报告、故障修复报告、架构演进报告或归档，则必须在 Forge 阶段把【文档生动化标准】写入该技能的 Workflow / SOP；标准中需明确“先调用 `cyber-inspiration-generator` 生成故事与视觉卡片，再前置嵌入飞书文档头部概览区，最后才允许正文写入或归档”。
 
 #### ✅ Checkpoint：CDA-Guardrails-Selfcheck（强制熔断）
 
@@ -165,6 +168,7 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 更新日志 (Changelog)
 
+- **V5.4**: 新增“文档生动化标准”护栏：当升级报告生成/修复总结/架构演进/归档类技能时，Forge 阶段必须把该标准写入 Workflow / SOP，并在 Verification 中强制验收。
 - **V5.2**: 新增 `CDA-Guardrails-Selfcheck` Forge Checkpoint（风险分级 + 三层护栏自检 + 失败即熔断），并下沉反例库/模板到 `resources/cda_guardrails/`。
 - **V5.1**: 飞书说明文档（Readme / Document）模板升级，新增「🔑 触发词」与「📖 案例实录 (Best Practice)」的头尾双加持结构。
 - **V5**: 新增技能目录自动压缩、飞书云盘上传、`yuqinan@bytedance.com` Full Access 赋权，以及通过 `lark` MCP 自动回挂原生 File Block 到说明文档顶部。
