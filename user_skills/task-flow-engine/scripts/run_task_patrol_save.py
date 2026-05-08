@@ -76,7 +76,10 @@ def validate_spreadsheet(value: str) -> str:
 def validate_safe_path_under_repo(path: Path, *, repo_root: Path, arg_name: str) -> Path:
     repo_root = repo_root.resolve()
     resolved = path.resolve()
-    if not str(resolved).startswith(str(repo_root) + str(Path.sep)) and resolved != repo_root:
+    try:
+        # Python 3.9+: allows resolved == repo_root
+        resolved.relative_to(repo_root)
+    except ValueError:
         raise ValueError(f"{arg_name} 必须位于任务目录内：{resolved} (repo_root={repo_root})")
     return resolved
 
@@ -94,7 +97,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--spreadsheet", required=True)
     ap.add_argument("--task-sheet-title", default="任务库")
-    ap.add_argument("--roster-sheet-title", default="团队联系方式")
+    ap.add_argument("--roster-sheet-title", default="团队名单")
     ap.add_argument("--due-soon-days", type=int, default=2)
     ap.add_argument("--today", default=None)
     ap.add_argument("--target-chat", default=None)

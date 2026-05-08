@@ -9,7 +9,13 @@ from urllib import error as urlerror
 from urllib import parse as urlparse
 from urllib import request as urlrequest
 
-from .patrol import OwnerIdentity, PatrolFinding, build_patrol_card, _render_task_blocks
+from .patrol import (
+    OwnerIdentity,
+    PatrolFinding,
+    build_patrol_card,
+    _render_scheme3_message,
+    _render_task_blocks,
+)
 
 
 def is_legal_rest_day(day: date) -> bool:
@@ -253,9 +259,11 @@ def apply_vacation_guard(
     """
 
     routes = output.get("routes") or {}
+    p2p_routes = routes.get("p2p") or {}
     private_routes = routes.get("private") or {}
     group_route = routes.get("group") or {}
     unmapped_route = routes.get("unmapped") or {}
+    admin_route = routes.get("admin") or {}
 
     skipped_private: List[Dict[str, Any]] = []
     skipped_group_items: List[Dict[str, Any]] = []
@@ -281,6 +289,7 @@ def apply_vacation_guard(
                         }
                     )
 
+        routes["p2p"] = {}
         routes["private"] = {}
         routes["group"] = {
             "target_chat": group_route.get("target_chat"),
@@ -290,7 +299,8 @@ def apply_vacation_guard(
             "message": "",
             "card": None,
         }
-        routes["unmapped"] = {"count": 0, "items": []}
+        routes["unmapped"] = {"count": 0, "items": [], "message": ""}
+        routes["admin"] = {"count": 0, "items": [], "message": ""}
 
         summary = output.get("summary") or {}
         if isinstance(summary, dict):
@@ -337,7 +347,60 @@ def apply_vacation_guard(
         leave_cache[key] = value
         return value
 
-    # --- 1) 过滤私聊路由 ---
+    # --- 0) 过滤 p2p 路由（Bot 私聊分发） ---
+    skipped_p2p: List[Dict[str, Any]] = []
+    new_p2p: Dict[str, Any] = {}
+    if isinstance(p2p_routes, dict):
+        for route_key, bucket in p2p_routes.items():
+            owner_dict = bucket.get("owner") or {}
+            owner = _dict_to_owner_identity(owner_dict) if isinstance(owner_dict, dict) else _dict_to_owner_identity({})
+            if is_on_leave(owner):
+                skipped_p2p.append(
+                    {
+                        "route_key": route_key,
+                        "owner": owner_dict,
+                        "count": bucket.get("count"),
+                    }
+                )
+                continue
+            new_p2p[route_key] = bucket
+
+    # 重新渲染每个 p2p bucket 的 message/card
+    for route_key, bucket in new_p2p.items():
+        items_raw = bucket.get("items") or []
+        findings_for_owner: List[PatrolFinding] = []
+        for d in items_raw:
+            if isinstance(d, dict):
+                findings_for_owner.append(_dict_to_finding(d))
+
+        if not findings_for_owner:
+            bucket["count"] = 0
+            bucket["message"] = ""
+            bucket["card"] = None
+            bucket["mentions_open_ids"] = []
+            continue
+
+        bucket["count"] = len(findings_for_owner)
+
+        owner_dict = bucket.get("owner") or {}
+        owner_obj = _dict_to_owner_identity(owner_dict) if isinstance(owner_dict, dict) else _dict_to_owner_identity({})
+
+        body_md = _render_scheme3_message(findings_for_owner, route_owner=owner_obj)
+        header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {bucket['count']} 条）"
+        bucket["message"] = (header + "\n\n" + body_md).strip() if body_md else header
+
+        detail_md, mentions = _render_task_blocks(findings_for_owner, include_owner=False)
+        bucket["mentions_open_ids"] = mentions
+
+        summary_md = f"**日期**：{today.isoformat()}\n\n**需关注条目**：{bucket['count']}"
+        bucket["card"] = build_patrol_card(
+            title="任务巡检提醒（私聊）",
+            template="blue",
+            summary_md=summary_md,
+            detail_md=detail_md,
+        )
+
+    # --- 1) 过滤 private（原两阶段策略中的私聊桶） ---
     new_private: Dict[str, Any] = {}
     if isinstance(private_routes, dict):
         for route_key, bucket in private_routes.items():
@@ -371,10 +434,16 @@ def apply_vacation_guard(
             continue
 
         bucket["count"] = len(findings_for_owner)
-        header = f"🚨 **[任务巡检·私聊催办] {today.isoformat()}**（共 {bucket['count']} 条）"
+
+        owner_dict = bucket.get("owner") or {}
+        owner_obj = _dict_to_owner_identity(owner_dict) if isinstance(owner_dict, dict) else _dict_to_owner_identity({})
+
+        body_md = _render_scheme3_message(findings_for_owner, route_owner=owner_obj)
+        header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {bucket['count']} 条）"
+        bucket["message"] = (header + "\n\n" + body_md).strip() if body_md else header
+
         detail_md, mentions = _render_task_blocks(findings_for_owner, include_owner=False)
         bucket["mentions_open_ids"] = mentions
-        bucket["message"] = (header + "\n" + detail_md).strip()
         summary_md = f"**日期**：{today.isoformat()}\n\n**需关注条目**：{bucket['count']}"
         bucket["card"] = build_patrol_card(
             title="任务巡检提醒（私聊）",
@@ -409,6 +478,8 @@ def apply_vacation_guard(
 
             new_group_items.append(item)
 
+    routes["p2p"] = new_p2p
+
     # 回写过滤后的路由
     routes["private"] = new_private
 
@@ -418,9 +489,10 @@ def apply_vacation_guard(
             if isinstance(d, dict):
                 group_findings.append(_dict_to_finding(d))
 
-        header = f"📣 **[任务巡检·公开提醒] {today.isoformat()}**（共 {len(group_findings)} 条）"
+        body_md = _render_scheme3_message(group_findings, route_owner=None)
+        header = f"📣 **任务巡检·公开提醒**（{today.isoformat()}，共 {len(group_findings)} 条）"
         detail_md, mentions = _render_task_blocks(group_findings, include_owner=True)
-        message = (header + "\n" + detail_md).strip() if group_findings else ""
+        message = (header + "\n\n" + body_md).strip() if group_findings else ""
         card = None
         if group_findings:
             summary_md = f"**日期**：{today.isoformat()}\n\n**需公开提醒条目**：{len(group_findings)}"
@@ -440,8 +512,9 @@ def apply_vacation_guard(
             "card": card,
         }
 
-    # unmapped 路由保持不变
+    # unmapped/admin 路由保持不变（管理员兜底信息不受个人请假过滤影响）
     routes["unmapped"] = unmapped_route
+    routes["admin"] = admin_route
 
     summary = output.get("summary") or {}
     if isinstance(summary, dict):
@@ -455,6 +528,7 @@ def apply_vacation_guard(
         "is_holiday": False,
         "personal_checker_enabled": True,
         "skipped": {
+            "p2p_route_keys": [x.get("route_key") for x in skipped_p2p],
             "private_route_keys": [x.get("route_key") for x in skipped_private],
             "group_item_keys": [x.get("key") for x in skipped_group_items],
         },

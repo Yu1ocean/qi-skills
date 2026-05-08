@@ -85,7 +85,9 @@ def validate_safe_path_under_repo(path: Path, *, repo_root: Path, arg_name: str)
 
     repo_root = repo_root.resolve()
     resolved = path.resolve()
-    if not str(resolved).startswith(str(repo_root) + str(Path.sep)) and resolved != repo_root:
+    try:
+        resolved.relative_to(repo_root)
+    except ValueError:
         raise ValueError(f"{arg_name} 必须位于任务目录内：{resolved} (repo_root={repo_root})")
     return resolved
 
@@ -119,8 +121,8 @@ def main() -> int:
     ap.add_argument("--task-sheet-title", default="任务库")
     ap.add_argument(
         "--roster-sheet-title",
-        default="团队联系方式",
-        help="花名册所在工作表标题（默认：团队联系方式）",
+        default="团队名单",
+        help="花名册所在工作表标题（默认：团队名单）",
     )
     ap.add_argument("--due-soon-days", type=int, default=2, help="DDL 距离今天多少天算临近到期（包含 0）")
     ap.add_argument(

@@ -427,6 +427,8 @@ def _at_in_card(open_id: Optional[str], display_name: str) -> str:
 
 
 def build_patrol_card(*, title: str, template: str, summary_md: str, detail_md: str) -> Dict[str, Any]:
+    """旧版卡片渲染（保留兼容）。"""
+
     return {
         "name": "AimeCard",
         "dsl": {
@@ -446,45 +448,235 @@ def build_patrol_card(*, title: str, template: str, summary_md: str, detail_md: 
     }
 
 
+# -----------------------------
+# A 款（简约直达风）卡片模板
+# -----------------------------
+
+# 重要：这类“任务 DDL 巡检报警”的“工作站链接”必须指向【任务台账 / 个人工作站】。
+TASK_WORKSTATION_TOKEN = "TnNYsLq9phIJwutJGwBl730ygjd"
+
+
+def default_task_workstation_url(token: str = TASK_WORKSTATION_TOKEN) -> str:
+    """将 token 组装成可跳转的工作站 URL。
+
+    说明：该 token 可能来自“电子表格 / 多维表格”。
+    这里默认组装为 sheets URL；如实际为多维表格，可改为 base 链接。
+    """
+
+    # 如果是特指的 BD 任务库，直接返回 Wiki 挂载链接
+    if token == TASK_WORKSTATION_TOKEN:
+        return "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+
+    # - Spreadsheet: https://bytedance.larkoffice.com/sheets/<token>
+    # - Bitable:     https://bytedance.larkoffice.com/base/<token>
+    return f"https://bytedance.larkoffice.com/sheets/{token}"
+
+
+def build_patrol_card_a(
+    *,
+    title: str,
+    template: str,
+    body_md: str,
+    action_text: str,
+    action_url: str,
+) -> Dict[str, Any]:
+    """飞书互动卡片（schema 2.0）- A 款简约直达风。
+
+    结构：
+    - Header：标题
+    - Body：一段 markdown
+    - Footer：一个跳转按钮
+    """
+
+    elements: List[Dict[str, Any]] = [
+        {"tag": "markdown", "content": body_md},
+        {"tag": "hr"},
+        {
+            "tag": "button",
+            "type": "primary",
+            "text": {"tag": "plain_text", "content": action_text},
+            "behaviors": [
+                {
+                    "type": "open_url",
+                    "default_url": action_url,
+                }
+            ],
+        },
+    ]
+
+    return {
+        "name": "AimeCard",
+        "dsl": {
+            "schema": "2.0",
+            "header": {
+                "title": {"tag": "plain_text", "content": title},
+                "template": template,
+            },
+            "body": {
+                "elements": elements,
+            },
+        },
+    }
+
+
+def _at_in_post(open_id: Optional[str], display_name: str) -> str:
+    """Post（md 标签）里可用的 @ 语法。
+
+    参考：飞书 post 的 md tag 支持 `<at user_id="ou_xxx">Name</at>`。
+    """
+
+    if open_id:
+        return f'<at user_id="{open_id}">{display_name}</at>'
+    return f"@{display_name}"
+
+
+def _render_scheme3_message(
+    items: Sequence[PatrolFinding],
+    *,
+    route_owner: Optional[OwnerIdentity] = None,
+    include_due_soon: bool = True,
+) -> str:
+    """排版方案三：按异常类型聚合。
+
+    目标输出样式（示例）：
+    🔴 **【已超期】（请立即跟进）**
+    - `任务名` (超期X天) ➡️ @责任人
+    🟡 **【缺失 DDL】（请补全截止时间）**
+    - `任务名` ➡️ @责任人
+    🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**
+    - `任务名` (异常原因)
+
+    说明：
+    - 私聊分发场景下，为避免在私聊里“@到其他协作者”，默认只指向 route_owner。
+    - 管理员汇总/兜底场景（route_owner=None）时，会展示该任务的全部负责人（如可得）。
+    """
+
+    def owner_hint(it: PatrolFinding) -> str:
+        if route_owner is not None:
+            return _at_in_post(route_owner.open_id, route_owner.display_name)
+        if it.owners:
+            return "、".join(_at_in_post(o.open_id, o.display_name) for o in it.owners)
+        return "⚠️未分配"
+
+    # 稳定排序：优先行号，其次任务名
+    ordered = sorted(items, key=lambda x: (x.row if x.row is not None else 10**9, x.task))
+
+    groups: Dict[str, List[PatrolFinding]] = {
+        "overdue": [],
+        "missing_ddl": [],
+        "format_error": [],
+        "due_soon": [],
+    }
+    for it in ordered:
+        groups.setdefault(it.issue_type, []).append(it)
+
+    lines: List[str] = []
+
+    if groups.get("overdue"):
+        lines.append("🔴 **【已超期】（请立即跟进）**")
+        for it in groups["overdue"]:
+            days = it.overdue_days
+            if days is None and it.delta_days is not None:
+                days = -it.delta_days
+            days_show = f"超期{days}天" if days is not None else "已超期"
+            lines.append(f"- `{it.task}` ({days_show}) ➡️ {owner_hint(it)}")
+
+    if groups.get("missing_ddl"):
+        lines.append("\n🟡 **【缺失 DDL】（请补全截止时间）**")
+        for it in groups["missing_ddl"]:
+            lines.append(f"- `{it.task}` ➡️ {owner_hint(it)}")
+
+    if groups.get("format_error"):
+        lines.append("\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**")
+        for it in groups["format_error"]:
+            lines.append(f"- `{it.task}` ({it.reason})")
+
+    if include_due_soon and groups.get("due_soon"):
+        lines.append("\n🟠 **【临近到期】（请注意推进节奏）**")
+        for it in groups["due_soon"]:
+            if it.delta_days is not None:
+                days_show = "今天到期" if it.delta_days == 0 else f"还有{it.delta_days}天"
+                lines.append(f"- `{it.task}` ({days_show}) ➡️ {owner_hint(it)}")
+            else:
+                lines.append(f"- `{it.task}` ➡️ {owner_hint(it)}")
+
+    return "\n".join(lines).strip()
+
+
 def _render_task_blocks(
     items: Sequence[PatrolFinding],
     *,
     include_owner: bool,
 ) -> Tuple[str, List[str]]:
-    """渲染任务块，并返回 (markdown, mentions_open_ids)。"""
+    """（旧版卡片渲染保留）渲染任务块，并按分类规则聚合，返回 (markdown, mentions_open_ids)。
+
+    说明：卡片目前仍沿用原“逐条任务块”样式，避免一次改动影响卡片交互/组件上限。
+    在此基础上增加了分类（如：已超期、缺失 DDL）的小标题区隔。
+    路由层实际私聊分发将优先使用 `_render_scheme3_message` 的文本消息。
+    """
 
     lines: List[str] = []
     mentions: List[str] = []
     _seen_mentions: set[str] = set()
 
-    for it in items:
-        ddl = it.ddl_parsed or _normalize_text(it.ddl_raw) or "无"
+    # 按照定义的优先级顺序进行分类展示
+    category_order = ["已超期", "缺失 DDL", "临近到期", "格式异常"]
+    
+    # 稳定排序：优先行号，其次任务名
+    ordered = sorted(items, key=lambda x: (x.row if x.row is not None else 10**9, x.task))
+    
+    grouped: Dict[str, List[PatrolFinding]] = {cat: [] for cat in category_order}
+    for it in ordered:
+        cat = it.alert_category
+        if cat not in grouped:
+            grouped[cat] = []
+        grouped[cat].append(it)
 
-        # 关键：在 `📌 **【任务名】**` 前强制加一个换行符，确保不同任务间有空行区隔。
-        lines.append(f"\n📌 **【任务名】**：{it.task}")
-
-        if include_owner:
-            if it.owners:
-                owners_show: List[str] = []
-                for o in it.owners:
-                    owners_show.append(_at_in_card(o.open_id, o.display_name))
-                    if o.open_id and o.open_id not in _seen_mentions:
-                        mentions.append(o.open_id)
-                        _seen_mentions.add(o.open_id)
-                lines.append(f"👤 **负责人**：{'、'.join(owners_show)}")
-            else:
-                lines.append("👤 **负责人**：未分配")
-
-        if it.issue_type == "overdue" and it.overdue_days is not None:
-            lines.append(f"⏰ **DDL**：{ddl}（已超期 {it.overdue_days} 天）")
-        elif it.issue_type == "due_soon" and it.delta_days is not None:
-            lines.append(f"⏰ **DDL**：{ddl}（距离 {it.delta_days} 天）")
-        elif it.issue_type in {"missing_ddl", "format_error"} and it.abnormal_days is not None:
-            lines.append(f"⏰ **DDL**：{ddl}（连续 {it.abnormal_days} 天异常：{it.reason}）")
+    for cat in category_order + [k for k in grouped.keys() if k not in category_order]:
+        cat_items = grouped.get(cat, [])
+        if not cat_items:
+            continue
+            
+        # 分类标题
+        if cat == "已超期":
+            lines.append(f"\n🔴 **【{cat}】**")
+        elif cat == "缺失 DDL":
+            lines.append(f"\n🟡 **【{cat}】**")
+        elif cat == "格式异常":
+            lines.append(f"\n🟣 **【{cat}】**")
+        elif cat == "临近到期":
+            lines.append(f"\n🟠 **【{cat}】**")
         else:
-            lines.append(f"⏰ **DDL**：{ddl}（{it.reason}）")
+            lines.append(f"\n⚪️ **【{cat}】**")
 
-        lines.append(f"🧭 **分类**：{it.alert_category}")
+        for it in cat_items:
+            ddl = it.ddl_parsed or _normalize_text(it.ddl_raw) or "无"
+    
+            # 关键：在 `📌 **【任务名】**` 前强制加一个换行符，确保不同任务间有空行区隔。
+            lines.append(f"\n📌 **【任务名】**：{it.task}")
+    
+            if include_owner:
+                if it.owners:
+                    owners_show: List[str] = []
+                    for o in it.owners:
+                        owners_show.append(_at_in_card(o.open_id, o.display_name))
+                        if o.open_id and o.open_id not in _seen_mentions:
+                            mentions.append(o.open_id)
+                            _seen_mentions.add(o.open_id)
+                    lines.append(f"👤 **负责人**：{'、'.join(owners_show)}")
+                else:
+                    lines.append("👤 **负责人**：未分配")
+    
+            if it.issue_type == "overdue" and it.overdue_days is not None:
+                lines.append(f"⏰ **DDL**：{ddl}（已超期 {it.overdue_days} 天）")
+            elif it.issue_type == "due_soon" and it.delta_days is not None:
+                lines.append(f"⏰ **DDL**：{ddl}（距离 {it.delta_days} 天）")
+            elif it.issue_type in {"missing_ddl", "format_error"} and it.abnormal_days is not None:
+                lines.append(f"⏰ **DDL**：{ddl}（连续 {it.abnormal_days} 天异常：{it.reason}）")
+            else:
+                lines.append(f"⏰ **DDL**：{ddl}（{it.reason}）")
+    
+            lines.append(f"🧭 **分类**：{it.alert_category}")
 
     return "\n".join(lines).strip(), mentions
 
@@ -651,7 +843,30 @@ class TaskPatrol:
         private_items = [x for x in findings if x.stage == "private"]
         group_items = [x for x in findings if x.stage == "group"]
 
-        # --- private：按 owner 分包 ---
+        # --- p2p：按 owner 分包（覆盖全部 findings，用于 Bot 私聊分发） ---
+        p2p_routes: Dict[str, Dict[str, Any]] = {}
+        for it in findings:
+            if not it.owners:
+                continue
+            for o in it.owners:
+                route_key = o.email or o.open_id or o.display_name
+                if not route_key:
+                    continue
+                bucket = p2p_routes.setdefault(
+                    route_key,
+                    {
+                        "owner": o.to_dict(),
+                        "count": 0,
+                        "items": [],
+                        "message": "",
+                        "card": None,
+                        "mentions_open_ids": [],
+                    },
+                )
+                bucket["count"] += 1
+                bucket["items"].append(it.to_dict())
+
+        # --- private：按 owner 分包（仅 private stage，用于兼容原两阶段策略） ---
         private_routes: Dict[str, Dict[str, Any]] = {}
         unmapped_bucket: List[PatrolFinding] = []
         for it in private_items:
@@ -680,50 +895,152 @@ class TaskPatrol:
                 bucket["count"] += 1
                 bucket["items"].append(it.to_dict())
 
-        # 生成 message/card
+        # 生成 message/card（p2p：用于 Bot 私聊分发，覆盖全部 findings）
+        for route_key, bucket in p2p_routes.items():
+            owner = bucket["owner"]
+
+            owner_obj = OwnerIdentity(
+                raw=str(owner.get("raw") or owner.get("display_name") or ""),
+                display_name=str(owner.get("display_name") or owner.get("raw") or ""),
+                open_id=owner.get("open_id"),
+                email=owner.get("email"),
+                source=str(owner.get("source") or "sheet"),
+            )
+
+            items_for_owner: List[PatrolFinding] = []
+            for it in findings:
+                if any((o.email or o.open_id or o.display_name) == route_key for o in it.owners):
+                    items_for_owner.append(it)
+
+            body_md = _render_scheme3_message(items_for_owner, route_owner=owner_obj)
+            header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {bucket['count']} 条）"
+            bucket["message"] = (header + "\n\n" + body_md).strip() if body_md else header
+
+            detail_md, mentions = _render_task_blocks(items_for_owner, include_owner=False)
+            bucket["mentions_open_ids"] = mentions
+
+            workstation_url = default_task_workstation_url()
+            body_md_for_card = (
+                f"**日期**：{today.isoformat()}\n\n**需关注条目**：{bucket['count']}" + "\n\n" + (detail_md or "（无）")
+            ).strip()
+            bucket["card"] = build_patrol_card_a(
+                title="📌 任务巡检提醒",
+                template="blue",
+                body_md=body_md_for_card,
+                action_text="前往任务工作站处理",
+                action_url=workstation_url,
+            )
+
+        # 生成 message/card（private：仅 private stage，用于兼容原两阶段策略）
         for route_key, bucket in private_routes.items():
             owner = bucket["owner"]
-            # message（纯 markdown 文本）
-            header = f"🚨 **[任务巡检·私聊催办] {today.isoformat()}**（共 {bucket['count']} 条）"
+
+            owner_obj = OwnerIdentity(
+                raw=str(owner.get("raw") or owner.get("display_name") or ""),
+                display_name=str(owner.get("display_name") or owner.get("raw") or ""),
+                open_id=owner.get("open_id"),
+                email=owner.get("email"),
+                source=str(owner.get("source") or "sheet"),
+            )
+
             # 为保证输出稳定，我们从本次 findings 中重新筛出该 owner 的条目：
             items_for_owner: List[PatrolFinding] = []
             for it in private_items:
                 if any((o.email or o.open_id or o.display_name) == route_key for o in it.owners):
                     items_for_owner.append(it)
 
+            # message：排版方案三（按异常类型聚合）
+            body_md = _render_scheme3_message(items_for_owner, route_owner=owner_obj)
+            header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {bucket['count']} 条）"
+            bucket["message"] = (header + "\n\n" + body_md).strip() if body_md else header
+
+            # card：A 款简约直达风（用于飞书群聊/私聊统一渲染）
             detail_md, mentions = _render_task_blocks(items_for_owner, include_owner=False)
             bucket["mentions_open_ids"] = mentions
-            bucket["message"] = (header + "\n" + detail_md).strip()
 
-            # card
-            summary_md = f"**日期**：{today.isoformat()}\n\n**需关注条目**：{bucket['count']}"
-            bucket["card"] = build_patrol_card(
-                title="任务巡检提醒（私聊）",
+            workstation_url = default_task_workstation_url()
+            body_md_for_card = (
+                f"**日期**：{today.isoformat()}\n\n**需关注条目**：{bucket['count']}" + "\n\n" + (detail_md or "（无）")
+            ).strip()
+            bucket["card"] = build_patrol_card_a(
+                title="📌 任务巡检提醒",
                 template="blue",
-                summary_md=summary_md,
-                detail_md=detail_md,
+                body_md=body_md_for_card,
+                action_text="前往任务工作站处理",
+                action_url=workstation_url,
             )
 
         # --- group：合并一包，发群并 @ ---
         group_detail_md, group_mentions = _render_task_blocks(group_items, include_owner=True)
-        group_message_header = f"📣 **[任务巡检·公开提醒] {today.isoformat()}**（共 {len(group_items)} 条）"
+        group_body_md = _render_scheme3_message(group_items, route_owner=None)
+        group_message_header = f"📣 **任务巡检·公开提醒**（{today.isoformat()}，共 {len(group_items)} 条）"
         group_route = {
             "target_chat": target_chat,
             "count": len(group_items),
             "items": [it.to_dict() for it in group_items],
             "mentions_open_ids": group_mentions,
-            "message": (group_message_header + "\n" + group_detail_md).strip() if group_items else "",
+            "message": (group_message_header + "\n\n" + group_body_md).strip() if group_items else "",
             "card": (
-                build_patrol_card(
-                    title="任务巡检提醒（群聊）",
+                build_patrol_card_a(
+                    title="📌 任务巡检提醒",
                     template="red",
-                    summary_md=f"**日期**：{today.isoformat()}\n\n**需公开提醒条目**：{len(group_items)}",
-                    detail_md=group_detail_md or "（无）",
+                    body_md=(
+                        f"**日期**：{today.isoformat()}\n\n**需公开提醒条目**：{len(group_items)}"
+                        + "\n\n"
+                        + (group_detail_md or "（无）")
+                    ).strip(),
+                    action_text="前往任务工作站处理",
+                    action_url=default_task_workstation_url(),
                 )
                 if group_items
                 else None
             ),
         }
+
+        # --- group_broadcast：全量 findings 合并一包，供“只发群聊、不做私聊”场景使用 ---
+        broadcast_detail_md, broadcast_mentions = _render_task_blocks(findings, include_owner=True)
+        broadcast_body_md = _render_scheme3_message(findings, route_owner=None)
+        broadcast_message_header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {len(findings)} 条）"
+        broadcast_route = {
+            "target_chat": target_chat,
+            "count": len(findings),
+            "items": [it.to_dict() for it in findings],
+            "mentions_open_ids": broadcast_mentions,
+            "message": (broadcast_message_header + "\n\n" + broadcast_body_md).strip() if findings else "",
+            "card": (
+                build_patrol_card_a(
+                    title="📌 任务巡检提醒",
+                    template="blue",
+                    body_md=(
+                        f"**日期**：{today.isoformat()}\n\n**异常任务**：{len(findings)}"
+                        + "\n\n"
+                        + (broadcast_detail_md or "（无）")
+                    ).strip(),
+                    action_text="前往任务工作站处理",
+                    action_url=default_task_workstation_url(),
+                )
+                if findings
+                else None
+            ),
+        }
+
+        # --- unmapped：无法按邮箱/open_id 形成私聊分包的兜底桶 ---
+        unmapped_body_md = _render_scheme3_message(unmapped_bucket, route_owner=None)
+        unmapped_message_header = f"🧯 **任务巡检·未映射负责人兜底**（{today.isoformat()}，共 {len(unmapped_bucket)} 条）"
+
+        # --- admin：格式异常/缺负责人（私聊给管理员） ---
+        admin_items: List[PatrolFinding] = []
+        _seen_admin: set[str] = set()
+        for it in findings:
+            if it.issue_type != "format_error" and it.owners:
+                continue
+            if it.key in _seen_admin:
+                continue
+            _seen_admin.add(it.key)
+            admin_items.append(it)
+
+        admin_body_md = _render_scheme3_message(admin_items, route_owner=None, include_due_soon=False)
+        admin_message_header = f"🛠️ **任务巡检·管理员兜底**（{today.isoformat()}，共 {len(admin_items)} 条）"
 
         summary = {
             "today": today.isoformat(),
@@ -737,11 +1054,27 @@ class TaskPatrol:
             "summary": summary,
             "grouped_results": {k: [it.to_dict() for it in v] for k, v in grouped.items()},
             "routes": {
+                "p2p": p2p_routes,
                 "private": private_routes,
+                "group_broadcast": broadcast_route,
                 "group": group_route,
                 "unmapped": {
                     "count": len(unmapped_bucket),
                     "items": [it.to_dict() for it in unmapped_bucket],
+                    "message": (
+                        (unmapped_message_header + "\n\n" + unmapped_body_md).strip()
+                        if unmapped_bucket
+                        else ""
+                    ),
+                },
+                "admin": {
+                    "count": len(admin_items),
+                    "items": [it.to_dict() for it in admin_items],
+                    "message": (
+                        (admin_message_header + "\n\n" + admin_body_md).strip()
+                        if admin_items
+                        else ""
+                    ),
                 },
             },
         }

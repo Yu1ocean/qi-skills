@@ -233,5 +233,9 @@ class LarkSheetsCLI:
         for k, v in kv.items():
             if k not in idx:
                 continue
-            row[idx[k]] = "" if v is None else str(v)
+            # ⚠️ 不要一刀切 str()：
+            # - 富文本（@人 mention block）在飞书表格里可能是 dict / list[dict]
+            # - 日期时间希望保留为 number（Excel serial）或原始结构
+            # 这里保持“值的原貌”，由上层负责把不可序列化对象（如 datetime）提前转换。
+            row[idx[k]] = "" if v is None else v
         return row

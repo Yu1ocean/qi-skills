@@ -37,7 +37,7 @@ cd user_skills/task-flow-engine
 python3 scripts/task_patrol.py \
   --spreadsheet "<飞书表格URL或token>" \
   --task-sheet-title "任务库" \
-  --roster-sheet-title "团队联系方式" \
+  --roster-sheet-title "团队名单" \
   --target-chat "oc_xxx" \
   --state-file ".patrol_state.json" \
   > /tmp/daily_patrol_alerts.json
@@ -49,11 +49,43 @@ python3 scripts/task_patrol.py \
 输出 JSON 中关键字段：
 
 - `grouped_results`：按类别分组后的明细
-- `routes.private`：阶段一（<=2 天）私聊催办分包（按负责人路由）
+- `routes.p2p`：**Bot 私聊分发包**（覆盖全部 findings，按负责人聚合）
+- `routes.private`：阶段一（<=2 天）私聊催办分包（按负责人路由，兼容原两阶段策略）
 - `routes.group`：阶段二（>=3 天异常或 >2 天超期）群聊公开提醒分包
-- `routes.unmapped`：无法映射负责人（或负责人为空）的兜底桶
+- `routes.unmapped`：无法映射负责人（或负责人为空）的兜底桶（含 message 便于直发）
+- `routes.admin`：格式异常 / 缺负责人等兜底信息（建议私聊发给管理员）
 - `vacation`：休假免打扰拦截结果（法定休息日静默顺延 / 个人休假静默顺延）
 - `state`：状态缓存文件信息（用于连续异常天数升级）
+
+---
+
+### 3）飞书 Bot 私聊分发（P2P）+ 通知日志（Notification Log）
+
+建议两段式执行：**先生成 alerts.json，再做发送**，避免 stdout 截断，且便于重放。
+
+```bash
+cd user_skills/task-flow-engine
+python3 scripts/run_task_patrol_save.py \
+  --spreadsheet "<飞书表格URL或token>" \
+  --task-sheet-title "任务库" \
+  --roster-sheet-title "团队名单" \
+  --state-file ".patrol_state.json" \
+  --output alerts.json
+
+# 先演练：只把“将要发给每个人的内容”汇总私聊发给管理员，不触达其他人
+python3 scripts/task_patrol_notify.py \
+  --alerts-file alerts.json \
+  --admin-email yuqinan@bytedance.com \
+  --send-to-admin-only
+
+# 确认无误后再全量发送（逐人 P2P + 管理员兜底）
+python3 scripts/task_patrol_notify.py \
+  --alerts-file alerts.json \
+  --admin-email yuqinan@bytedance.com
+```
+
+- 发送器默认把 Notification Log 记录到：`notification_logs/notify_<UTC日期>.jsonl`（JSONL，每次发送一条记录）
+- 同时会把每次发送的 post payload 落盘到：`notification_payloads/<run_id>/`（便于复盘/重放）
 
 ---
 
@@ -74,6 +106,7 @@ user_skills/task-flow-engine/
   scripts/
     task_patrol.py
     run_task_patrol_save.py
+    task_patrol_notify.py
   task_flow_engine/
     __init__.py
     lark_sheets_cli.py
