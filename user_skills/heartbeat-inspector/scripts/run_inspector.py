@@ -33,7 +33,9 @@ class FetchError(RuntimeError):
 
 def _workspace_root() -> Path:
     env = os.environ.get("IRIS_WORKSPACE_PATH")
-    return Path(env).resolve() if env else Path.cwd().resolve()
+    if env:
+        return Path(env).resolve()
+    return Path(__file__).resolve().parents[3]
 
 
 def _run_cmd(cmd: List[str], timeout: int = 60) -> str:
@@ -101,7 +103,7 @@ def _try_bytedcli_auth(verbose: bool, dlq_path: Path) -> bool:
     try:
         out = _run_cmd(["bash", str(script)], timeout=60)
         if verbose:
-            print(out)
+            print(out, file=sys.stderr)
         return True
     except Exception as e:
         append_dlq(dlq_path, {"type": "bytedcli_auth", "error": str(e)})
@@ -146,6 +148,88 @@ def _guess_chat_name(msg: Dict[str, Any]) -> str:
         if isinstance(v, str) and v.strip():
             return v.strip()
     return ""
+
+
+def _guess_chat_id(msg: Dict[str, Any]) -> str:
+    for k in ["chat_id", "open_chat_id", "openChatId"]:
+        v = msg.get(k)
+        if isinstance(v, str) and v.startswith("oc_"):
+            return v
+
+    chat = msg.get("chat")
+    if isinstance(chat, dict):
+        for k in ["chat_id", "open_chat_id", "openChatId"]:
+            v = chat.get(k)
+            if isinstance(v, str) and v.startswith("oc_"):
+                return v
+
+    return ""
+
+
+def _normalize_http_link(v: Any) -> str:
+    if not isinstance(v, str):
+        return ""
+    s = v.strip()
+    if s.startswith("https://") or s.startswith("http://"):
+        return s
+    return ""
+
+
+def _build_feishu_chat_link(chat_id: str) -> str:
+    if isinstance(chat_id, str) and chat_id.startswith("oc_"):
+        return f"https://applink.larkoffice.com/client/chat/open?openChatId={chat_id}"
+    return ""
+
+
+def _guess_message_link(msg: Dict[str, Any]) -> str:
+    for k in ["message_link", "message_url", "message_permalink", "permalink"]:
+        link = _normalize_http_link(msg.get(k))
+        if link:
+            return link
+    return ""
+
+
+def _guess_chat_link(msg: Dict[str, Any]) -> str:
+    for k in ["chat_link", "chat_url", "conversation_link", "group_link"]:
+        link = _normalize_http_link(msg.get(k))
+        if link:
+            return link
+
+    return _build_feishu_chat_link(_guess_chat_id(msg))
+
+
+def _enrich_chat_message_context(
+    msg: Dict[str, Any], *, default_chat_name: str = "", default_chat_id: str = ""
+) -> Dict[str, Any]:
+    out = dict(msg)
+
+    chat_id = default_chat_id or _guess_chat_id(out)
+    chat_name = _guess_chat_name(out) or (default_chat_name.strip() if isinstance(default_chat_name, str) else "")
+    chat_link = _guess_chat_link(out) or _build_feishu_chat_link(chat_id)
+    message_link = _guess_message_link(out)
+    jump_link = message_link or chat_link
+
+    if chat_id:
+        out["chat_id"] = chat_id
+    if chat_name:
+        out["chat_name"] = chat_name
+    if chat_link:
+        out["chat_link"] = chat_link
+    if message_link:
+        out["message_link"] = message_link
+    if jump_link:
+        out["jump_link"] = jump_link
+
+    return out
+
+
+def _first_source_message(payload: Dict[str, Any]) -> Dict[str, Any]:
+    items = payload.get("source_messages_full")
+    if isinstance(items, list):
+        for item in items:
+            if isinstance(item, dict):
+                return item
+    return {}
 
 
 def _search_chat_id_by_name(chat_name: str) -> str:
@@ -452,6 +536,15 @@ def main() -> int:
                     page_size = int(t.raw.get("page_size") or 50)
 
                     msgs = fetch_feishu_chat_messages(chat_id, relative_time=relative_time, page_size=page_size)
+                    default_chat_name = str(t.raw.get("chat_name") or t.title or "")
+                    msgs = [
+                        _enrich_chat_message_context(
+                            m,
+                            default_chat_name=default_chat_name,
+                            default_chat_id=chat_id,
+                        )
+                        for m in msgs
+                    ]
 
                     new_msgs, new_frag = diff_feishu_messages(prev, msgs)
 
@@ -463,11 +556,19 @@ def main() -> int:
                             mid = str(m.get("message_id") or "")
                             sender = _guess_sender_name(m)
                             msg_text = _message_text_full(m)
+                            chat_name = _guess_chat_name(m) or default_chat_name
+                            chat_link = _guess_chat_link(m)
+                            message_link = _guess_message_link(m)
+                            jump_link = message_link or chat_link
                             obj = {
                                 "type": "chat_message_new",
                                 "target_id": t.id,
                                 "target_title": t.title,
                                 "chat_id": chat_id,
+                                "chat_name": chat_name,
+                                "chat_link": chat_link,
+                                "message_link": message_link,
+                                "jump_link": jump_link,
                                 "message_id": mid,
                                 "sender": sender,
                                 "create_time": m.get("create_time"),
@@ -492,11 +593,21 @@ def main() -> int:
                                 new_message_ids=new_ids,
                             )
                             for task in tasks:
+                                source0 = _first_source_message(task)
+                                chat_name = str(source0.get("chat_name") or default_chat_name)
+                                chat_link = str(source0.get("chat_link") or _build_feishu_chat_link(chat_id))
+                                message_link = str(source0.get("message_link") or source0.get("jump_link") or "")
+                                jump_link = message_link or chat_link
                                 obj = {
                                     "type": "chat_task",
                                     "target_id": t.id,
                                     "target_title": t.title,
                                     "chat_id": chat_id,
+                                    "chat_name": chat_name,
+                                    "chat_link": chat_link,
+                                    "message_link": message_link,
+                                    "jump_link": jump_link,
+                                    "message_id": str(source0.get("message_id") or ""),
                                     "task": task,
                                 }
                                 alert_events.append(obj)
@@ -516,6 +627,11 @@ def main() -> int:
                                         "message_id": str(mm.get("message_id") or ""),
                                         "create_time": mm.get("create_time"),
                                         "sender": _guess_sender_name(mm),
+                                        "chat_id": chat_id,
+                                        "chat_name": _guess_chat_name(mm) or default_chat_name,
+                                        "chat_link": _guess_chat_link(mm),
+                                        "message_link": _guess_message_link(mm),
+                                        "jump_link": str(mm.get("jump_link") or _guess_message_link(mm) or _guess_chat_link(mm) or ""),
                                         "text": _message_text_full(mm),
                                     }
                                     for mm in msgs
@@ -523,11 +639,20 @@ def main() -> int:
                                 known_task_names=[str(tk.get("task_name") or "") for tk in tasks],
                             )
                             for su in status_updates:
+                                chat_name = str(su.get("chat_name") or default_chat_name)
+                                chat_link = str(su.get("chat_link") or _build_feishu_chat_link(chat_id))
+                                message_link = str(su.get("message_link") or su.get("jump_link") or "")
+                                jump_link = message_link or chat_link
                                 obj = {
                                     "type": "task_status_update",
                                     "target_id": t.id,
                                     "target_title": t.title,
                                     "chat_id": chat_id,
+                                    "chat_name": chat_name,
+                                    "chat_link": chat_link,
+                                    "message_link": message_link,
+                                    "jump_link": jump_link,
+                                    "message_id": str(su.get("message_id") or ""),
                                     "status_update": su,
                                 }
                                 alert_events.append(obj)
@@ -562,22 +687,57 @@ def main() -> int:
 
                     self_open_id = _get_self_open_id(runtime_cache, dlq_path)
                     msgs = fetch_feishu_mentions_global(self_open_id, relative_time=relative_time, page_size=page_size)
+                    msgs = [
+                        _enrich_chat_message_context(
+                            m,
+                            default_chat_name=_guess_chat_name(m) or "未知群聊",
+                            default_chat_id=_guess_chat_id(m),
+                        )
+                        for m in msgs
+                    ]
                     new_msgs, new_frag = diff_feishu_messages(prev, msgs)
 
                     is_first_run = not bool(prev.get("last_seen_message_id"))
                     if new_msgs:
+                        mention_view_messages = []
+                        new_ids: List[str] = []
+
                         for m in new_msgs:
                             chat_name = _guess_chat_name(m) or "未知群聊"
+                            chat_id = _guess_chat_id(m)
+                            chat_link = _guess_chat_link(m)
+                            message_link = _guess_message_link(m)
+                            jump_link = message_link or chat_link
                             mid = str(m.get("message_id") or "")
                             sender = _guess_sender_name(m)
                             msg_text = _message_text_full(m)
+
+                            mention_view_messages.append(
+                                {
+                                    "message_id": mid,
+                                    "create_time": m.get("create_time"),
+                                    "sender": sender,
+                                    "chat_id": chat_id,
+                                    "chat_name": chat_name,
+                                    "chat_link": chat_link,
+                                    "message_link": message_link,
+                                    "jump_link": jump_link,
+                                    "text": msg_text,
+                                }
+                            )
+                            if mid:
+                                new_ids.append(mid)
 
                             # 1) Raw message (100% preserved)
                             obj = {
                                 "type": "mention_message_new",
                                 "target_id": t.id,
                                 "target_title": t.title,
+                                "chat_id": chat_id,
                                 "chat_name": chat_name,
+                                "chat_link": chat_link,
+                                "message_link": message_link,
+                                "jump_link": jump_link,
                                 "message_id": mid,
                                 "sender": sender,
                                 "create_time": m.get("create_time"),
@@ -593,74 +753,107 @@ def main() -> int:
                                 )
                             )
 
-                            # 2) Task extraction (single-message)
-                            try:
-                                tasks = extract_tasks_from_chat_messages(
-                                    chat_title=f"全局@我:{chat_name}",
-                                    messages=[m],
-                                    new_message_ids=[mid] if mid else [],
-                                )
-                                for task in tasks:
-                                    obj = {
-                                        "type": "chat_task",
-                                        "target_id": t.id,
-                                        "target_title": t.title,
-                                        "chat_name": chat_name,
-                                        "message_id": mid,
-                                        "task": task,
-                                    }
-                                    alert_events.append(obj)
-                                    alerts.append(
-                                        json.dumps(
-                                            obj,
-                                            ensure_ascii=False,
-                                            separators=(",", ":"),
-                                            default=str,
-                                        )
-                                    )
+                        # 2) Task extraction (batch)
+                        try:
+                            tasks = extract_tasks_from_chat_messages(
+                                chat_title=t.title,
+                                messages=msgs,
+                                new_message_ids=new_ids,
+                            )
+                            for task in tasks:
+                                source0 = _first_source_message(task)
+                                event_chat_id = str(source0.get("chat_id") or "")
+                                event_chat_name = str(source0.get("chat_name") or "未知群聊")
+                                event_chat_link = str(source0.get("chat_link") or _build_feishu_chat_link(event_chat_id))
+                                event_message_link = str(source0.get("message_link") or source0.get("jump_link") or "")
+                                event_jump_link = event_message_link or event_chat_link
+                                obj = {
+                                    "type": "chat_task",
+                                    "target_id": t.id,
+                                    "target_title": t.title,
+                                    "chat_id": event_chat_id,
+                                    "chat_name": event_chat_name,
+                                    "chat_link": event_chat_link,
+                                    "message_link": event_message_link,
+                                    "jump_link": event_jump_link,
+                                    "message_id": str(source0.get("message_id") or ""),
+                                    "task": task,
+                                }
+                                alert_events.append(obj)
 
-                                # State-Triggers for mention stream
-                                status_updates = extract_status_updates_from_messages(
-                                    view_messages=[
-                                        {
-                                            "message_id": str(m.get("message_id") or ""),
-                                            "create_time": m.get("create_time"),
-                                            "sender": sender,
-                                            "text": msg_text,
-                                        }
-                                    ],
-                                    known_task_names=[str(tk.get("task_name") or "") for tk in tasks],
-                                )
-                                for su in status_updates:
-                                    obj = {
-                                        "type": "task_status_update",
-                                        "target_id": t.id,
-                                        "target_title": t.title,
-                                        "chat_name": chat_name,
-                                        "message_id": mid,
-                                        "status_update": su,
-                                    }
-                                    alert_events.append(obj)
-                                    alerts.append(
-                                        json.dumps(
-                                            obj,
-                                            ensure_ascii=False,
-                                            separators=(",", ":"),
-                                            default=str,
-                                        )
+                                if args.verbose:
+                                    md_lines = []
+                                    task_name = str(task.get("task_name") or "未知任务")
+                                    md_lines.append(f"**【新增群聊任务】** {task_name}")
+                                    if event_chat_name:
+                                        md_lines.append(f"🎯 群聊：{event_chat_name}")
+                                    if event_jump_link:
+                                        md_lines.append(f"🔗 跳转：[点击进入群聊]({event_jump_link})")
+                                    print("\n".join(md_lines), file=sys.stderr)
+
+                                alerts.append(
+                                    json.dumps(
+                                        obj,
+                                        ensure_ascii=False,
+                                        separators=(",", ":"),
+                                        default=str,
                                     )
-                            except TaskExtractionError as e:
-                                append_dlq(
-                                    dlq_path,
-                                    {
-                                        "type": "task_extract",
-                                        "target_id": t.id,
-                                        "target_type": t.type,
-                                        "chat_name": chat_name,
-                                        "message_id": mid,
-                                        "error": str(e),
-                                    },
                                 )
+
+                            status_updates = extract_status_updates_from_messages(
+                                view_messages=mention_view_messages,
+                                known_task_names=[str(tk.get("task_name") or "") for tk in tasks],
+                            )
+                            for su in status_updates:
+                                event_chat_id = str(su.get("chat_id") or "")
+                                event_chat_name = str(su.get("chat_name") or "未知群聊")
+                                event_chat_link = str(su.get("chat_link") or _build_feishu_chat_link(event_chat_id))
+                                event_message_link = str(su.get("message_link") or su.get("jump_link") or "")
+                                event_jump_link = event_message_link or event_chat_link
+                                obj = {
+                                    "type": "task_status_update",
+                                    "target_id": t.id,
+                                    "target_title": t.title,
+                                    "chat_id": event_chat_id,
+                                    "chat_name": event_chat_name,
+                                    "chat_link": event_chat_link,
+                                    "message_link": event_message_link,
+                                    "jump_link": event_jump_link,
+                                    "message_id": str(su.get("message_id") or ""),
+                                    "status_update": su,
+                                }
+                                alert_events.append(obj)
+
+                                if args.verbose:
+                                    md_lines = []
+                                    su_action = str(su.get("action") or "状态更新")
+                                    su_task = str(su.get("task_name") or "未知任务")
+                                    md_lines.append(f"**【{su_action}】** {su_task}")
+                                    if event_chat_name:
+                                        md_lines.append(f"🎯 群聊：{event_chat_name}")
+                                    if event_jump_link:
+                                        md_lines.append(f"🔗 跳转：[点击进入群聊]({event_jump_link})")
+                                    print("\n".join(md_lines), file=sys.stderr)
+
+                                alerts.append(
+                                    json.dumps(
+                                        obj,
+                                        ensure_ascii=False,
+                                        separators=(",", ":"),
+                                        default=str,
+                                    )
+                                )
+                        except TaskExtractionError as e:
+                            append_dlq(
+                                dlq_path,
+                                {
+                                    "type": "task_extract",
+                                    "target_id": t.id,
+                                    "target_type": t.type,
+                                    "error": str(e),
+                                    "message_count": len(new_msgs),
+                                },
+                            )
 
                     prev.update(new_frag)
                     state_targets[t.id] = prev
@@ -673,8 +866,24 @@ def main() -> int:
                     # First run baseline: do not alert.
                     is_first_run = prev.get("digest") is None
                     if changed and not is_first_run:
+                        readable = f"[Heartbeat][{t.title}] 表格范围发生变化（{new_frag.get('rows')}x{new_frag.get('cols')}）"
+                        if args.verbose:
+                            print(readable, file=sys.stderr)
+                        obj = {
+                            "type": "sheet_range_change",
+                            "target_id": t.id,
+                            "target_title": t.title,
+                            "rows": new_frag.get("rows"),
+                            "cols": new_frag.get("cols"),
+                            "text": readable,
+                        }
                         alerts.append(
-                            f"[Heartbeat][{t.title}] 表格范围发生变化（{new_frag.get('rows')}x{new_frag.get('cols')}）"
+                            json.dumps(
+                                obj,
+                                ensure_ascii=False,
+                                separators=(",", ":"),
+                                default=str,
+                            )
                         )
 
                     prev.update(new_frag)
@@ -766,7 +975,7 @@ def main() -> int:
             print(a)
     else:
         if args.verbose:
-            print("[Heartbeat] 无新增，已静默退出")
+            print("[Heartbeat] 无新增，已静默退出", file=sys.stderr)
 
     return 0
 
