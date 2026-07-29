@@ -1,0 +1,38 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "📌 任务巡检提醒"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-05-11\n**异常任务**：15\n**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 3 项任务，同名去重\n\n👤 <at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>：共 6 项异常\n- 🔴 **已超期**：1 项（`【招商活动】设定目标并进行5分钟复盘`）\n- 🟡 **缺失 DDL**：4 项（`【可用Leads】梳理`、`新增HIPO商家类型`、`大商认证/打标流程提效`、等 1 项）\n- 🟣 **格式异常**：1 项（`市场建设`）\n\n👤 <at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>：共 3 项异常\n- 🔴 **已超期**：2 项（`【招商活动】设定目标并进行5分钟复盘`、`其他(关店挽回GMV)`）\n- 🟡 **缺失 DDL**：1 项（`针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩`）\n\n👤 <at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>：共 3 项异常\n- 🔴 **已超期**：1 项（`服务商/商家关于激励侧调研`）\n- 🟡 **缺失 DDL**：2 项（`US头商沟通入驻`、`CNOB协同`）\n\n👤 <at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>：共 2 项异常\n- 🔴 **已超期**：1 项（`【招商活动】设定目标并进行5分钟复盘`）\n- 🟡 **缺失 DDL**：1 项（`Leads管理表`）\n\n👤 **未分配**：共 1 项异常\n- 🟣 **格式异常**：1 项（`UK招商专项`）\n\n👤 <at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`商家工具包`）\n\n👤 <at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>：共 1 项异常\n- 🔴 **已超期**：1 项（`商家入驻one-pager`）"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "button",
+          "type": "primary",
+          "text": {
+            "tag": "plain_text",
+            "content": "前往任务工作站处理"
+          },
+          "behaviors": [
+            {
+              "type": "open_url",
+              "default_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

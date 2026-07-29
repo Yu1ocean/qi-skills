@@ -1,0 +1,40 @@
+{
+  "context": "晚6点归档质检与日报生成",
+  "date": "2026-07-02",
+  "generated_at_cst": "2026-07-02 18:00",
+  "task_ledger": {
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs",
+    "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_sheet_title": "任务库",
+    "roster_sheet_title": "团队名单"
+  },
+  "patrol": {
+    "total_findings": 21,
+    "counts": {
+      "临近到期": 0,
+      "已超期": 9,
+      "缺失 DDL": 12,
+      "格式异常": 0
+    },
+    "task_counts": {
+      "开启": 18,
+      "完成": 13,
+      "暂停": 0
+    },
+    "routes": {
+      "private_items": 0,
+      "group_items": 21,
+      "unmapped_items": 0
+    },
+    "raw_output_file": "user_skills/task-flow-engine/patrol_20260702_pm_raw.json"
+  },
+  "daily_log": {
+    "sheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+    "sheet_name": "Daily_Logs",
+    "primary_keys": [
+      "DL-20260702",
+      "DL-20260702-02"
+    ],
+    "note": "DL-20260702 由 periodic-report-generator 的 safe_insert_sheet_row.py 以 append 方式写入（脚本当前忽略 row_index）；随后为满足“第2行倒序插入”要求，额外在 A2:C2 写入 DL-20260702-02 并完成 RAW 回捞校验。"
+  }
+}

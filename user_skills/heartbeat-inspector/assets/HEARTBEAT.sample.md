@@ -15,14 +15,14 @@
       "type": "feishu_chat",
       "title": "项目A沟通群",
       "chat_name": "项目A沟通群",
-      "relative_time": "last_24_hours",
+      "relative_time": "last_6_hours",
       "page_size": 50
     },
     {
       "id": "mentions_me_global",
       "type": "feishu_mentions_global",
       "title": "全局@我",
-      "relative_time": "last_24_hours",
+      "relative_time": "last_6_hours",
       "page_size": 50
     }
   ]

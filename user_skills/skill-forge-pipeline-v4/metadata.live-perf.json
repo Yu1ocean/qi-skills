@@ -1,0 +1,14 @@
+{
+    "skill_id": "SKILL-LIVE-PERF-SUMMARY",
+    "name": "live-performance-summary-generator",
+    "description": "动态表头映射 + RAW 写后回读校验，Live Performance 飞书表格 2. 计算汇总 自动重建",
+    "version": "1.3",
+    "doc_link": "https://bytedance.larkoffice.com/docx/OcPedbVDro4PYSxHkTbcAogQnWh",
+    "date": "2026-05-20",
+    "updated_at": "2026-05-20 10:12",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-performance-summary-generator",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-performance-summary-generator.zip",
+    "zip_name": "live-performance-summary-generator.zip",
+    "drive_file_token": "",
+    "drive_file_url": "https://bytedance.larkoffice.com/docx/OcPedbVDro4PYSxHkTbcAogQnWh"
+}

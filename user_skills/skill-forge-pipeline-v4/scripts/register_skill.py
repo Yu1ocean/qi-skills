@@ -20,16 +20,31 @@ import requests
 DEFAULT_EMAIL = "yuqinan@bytedance.com"
 DEFAULT_OPEN_API_BASE = "https://fsopen.bytedance.net"
 DEFAULT_UPLOAD_API_BASE = "https://open.feishu.cn"
+DEFAULT_SKILL_INVENTORY_URL = "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
+DEFAULT_SKILL_INVENTORY_SHEET_NAME = "专属技能清单"
+DEFAULT_SKILL_INVENTORY_UPDATED_AT_FORMATTER = "yyyy/MM/dd"
 
 # --- SSOT (Single Source of Truth) Version Sync Bus ---
 # We treat `version:` in the target skill's SKILL.md frontmatter as SSOT.
 # During Archive, we bump version (Major: +1.0 / Minor: +0.1) and sync it to:
 # 1) local SKILL.md
-# 2) Feishu skill inventory sheet (Version column)
+# 2) Feishu skill inventory sheet (full-row upsert via omni-asset-archiver)
 # 3) (optional) Feishu skill doc version marker
+#
+# 【Initial Version Policy】
+# Per user (奇楠) directive (2026-05-20):
+# Brand-new skills MUST debut at version 1.1, not 0.x.
+# Scaffolding tools (e.g. aime-skill-creator) typically seed SKILL.md with
+# `version: 0.x` placeholders. When register_skill.py detects this
+# "fresh skill" state during its first run, it will force-set the
+# published version to DEFAULT_INITIAL_VERSION (1.1) instead of
+# performing the usual +0.1 bump within the 0.x range.
+DEFAULT_INITIAL_VERSION = "1.1"
 DEFAULT_SSOT_SPREADSHEET_TOKEN = "ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
 DEFAULT_SSOT_SHEET_NAME = "专属技能清单"
 DEFAULT_SSOT_SHEET_NAME_FALLBACKS = ["专属技能清单_Sheet"]
+DEFAULT_WIKI_NODE_TOKEN = "GU0ewkyaGi4i5nkwBtNcM3aPn9g"
+DEFAULT_WIKI_URL = f"https://bytedance.larkoffice.com/wiki/{DEFAULT_WIKI_NODE_TOKEN}"
 
 DEFAULT_SSOT_VERSION_HEADERS = ["版本号", "版本", "version", "Version"]
 DEFAULT_SSOT_ID_HEADERS = ["技能编号", "Skill ID", "skill_id", "SkillID", "ID", "编号", "包 ID"]
@@ -86,6 +101,32 @@ def get_workspace_root() -> Path:
     if env_path:
         return Path(env_path).resolve()
     return Path(__file__).resolve().parents[3]
+
+
+FEISHU_DATE_EPOCH = datetime.datetime(1899, 12, 30)
+FEISHU_DATETIME_FORMATS = (
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%Y/%m/%d %H:%M:%S",
+    "%Y/%m/%d %H:%M",
+    "%Y-%m-%d",
+    "%Y/%m/%d",
+)
+
+
+def maybe_to_feishu_datetime_serial(value: Any) -> Any:
+    if isinstance(value, (int, float)):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return value
+    for fmt in FEISHU_DATETIME_FORMATS:
+        try:
+            parsed = datetime.datetime.strptime(text, fmt)
+            return round((parsed - FEISHU_DATE_EPOCH).total_seconds() / 86400, 10)
+        except ValueError:
+            continue
+    return value
 
 
 def get_raw_cloud_jwt() -> str:
@@ -236,19 +277,15 @@ def ensure_drive_permission(
     email: str,
     perm: str = "full_access",
 ) -> None:
-    create_result = add_permission_member(bearer_token, open_api_base, file_token, email, perm)
-    if create_result["http_status"] == 200 and create_result["data"].get("code") == 0:
-        return
+    """Legacy compatibility shim for older callers.
 
-    update_result = update_permission_member(bearer_token, open_api_base, file_token, email, perm)
-    if update_result["http_status"] == 200 and update_result["data"].get("code") == 0:
-        return
+    Deprecated: do not use JWT/OpenAPI permission grants. Prefer
+    `ensure_drive_asset_access_via_mcp()` with a concrete /file/ URL.
+    """
 
-    raise RuntimeError(
-        "grant drive permission failed\n"
-        f"- create: {create_result}\n"
-        f"- update: {update_result}"
-    )
+    del bearer_token, open_api_base
+    drive_file_url = build_drive_file_url("https://bytedance.larkoffice.com/docx/placeholder", file_token)
+    ensure_drive_asset_access_via_mcp(drive_file_url, email=email, perm=perm)
 
 
 def build_drive_file_url(doc_url: str, file_token: str) -> str:
@@ -256,6 +293,26 @@ def build_drive_file_url(doc_url: str, file_token: str) -> str:
     scheme = parsed.scheme or "https"
     netloc = parsed.netloc or "bytedance.larkoffice.com"
     return f"{scheme}://{netloc}/file/{file_token}"
+
+
+def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str = "full_access") -> str:
+    workspace_root = get_workspace_root()
+    repair_script = workspace_root / "user_skills/feishu-doc-writing-guide/scripts/grant_doc_permissions.py"
+    if not repair_script.exists():
+        raise FileNotFoundError(f"grant_doc_permissions wrapper not found: {repair_script}")
+
+    return run_subprocess(
+        [
+            "python3",
+            str(repair_script),
+            drive_file_url,
+            "--email",
+            email,
+            "--perm",
+            perm,
+        ],
+        "repair drive asset access via MCP personal flow",
+    )
 
 
 def run_subprocess(command: list[str], action: str) -> str:
@@ -328,6 +385,18 @@ def bump_version(current_version: str, bump_type: str) -> str:
         return _format_version_pair(major, minor + 1)
 
     raise ValueError(f"Unsupported bump type: {bump_type!r} (expected major/minor)")
+
+
+def is_initial_version(current_version: str) -> bool:
+    """Return True if the current SKILL.md version is still in the
+    0.x scaffold range, meaning this is the very first publish of the skill.
+    """
+
+    try:
+        major, _minor = _normalize_version_to_int_pair(current_version)
+    except ValueError:
+        return False
+    return major == 0
 
 
 def write_skill_md_version(skill_dir: Path, new_version: str) -> None:
@@ -509,102 +578,132 @@ def update_xlsx_version_cell(
     return updated_path, debug_loc
 
 
-def sync_version_to_lark_sheet(
-    *,
-    spreadsheet_url: str,
-    sheet_name: str,
-    skill_id: str,
-    skill_name: str,
-    new_version: str,
-) -> None:
-    """Sync point #2: update the Version column in Feishu inventory sheet via MCP."""
+def sync_skill_inventory_via_omni(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """Sync point #2: upsert the full skill row into Feishu inventory via omni-asset-archiver."""
 
     workspace_root = get_workspace_root()
-    update_script = workspace_root / "inner_skills/lark_sheets_update/mcp_lark_sheets_update_lark_update_sheet.py"
-    if not update_script.exists():
-        raise FileNotFoundError(f"Lark Sheets Update MCP script not found: {update_script}")
+    archiver_script = workspace_root / "user_skills/omni-asset-archiver/scripts/archiver_driver.py"
+    if not archiver_script.exists():
+        raise FileNotFoundError(f"Omni asset archiver script not found: {archiver_script}")
 
-    print("📥 Downloading SSOT spreadsheet xlsx...")
-    downloaded = _pick_first_xlsx(mcp_lark_download(spreadsheet_url))
+    payload = {
+        "asset_type": "skill_inventory",
+        "target_route_key": "skill_inventory",
+        "skill_id": metadata.get("skill_id", ""),
+        "title": metadata.get("name", ""),
+        "doc_url": metadata.get("doc_link", ""),
+        "description": metadata.get("description", ""),
+        "version": metadata.get("version", ""),
+        "updated_at": maybe_to_feishu_datetime_serial(metadata.get("updated_at", "")),
+    }
 
-    with tempfile.TemporaryDirectory(prefix="ssot_sheet_", dir=workspace_root) as temp_dir:
-        temp_dir_path = Path(temp_dir)
-        local_xlsx = temp_dir_path / downloaded.name
-        shutil.copy2(downloaded, local_xlsx)
-
-        updated_xlsx, debug_loc = update_xlsx_version_cell(
-            source_xlsx=local_xlsx,
-            sheet_name=sheet_name,
-            skill_id=skill_id,
-            skill_name=skill_name,
-            new_version=new_version,
-        )
-        print(f"🚌 SSOT sheet version cell updated locally: {debug_loc}")
-
-        print("📤 Syncing updated xlsx back to Feishu via lark_sheets_update...")
-        run_subprocess(
-            [
-                "python3",
-                str(update_script),
-                json.dumps(
-                    {
-                        "document_url": spreadsheet_url,
-                        "sheet_name": sheet_name,
-                        "source_file_path": str(updated_xlsx.resolve()),
-                    },
-                    ensure_ascii=False,
-                ),
-            ],
-            "lark_sheets_update",
+    required_fields = ["skill_id", "title", "doc_url", "description", "version", "updated_at"]
+    missing_fields = [field for field in required_fields if not str(payload.get(field, "")).strip()]
+    if missing_fields:
+        raise RuntimeError(
+            "Omni skill inventory sync payload missing required fields: " + ", ".join(missing_fields)
         )
 
-        # RAW-ish post-check: wait a bit then download and verify.
-        time.sleep(2)
-        re_downloaded = _pick_first_xlsx(mcp_lark_download(spreadsheet_url))
-        verify_path = temp_dir_path / f"verify_{re_downloaded.name}"
-        shutil.copy2(re_downloaded, verify_path)
+    print("🚌 Syncing skill inventory row via omni-asset-archiver...")
+    output = run_subprocess(
+        [
+            "python3",
+            str(archiver_script),
+            "--payload-json",
+            json.dumps(payload, ensure_ascii=False),
+        ],
+        "omni-asset-archiver skill inventory upsert",
+    )
 
-        try:
-            from openpyxl import load_workbook  # type: ignore
-        except Exception:
-            print("⚠️ openpyxl missing, skip post-read verification.")
-            return
+    json_match = re.search(r"(\{[\s\S]*\})\s*$", output.strip())
+    if not json_match:
+        raise RuntimeError(f"Unable to parse omni-asset-archiver output: {output}")
 
-        wb = load_workbook(verify_path, data_only=False)
-        real_sheet_name = _choose_sheet_name(wb.sheetnames, sheet_name)
-        ws = wb[real_sheet_name]
+    result = json.loads(json_match.group(1))
+    status = str(result.get("status", "")).strip().lower()
+    if status not in {"appended", "updated", "dry_run"}:
+        raise RuntimeError(f"Unexpected omni-asset-archiver status: {result}")
 
-        header_row = [
-            _normalize_header_value(ws.cell(row=1, column=c).value) for c in range(1, ws.max_column + 1)
-        ]
-        id_col = _find_header_col_index(header_row, DEFAULT_SSOT_ID_HEADERS)
-        name_col = _find_header_col_index(header_row, DEFAULT_SSOT_NAME_HEADERS)
-        version_col = _find_header_col_index(header_row, DEFAULT_SSOT_VERSION_HEADERS)
-        if version_col is None:
-            print("⚠️ Unable to re-locate version column during verification, skip.")
-            return
+    print(
+        "✅ Skill inventory sync finished via omni-asset-archiver: "
+        f"status={result.get('status')}, sheet={result.get('sheet_name')}, row={result.get('row_number')}"
+    )
+    return result
 
-        id_col_1b = id_col + 1 if id_col is not None else None
-        name_col_1b = name_col + 1 if name_col is not None else None
-        version_col_1b = version_col + 1
 
-        current = None
-        for r in range(2, ws.max_row + 1):
-            rid = _normalize_header_value(ws.cell(row=r, column=id_col_1b).value) if id_col_1b else ""
-            rname = _normalize_skill_name_cell(ws.cell(row=r, column=name_col_1b).value) if name_col_1b else ""
-            if skill_id and rid and rid.strip() == skill_id.strip():
-                current = _normalize_header_value(ws.cell(row=r, column=version_col_1b).value)
-                break
-            if skill_name and rname and rname.strip() == skill_name.strip():
-                current = _normalize_header_value(ws.cell(row=r, column=version_col_1b).value)
-                break
+def _run_lark_sheets_json(args: list[str], step_name: str) -> dict:
+    workspace_root = get_workspace_root()
+    cli_path = workspace_root / "inner_skills/lark-sheets/bin/lark-sheets-cli"
+    if not cli_path.exists():
+        raise FileNotFoundError(f"lark-sheets cli not found: {cli_path}")
+    output = run_subprocess([str(cli_path), *args], step_name)
+    json_match = re.search(r"(\{[\s\S]*\})", output)
+    if not json_match:
+        raise RuntimeError(f"Unable to parse lark-sheets output for {step_name}: {output}")
+    try:
+        return json.loads(json_match.group(1))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Unable to decode lark-sheets json for {step_name}: {output}") from exc
 
-        if current != new_version:
-            raise RuntimeError(
-                "SSOT sheet post-read verification FAILED. "
-                f"expected={new_version!r}, got={current!r}, spreadsheet_url={spreadsheet_url}"
-            )
-        print("✅ SSOT sheet post-read verification PASSED.")
+
+def _resolve_skill_inventory_sheet_id() -> str:
+    info = _run_lark_sheets_json(
+        ["sheets", "+info", "--url", DEFAULT_SKILL_INVENTORY_URL],
+        "resolve skill inventory sheet id",
+    )
+    sheets = info.get("data", {}).get("sheets", {}).get("sheets", [])
+    for sheet in sheets:
+        if sheet.get("title") == DEFAULT_SKILL_INVENTORY_SHEET_NAME:
+            return str(sheet.get("sheet_id") or "").strip()
+    raise RuntimeError(f"Unable to resolve sheet id for {DEFAULT_SKILL_INVENTORY_SHEET_NAME}")
+
+
+def ensure_skill_inventory_updated_at_formatter(row_number: int, expected_text: str) -> None:
+    if row_number <= 0:
+        raise ValueError(f"Invalid row_number: {row_number}")
+    expected_display = str(expected_text or "").strip()[:10].replace("-", "/")
+    if not expected_display:
+        raise ValueError("expected_text is empty for skill inventory updated_at formatter verification")
+    sheet_id = _resolve_skill_inventory_sheet_id()
+    range_str = f"{sheet_id}!E{row_number}:E{row_number}"
+    _run_lark_sheets_json(
+        [
+            "sheets",
+            "+set-style",
+            "--url",
+            DEFAULT_SKILL_INVENTORY_URL,
+            "--range",
+            range_str,
+            "--style",
+            json.dumps({"formatter": DEFAULT_SKILL_INVENTORY_UPDATED_AT_FORMATTER}, ensure_ascii=False),
+        ],
+        "set updated_at formatter on skill inventory row",
+    )
+    time.sleep(2)
+    readback = _run_lark_sheets_json(
+        [
+            "sheets",
+            "+read",
+            "--url",
+            DEFAULT_SKILL_INVENTORY_URL,
+            "--sheet-id",
+            sheet_id,
+            "--range",
+            f"E{row_number}:E{row_number}",
+            "--value-render-option",
+            "FormattedValue",
+        ],
+        "verify updated_at formatter on skill inventory row",
+    )
+    values = readback.get("data", {}).get("valueRange", {}).get("values", [])
+    actual = ""
+    if values and values[0]:
+        actual = str(values[0][0] or "").strip()
+    if actual != expected_display:
+        raise RuntimeError(
+            "Skill inventory updated_at formatter verification failed: "
+            f"expected={expected_display!r}, actual={actual!r}, row={row_number}"
+        )
 
 
 def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
@@ -730,6 +829,40 @@ def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
     return f"file_{zip_stem}" in content or zip_name in content or zip_stem in content
 
 
+def move_doc_to_wiki_via_mcp(doc_url: str, wiki_node_token: str) -> Dict[str, str]:
+    workspace_root = get_workspace_root()
+    move_script = workspace_root / "inner_skills/lark/mcp_lark_move_lark_doc.py"
+    if not move_script.exists():
+        raise FileNotFoundError(f"Lark MCP move script not found: {move_script}")
+
+    output = run_subprocess(
+        [
+            "python3",
+            str(move_script),
+            json.dumps(
+                {
+                    "document_urls": [doc_url],
+                    "target_type": "wiki",
+                    "target_location": wiki_node_token,
+                },
+                ensure_ascii=False,
+            ),
+        ],
+        "lark move doc to wiki",
+    )
+
+    urls = re.findall(r'https?://[^\s"\'<>]+', output)
+    moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), doc_url)
+    moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+
+    return {
+        "doc_link": moved_doc_url,
+        "wiki_url": moved_wiki_url or f"https://bytedance.larkoffice.com/wiki/{wiki_node_token}",
+        "wiki_node_token": wiki_node_token,
+        "raw_output": output,
+    }
+
+
 def parse_doc_token(doc_url: str) -> str:
     path = urlparse(doc_url).path or ""
     parts = [part for part in path.split("/") if part]
@@ -788,6 +921,92 @@ def list_doc_file_blocks(doc_url: str) -> list[Dict[str, str]]:
     return file_blocks
 
 
+def parse_file_token_from_attach_output(attach_output: str) -> str:
+    if not attach_output:
+        return ""
+
+    json_like_matches = re.findall(r'\{[^{}]*"file_token"\s*:\s*"([^"]+)"[^{}]*\}', attach_output)
+    if json_like_matches:
+        return json_like_matches[0]
+
+    dict_like_matches = re.findall(r"['\"]file_token['\"]\s*[:=]\s*['\"]([^'\"\s]+)['\"]", attach_output)
+    if dict_like_matches:
+        return dict_like_matches[0]
+
+    # Some MCP / download outputs only expose a raw token-like field or a
+    # canonical /file/<token> URL instead of a JSON object.
+    url_match = re.search(r"/file/([A-Za-z0-9_-]+)", attach_output)
+    if url_match:
+        return url_match.group(1)
+
+    loose_token_match = re.search(
+        r"(?:^|[\s'\"=:,])(file_[A-Za-z0-9_-]{10,}|boxcn[A-Za-z0-9_-]{10,}|[A-Za-z0-9_-]{20,})(?=$|[\s'\",}])",
+        attach_output,
+    )
+    if loose_token_match:
+        return loose_token_match.group(1)
+
+    return ""
+
+
+def resolve_attached_drive_file_token(
+    attach_output: str,
+    before_blocks: list[Dict[str, str]],
+    doc_url: str,
+    file_name: str,
+    before_blocks_error: str = "",
+) -> str:
+    """Resolve the Drive file_token for the newly attached ZIP.
+
+    Resolution order (fail-fast, but with an extra zero-trust fallback):
+    1) Parse stdout/stderr from the MCP attach script (preferred, includes raw file_token).
+    2) If that fails, call docx.v1.document_block.list via internal proxy and diff
+       before/after file blocks to locate the new block.
+    3) If the OpenAPI path fails (e.g. missing scope, doc type not supported),
+       fall back to inspecting the latest downloaded .lark.md and reusing the
+       same parsing heuristics we use for attach_output (searching for /file/<token>
+       or JSON blobs containing "file_token").
+
+    Only after all three paths fail do we hard-stop, to avoid producing an
+    orphan ZIP without a recorded Drive token / permission grant.
+    """
+
+    # 1) Primary: parse attach_output directly (most structured / least fragile).
+    parsed_token = parse_file_token_from_attach_output(attach_output)
+    if parsed_token:
+        return parsed_token
+
+    attach_summary = "attach_output missing parseable file_token"
+    list_failure_summary = before_blocks_error or "before attachment snapshot ok"
+
+    # 2) Secondary: try listing file blocks via internal Lark proxy and diffing.
+    try:
+        after_blocks = list_doc_file_blocks(doc_url)
+        return find_new_file_token(before_blocks, after_blocks, file_name)
+    except Exception as exc:
+        list_failure_summary = f"{list_failure_summary}; after attachment lookup failed: {exc}"
+
+    # 3) Tertiary: zero-trust markdown introspection — download latest doc as
+    # .lark.md and reuse the same token parsing heuristics on its content.
+    try:
+        md_path = download_doc_markdown(doc_url)
+        md_text = md_path.read_text(encoding="utf-8", errors="ignore")
+        markdown_token = parse_file_token_from_attach_output(md_text)
+        if markdown_token:
+            return markdown_token
+    except Exception as exc:
+        list_failure_summary = f"{list_failure_summary}; markdown introspection failed: {exc}"
+
+    # All paths failed: refuse to continue in order to avoid delivering an
+    # untracked, potentially permissionless orphan Drive file.
+    raise RuntimeError(
+        "Unable to resolve attached drive file token; refuse to continue because this would "
+        "deliver a potentially permissionless orphan file. "
+        f"attach_output path failed: {attach_summary}. "
+        f"fallbacks failed: {list_failure_summary}."
+    )
+
+
 def find_new_file_token(before_blocks: list[Dict[str, str]], after_blocks: list[Dict[str, str]], file_name: str) -> str:
     before_tokens = {item.get("file_token", "") for item in before_blocks}
     named_candidates = [
@@ -813,6 +1032,8 @@ def extract_metadata(
     zip_path: Optional[Path] = None,
     drive_file_token: Optional[str] = None,
     drive_file_url: Optional[str] = None,
+    wiki_url: str = "",
+    wiki_node_token: str = "",
 ) -> Dict[str, Any]:
     now = datetime.datetime.now()
     return {
@@ -821,6 +1042,8 @@ def extract_metadata(
         "description": desc,
         "version": version,
         "doc_link": doc_link,
+        "wiki_url": wiki_url,
+        "wiki_node_token": wiki_node_token,
         "date": now.strftime("%Y-%m-%d"),
         "updated_at": now.strftime("%Y-%m-%d %H:%M"),
         "skill_dir": str(skill_dir.resolve()) if skill_dir else "",
@@ -840,6 +1063,16 @@ def main() -> int:
     parser.add_argument("--id", required=False, help="技能编号或包 ID")
     parser.add_argument("--user-email", default=DEFAULT_EMAIL, help="默认授予 Full Access 的邮箱")
     parser.add_argument("--output-zip", help="可选，自定义 zip 输出路径")
+    parser.add_argument(
+        "--wiki-node-token",
+        default=DEFAULT_WIKI_NODE_TOKEN,
+        help="技能说明文档默认迁入的 Wiki 节点 token（默认 Aime 技能库根节点）。",
+    )
+    parser.add_argument(
+        "--skip-wiki-mount",
+        action="store_true",
+        help="调试用：跳过 Wiki Mount Phase（正式发布默认必须执行）。",
+    )
 
     # SSOT version sync bus
     parser.add_argument(
@@ -850,6 +1083,15 @@ def main() -> int:
     parser.add_argument(
         "--new-version",
         help="直接指定新版本号（标准 X.Y 两段式，如 5.2）。优先级高于 --bump。",
+    )
+    parser.add_argument(
+        "--initial-version",
+        default=DEFAULT_INITIAL_VERSION,
+        help=(
+            "首次发布时的起始版本号（默认 1.1）。"
+            "当 SKILL.md 当前版本仍处于 0.x 脚手架阶段时，"
+            "本流水线会忽略 --bump，直接将版本设为该值。"
+        ),
     )
     parser.add_argument(
         "--skip-ssot",
@@ -869,7 +1111,7 @@ def main() -> int:
     parser.add_argument(
         "--skip-ssot-sheet-sync",
         action="store_true",
-        help="调试用：跳过台账版本号覆写。",
+        help="调试用：跳过技能台账整行 upsert（omni-asset-archiver）。",
     )
     parser.add_argument(
         "--skip-ssot-doc-sync",
@@ -889,6 +1131,9 @@ def main() -> int:
     zip_path: Optional[Path] = None
     drive_file_token = ""
     drive_file_url = ""
+    final_doc_link = args.path
+    wiki_url = ""
+    wiki_node_token = ""
 
     # SSOT version (X.Y)
     ssot_version = ""
@@ -903,6 +1148,14 @@ def main() -> int:
             if args.new_version:
                 major, minor = _normalize_version_to_int_pair(args.new_version)
                 new_version = _format_version_pair(major, minor)
+            elif is_initial_version(current_version):
+                # First publish: ignore --bump, jump straight to initial version (default 1.1).
+                major, minor = _normalize_version_to_int_pair(args.initial_version)
+                new_version = _format_version_pair(major, minor)
+                print(
+                    f"🚌 SSOT initial publish detected (current={current_version}). "
+                    f"Forcing initial version: {new_version}"
+                )
             else:
                 bump_type = args.bump
                 if not bump_type:
@@ -948,9 +1201,11 @@ def main() -> int:
             )
 
             before_blocks: list[Dict[str, str]] = []
+            before_blocks_error = ""
             try:
                 before_blocks = list_doc_file_blocks(args.path)
             except Exception as exc:
+                before_blocks_error = f"before attachment snapshot failed: {exc}"
                 print(f"⚠️ Unable to list doc blocks before attachment: {exc}")
 
             print("🚀 Inserting native File Block into skill doc via Lark MCP...")
@@ -976,39 +1231,53 @@ def main() -> int:
                     lambda: sync_version_to_skill_doc_via_mcp(args.path, ssot_version),
                 )
 
-            try:
-                after_blocks = list_doc_file_blocks(args.path)
-                drive_file_token = find_new_file_token(before_blocks, after_blocks, zip_path.name)
-            except Exception as exc:
-                print(f"⚠️ Unable to resolve remote file token automatically: {exc}")
-                drive_file_token = ""
-
-            if drive_file_token:
-                drive_file_url = build_drive_file_url(args.path, drive_file_token)
-                print(f"🚀 Granting full_access to {args.user_email}...")
-                call_with_retry(
-                    "grant drive full_access",
-                    lambda: ensure_drive_permission(
-                        bearer_token,
-                        DEFAULT_OPEN_API_BASE,
-                        drive_file_token,
-                        args.user_email,
-                    ),
-                )
-                print("✅ Drive permission granted.")
+            if args.skip_wiki_mount:
+                print("⚠️ Wiki Mount Phase skipped by --skip-wiki-mount (debug only).")
             else:
-                drive_file_url = args.path
+                print("🚀 Wiki Mount Phase: moving skill doc into target wiki node...")
+                wiki_mount_result = call_with_retry(
+                    "move skill doc to wiki",
+                    lambda: move_doc_to_wiki_via_mcp(args.path, args.wiki_node_token),
+                )
+                final_doc_link = wiki_mount_result.get("doc_link") or args.path
+                wiki_url = wiki_mount_result.get("wiki_url") or DEFAULT_WIKI_URL
+                wiki_node_token = wiki_mount_result.get("wiki_node_token") or args.wiki_node_token
+                print("✅ Wiki Mount Phase finished.")
+                if wiki_mount_result.get("raw_output"):
+                    print(wiki_mount_result["raw_output"])
+
+            drive_file_token = resolve_attached_drive_file_token(
+                attach_output=attach_output,
+                before_blocks=before_blocks,
+                doc_url=final_doc_link,
+                file_name=zip_path.name,
+                before_blocks_error=before_blocks_error,
+            )
+            drive_file_url = build_drive_file_url(final_doc_link, drive_file_token)
+            print(f"🚀 Repairing drive asset access for {args.user_email} via MCP personal flow...")
+            repair_output = call_with_retry(
+                "repair drive asset access via MCP personal flow",
+                lambda: ensure_drive_asset_access_via_mcp(
+                    drive_file_url,
+                    email=args.user_email,
+                ),
+            )
+            print("✅ Drive asset access repaired.")
+            if repair_output:
+                print(repair_output)
 
     metadata = extract_metadata(
         args.name,
         args.desc,
-        args.path,
+        final_doc_link,
         ssot_version,
         args.id,
         skill_dir,
         zip_path,
         drive_file_token,
         drive_file_url,
+        wiki_url,
+        wiki_node_token,
     )
 
     if (
@@ -1018,17 +1287,14 @@ def main() -> int:
         and (not args.skip_remote)
         and (not args.skip_ssot_sheet_sync)
     ):
-        ssot_sheet_url = build_ssot_spreadsheet_url(args.ssot_spreadsheet_token)
-        print("🚌 Syncing SSOT version to Feishu inventory sheet...")
+        sync_result = call_with_retry(
+            "sync skill inventory via omni-asset-archiver",
+            lambda: sync_skill_inventory_via_omni(metadata),
+        )
+        row_number = int(sync_result.get("row_number") or 0)
         call_with_retry(
-            "sync ssot version to sheet",
-            lambda: sync_version_to_lark_sheet(
-                spreadsheet_url=ssot_sheet_url,
-                sheet_name=args.ssot_sheet_name,
-                skill_id=metadata.get("skill_id", ""),
-                skill_name=metadata.get("name", ""),
-                new_version=ssot_version,
-            ),
+            "sync skill inventory updated_at formatter",
+            lambda: ensure_skill_inventory_updated_at_formatter(row_number, metadata.get("updated_at", "")),
         )
 
     metadata_path = Path.cwd() / "metadata.json"

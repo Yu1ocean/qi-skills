@@ -1,0 +1,46 @@
+[
+  {
+    "query": "What's trending on Weibo today?",
+    "expected_action": "get_event_board"
+  },
+  {
+    "query": "What are the latest AI papers today?",
+    "expected_action": "daily_paper"
+  },
+  {
+    "query": "What have OpenAI and Google blogged about recently?",
+    "expected_action": "daily_blog"
+  },
+  {
+    "query": "How is Xiaohongshu reviewing this product?",
+    "expected_action": "social_search"
+  },
+  {
+    "query": "What has CCTV News posted on Weibo this week?",
+    "expected_action": "search_author_posts"
+  },
+  {
+    "query": "How does Reddit feel about Claude Code?",
+    "expected_action": "global_social_search"
+  },
+  {
+    "query": "How is GitHub reacting to a new release in a project?",
+    "expected_action": "developer_signal_search"
+  },
+  {
+    "query": "How is western tech media covering OpenAI's new model?",
+    "expected_action": "global_media_search"
+  },
+  {
+    "query": "How is the global tech community reacting to MCP lately?",
+    "expected_action": "global_signal_brief"
+  },
+  {
+    "query": "How are overseas developers and media reacting to the new Claude Code feature?",
+    "expected_action": "global_signal_brief"
+  },
+  {
+    "query": "What is the global product positioning, pricing strategy, and quality perception of the BytePlus Seedance 2.0 API?",
+    "expected_action": "global_signal_brief"
+  }
+]

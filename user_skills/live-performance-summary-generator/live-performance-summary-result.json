@@ -1,0 +1,115 @@
+{
+  "ok": true,
+  "result": {
+    "spreadsheet_token": "VVeQshKyvhyK7stx4gbuqOQ4sBb",
+    "raw_sheet_id": "cfc575",
+    "summary_sheet_id": "YKHVS",
+    "raw_sheet_title": "1. 数据底表",
+    "summary_sheet_title": "2. 计算汇总",
+    "data_rows": 86,
+    "header_row": 2,
+    "data_start_row": 3,
+    "last_raw_row": 88,
+    "clear_end_row": 500,
+    "benchmark_red_ranges": [
+      "L3:L88",
+      "M3:M33",
+      "M35:M52",
+      "M54:M81",
+      "M83:M85",
+      "N4:N7",
+      "N10:N12",
+      "N14:N26",
+      "N30:N32",
+      "N34",
+      "N36:N37",
+      "N40",
+      "N42:N44",
+      "N46:N64",
+      "N66:N88",
+      "P3",
+      "P5:P24",
+      "P26",
+      "P28:P34",
+      "P36:P87"
+    ],
+    "exported_xlsx": "(skipped)",
+    "field_to_letter": {
+      "handle": "D",
+      "date": "F",
+      "duration_sec": "J",
+      "cl_gmv": "K",
+      "show_pv": "M",
+      "show_gpm": "T",
+      "enter_room_rate": "O",
+      "valid_cl_ctr": "P",
+      "valid_cl_co": "Q",
+      "aov": "S",
+      "watch_duration_avg": "AE",
+      "follow_rate": "AB",
+      "like_rate": "Z",
+      "share_rate": "AC",
+      "comment_rate": "AA"
+    },
+    "readback": {
+      "success": true,
+      "findings": [],
+      "head_range": "YKHVS!A1:P2",
+      "head_values": [
+        [
+          "基础数据",
+          "自动计算，在【1. 数据底表】贴入数据即可",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "互动指标｜Fashion Live 过程指标优化2505",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "Handle",
+          "日期",
+          "GMV",
+          "时均GMV",
+          "时均show PV /K",
+          "开播小时",
+          "Show GPM",
+          "ERR",
+          "CTR",
+          "C_O",
+          "AOV",
+          "Watch Duration(AVG.)>55秒",
+          "Follow rate >1%",
+          "Like rate >500%",
+          "Share rate \n观察持续提升",
+          "Comment rate >5%"
+        ]
+      ],
+      "sample_rows": [
+        {
+          "row": 3,
+          "A": "feelingirlukshop",
+          "C": "46",
+          "F": "1",
+          "K(AOV)": "15"
+        },
+        {
+          "row": 88,
+          "A": "feelingirlukshop",
+          "C": "235",
+          "F": "2",
+          "K(AOV)": "35"
+        }
+      ],
+      "last_summary_data_row": 88
+    }
+  }
+}

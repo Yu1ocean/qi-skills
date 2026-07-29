@@ -24,7 +24,7 @@ Heartbeat Inspector 默认从工作区根目录读取 `HEARTBEAT.md`。
 
       "chat_name": "项目A沟通群",
 
-      "relative_time": "last_24_hours",
+      "relative_time": "last_6_hours",
       "page_size": 50
     },
     {
@@ -32,7 +32,7 @@ Heartbeat Inspector 默认从工作区根目录读取 `HEARTBEAT.md`。
       "type": "feishu_mentions_global",
       "title": "全局@我",
 
-      "relative_time": "last_24_hours",
+      "relative_time": "last_6_hours",
       "page_size": 50
     },
     {
@@ -65,14 +65,14 @@ Heartbeat Inspector 默认从工作区根目录读取 `HEARTBEAT.md`。
 
 - `chat_id`：可选，形如 `oc_...`。
 - `chat_name`：可选，群聊名称（**支持直接写群名**）。
-- `relative_time`：可选，默认 `last_24_hours`。
+- `relative_time`：可选，默认 `last_6_hours`。
 - `page_size`：可选，默认 `50`，范围建议 1-50。
 
 > 备注：若只提供 `chat_name`，脚本会先按名称搜索群聊解析 `chat_id`。
 
 ### feishu_mentions_global
 
-- `relative_time`：可选，默认 `last_24_hours`。
+- `relative_time`：可选，默认 `last_6_hours`。
 - `page_size`：可选，默认 `50`。
 
 > 备注：该模式会在全局范围筛选“明确 @ 当前用户”的群聊消息，减少噪音。

@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+.env
+*.json
+memory/
+.aime/
+projects/
+
+# Keep every file under user_skills/ tracked for qi-skills sync
+!user_skills/
+!user_skills/**

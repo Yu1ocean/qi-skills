@@ -1,9 +1,41 @@
 ---
 name: periodic-report-generator
-description: 赛博周期性汇报生成器。专门处理“每日 100 字工作日报”与“结构化周报”的自动化生成、结构化组装，并严格调用 feishu-doc-writing-guide 技能的安全插入 API 双轨归档到台账；重要复盘文档默认前置内嵌灵感故事与视觉卡片。
+description: 生成周期性日报或周报并整理成结构化汇报文档。适用于每日工作日报、周报复盘、固定节奏汇报与自动归档场景。
+version: 6.2
 ---
 
-# 赛博周期性汇报生成器 (periodic-report-generator) V5
+# 赛博周期性汇报生成器 (periodic-report-generator) V6.2
+
+## Common Rationalizations（常见借口）
+
+以下想法出现时，必须立刻回到本 SOP：
+
+- “这次只是周报，先不写绩效素材池，后面绩效季再补。”
+- “素材摘要可以凭印象写，来源报告链接以后再补。”
+- “表格只有四列，直接裸调 lark 写进去也没事。”
+- “RAW 回捞慢，看到写入成功就算完成。”
+- “GMV、实验、决策类型差不多，可以混成一个总结字段。”
+
+## Red Flags（危险信号）
+
+出现任意一条，必须熔断或修正后再继续：
+
+- `--write-perf-pool` 已开启，但素材项缺少来源报告链接。
+- 写入 `Perf_Material_Pool` 前没有读取并核对 `[日期, 事项类型, 内容摘要, 来源报告链接]` 表头。
+- 事项类型不属于 `GMV` / `实验` / `决策`。
+- 使用裸 lark 写入绩效素材池，而不是调用 `feishu-doc-writing-guide` 包装器。
+- 宣称写入完成，但没有输出 RAW 回捞行号。
+
+## Verification（强制验收清单）
+
+当宣称周报与绩效素材池同步完成时，必须同时满足：
+
+1. 周报文档已按元数据标头、文档生动化标准和双轨归档要求生成或归档。
+2. 仅当 `--write-perf-pool` 显式开启时写入绩效素材池；未开启时保持只生成周报。
+3. 绩效素材池写入前已完成 Schema 合同校验，四列字段顺序完全一致。
+4. 每条素材均包含日期、事项类型、内容摘要和来源报告链接，且事项类型在允许枚举内。
+5. 写入动作通过 `feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py` 完成。
+6. 写入后等待 ≥2 秒并 RAW 回捞，输出新写入行号；不一致立即熔断。
 
 本 Skill 专门用于自动化生成数据驱动的极简工作日报与高度结构化的周报，并确保所有记录安全归档至飞书台账。
 
@@ -19,8 +51,12 @@ description: 赛博周期性汇报生成器。专门处理“每日 100 字工�
 - **内容要求**：
   - 字数：约 100 字。
   - 风格：**极简、数据驱动。减少形容词，直接使用数字。**
-  - 核心：量化总结关键进展、Bug 修复数或技术指标。
-  - 遗留任务提醒：今天没做完的任务，提醒我是否要继续。
+  - **任务状态汇总表**（强制）：必须包含一个表格，展示任务库（token: `Yl6lwic1EiF2d3kHnzccZinsnLV`）中任务的统计数据：开启 x 个、完成 y 个、暂停 z 个。
+  - **前置数据拉取（强制）**：晚 6 点日报生成前，必须先从新任务库 Wiki `https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs` 下载最新台账快照，读取 `任务库` 工作表并基于 `完成情况` 列统计开启/完成/暂停数，再回填日报内容中的对应字段或占位符。
+  - **核心进展**：量化总结关键进展、Bug 修复数或技术指标。
+  - **对工作的建议**（强制）：专门提供一部分关于工作改进或优化的建议模块。
+  - **遗留任务提醒**：今天没做完的任务，提醒我是否要继续。
+  - **上下文归属**：任务统一归属于“晚6点归档质检与日报生成”。
 - **归档流程（零信任安全插入，强制 Schema 合同 + 写后即读）**：
   - 目标台账：`https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh`
   - 目标工作表：`Daily_Logs`
@@ -29,7 +65,7 @@ description: 赛博周期性汇报生成器。专门处理“每日 100 字工�
   - **编号列主键生成（必须）**：当表头包含【编号】列时，自动生成主键：`DL-YYYYMMDD`（如当日已存在则追加递增后缀：`DL-YYYYMMDD-02`）。
   - **插入内容（严格三列）**：`[[编号, 日期, 日报内容]]`（日期格式：`YYYY-MM-DD`）。
   - **写后即读 RAW 原子锁（必须）**：写入后等待 ≥2 秒，再次通过 MCP 下载台账，读回刚写入行的原始数组并逐字段核对；不一致立即熔断并落 DLQ。
-  - **推荐一键脚本**：直接运行本 Skill 自带的 `scripts/daily_logs_zero_trust_insert.py`（脚本内部会完成：MCP Schema 回捞 → 主键生成 → 安全插入 → 写后即读校验）。
+  - **推荐一键脚本**：直接运行本 Skill 自带的 `scripts/daily_logs_zero_trust_insert.py`（脚本内部会完成：任务库统计预拉取 → 占位符/字段回填 → MCP Schema 回捞 → 主键生成 → 安全插入 → 写后即读校验）。
   - **执行示例（必须 include_secrets=true）**：
 
     ```bash
@@ -62,6 +98,23 @@ description: 赛博周期性汇报生成器。专门处理“每日 100 字工�
   - 必须遵守 `feishu-doc-writing-guide` 的“标题去重”与“元数据标头”规范。
   - 在正文模块写入前，先完成上述“文档生动化标准”的头部嵌入。
   - 双轨归档：创建文档后，将其链接以 `HYPERLINK` 形式插入台账的 `Weekly_Reports`（或 `图书馆`）工作表。
+- **绩效素材池同步（可选）**：
+  - 触发 flag：周报生成链路收到 `--write-perf-pool` 时启用；未传该 flag 时，不写入绩效素材池，保持原周报生成行为不变。
+  - 目标素材区：`https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh?sheet=3Mn6co`，工作表 `Perf_Material_Pool`。
+  - 固定 Schema：`[日期, 事项类型, 内容摘要, 来源报告链接]`；事项类型仅允许 `GMV` / `实验` / `决策`。
+  - 素材抽取口径：只写入每周高亮结论，包括 GMV 增量、实验结论、关键决策；流水账动作、无来源链接的口头判断、未验证数字不得写入。
+  - 写入工具：必须通过 `feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py` 包装器写入，禁止裸调 lark 写入。
+  - RAW 原子锁：写入后等待 ≥2 秒，通过 `lark-sheets` 直读 `Perf_Material_Pool`，按 `[日期, 事项类型, 内容摘要, 来源报告链接]` 四元组定位新行并输出行号；未命中或字段不一致立即熔断。
+  - 推荐脚本：`scripts/weekly_perf_pool_insert.py`。
+
+    ```bash
+    cd user_skills/periodic-report-generator
+    python3 scripts/weekly_perf_pool_insert.py \
+      --write-perf-pool \
+      --date "YYYY-MM-DD" \
+      --source-report-link "https://bytedance.larkoffice.com/docx/xxx" \
+      --items-json '[{"type":"GMV","summary":"本周 GMV 增量结论……","source_report_link":"https://bytedance.larkoffice.com/docx/xxx"}]'
+    ```
 
 ## 资源与约束
 
@@ -70,6 +123,7 @@ description: 赛博周期性汇报生成器。专门处理“每日 100 字工�
 - **安全插入**：调用 `feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py` 时必须设置 `include_secrets=true`。
 - **元数据**：所有生成的周报文档必须在最顶端包含元数据标头。
 - **生动化依赖**：涉及复盘/修复/架构演进类周报时，必须调用 `cyber-inspiration-generator` 先产出头部故事与视觉卡片，再进入飞书写入。
+- **绩效素材池写入（可选）**：仅当 `--write-perf-pool` 显式开启时写入 `Perf_Material_Pool`；每条素材必须带来源报告链接，写入前校验 Schema，写入后 RAW 回捞行号。
 
 ## 示例
 
@@ -85,6 +139,19 @@ description: 赛博周期性汇报生成器。专门处理“每日 100 字工�
 ...
 
 ## 更新日志 (Changelog)
+
+### V6.2 (2026-07-25)
+- **新增绩效素材池同步**：周报生成链路支持可选 `--write-perf-pool` flag，将 GMV 增量、实验结论、关键决策写入 `Perf_Material_Pool`。
+- **新增固定素材 Schema**：素材池字段为 `[日期, 事项类型, 内容摘要, 来源报告链接]`，事项类型限定为 `GMV` / `实验` / `决策`。
+- **新增 RAW 回捞脚本**：提供 `scripts/weekly_perf_pool_insert.py`，通过 `feishu-doc-writing-guide` 包装器写入，并回读行号供 `performance-review-writer` 后续召回。
+
+### V6 (2026-05-22)
+- **日报格式升级**：
+  - 新增“任务状态汇总表”强制要求，展示开启/完成/暂停任务数。
+  - 新增“对工作的建议”强制模块。
+  - 明确日报数据来源为任务库 `Yl6lwic1EiF2d3kHnzccZinsnLV`。
+  - 任务上下文归属于“晚6点归档质检与日报生成”。
+- **能力配套**：联动 `task-flow-engine` 升级后的状态统计输出能力。
 
 ### V5 (2026-05-07)
 - **新增长期标准**：重要的复盘报告、故障修复报告、架构演进报告，生成飞书文档前必须前置嵌入由 `cyber-inspiration-generator` 产出的灵感故事与视觉卡片。

@@ -1,0 +1,19 @@
+{
+  "type": "Daily_Logs_SchemaMismatch",
+  "timestamp": "2026-05-15T18:08:19.917986",
+  "sheet_url": "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+  "sheet_name": "Daily_Logs",
+  "expected_headers_prefix": [
+    "编号",
+    "【日期】",
+    "【日报内容】"
+  ],
+  "actual_headers": [
+    "编号"
+  ],
+  "payload": {
+    "date": "2026-05-15",
+    "content": "1.跑通每日记忆同步闭环。2.完成Task Flow与Heartbeat增量写入演练。3.修复QA Patrol OOM异常，完成路由/长任务静默巡检。4.Aime Dreaming基建就绪。5.拦截“插入空行”指令，按约定以Append模式落盘。"
+  },
+  "note": "⚠️[数据断链_待自愈] Schema 不匹配，已熔断写入。"
+}

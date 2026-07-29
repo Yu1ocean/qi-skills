@@ -1,0 +1,28 @@
+✅ 环境变量 IRIS_USER_CLOUD_JWT 已找到。
+⏳ 正在使用 JWT token 登录 bytedcli...
+(node:1715852) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ ByteCloud JWT token saved for site cn. Subsequent ByteCloud requests to this site will use this token when valid.
+✅ bytedcli 登录成功。
+⏳ 正在校验用户信息...
+(node:1715870) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+User Info
+ Field           Value                                                                              
+ Username        yuqinan                                                                            
+ Name            于奇楠                                                                             
+ Email           yuqinan@bytedance.com                                                              
+ Employee ID                                                                                        
+ Department      Global E-Commerce-Global Selling POP-Category Management-Seller Content Operations 
+ Work Country    中国大陆                                                                           
+ Work City       上海                                                                               
+ Employee Type                                                                                      
+ Active          false                                                                              
+ Emails          yuqinan@bytedance.com                                                              
+✅ 用户信息校验成功。
+
+**【新增群聊任务】** 【Join training on LIVE + Auction Strategies】
+🎯 群聊：未知群聊
+**【新增群聊任务】** 【reach out for the ads credit incentive for your newly onboarded sellers】
+🎯 群聊：未知群聊

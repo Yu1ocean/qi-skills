@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-06-02T02:24:15.886362+00:00",
+  "pipeline": "qa_patrol_daily_pipeline",
+  "mode": "business_dispatch",
+  "weekday": 1,
+  "business_dispatch_enabled": true,
+  "business_dispatch_disabled": false,
+  "skipped_steps": [],
+  "chat_registry_sync": {
+    "ok": true,
+    "output": null,
+    "source_spreadsheet": "https://bytedance.larkoffice.com/sheets/FvkIslPSgh4XGqtcUqychqU7nzb"
+  },
+  "zombie_sweeper": {
+    "ok": true,
+    "scan_root": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.runtime/checkpoints",
+    "stale_after_seconds": 7200,
+    "detected_count": 0,
+    "findings": []
+  },
+  "business_pipeline": {
+    "enabled": true,
+    "steps": [
+      {
+        "step": "run_task_patrol_save",
+        "rc": 0,
+        "output": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/alerts_2026-06-02.json"
+      },
+      {
+        "step": "task_patrol_notify",
+        "rc": 0,
+        "log_file": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/notification_logs/notify_2026-06-02.jsonl"
+      },
+      {
+        "step": "upload_notify_logs_to_sheet",
+        "rc": 0,
+        "spreadsheet": "TnNYsLq9phIJwutJGwBl730ygjd"
+      }
+    ]
+  },
+  "notes": [
+    "脚本已硬编码：仅周二(1)/周四(3)允许业务催办，其余日期强制降级为 safety_only。",
+    "周二/周四会继续执行任务巡检、催办分发与通知日志回写。"
+  ]
+}

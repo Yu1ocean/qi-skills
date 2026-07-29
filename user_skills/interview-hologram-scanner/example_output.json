@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "skill_name": "interview-hologram-scanner",
+    "version": "1.3",
+    "analysis_language": "zh-CN"
+  },
+  "input_alignment": {
+    "transcript_source": "https://bytedance.larkoffice.com/minutes/mock_interview_token",
+    "job_family": "BD",
+    "north_star_metric": "可售商家数",
+    "role_jd": "UK POP 运营经理，负责跨境供给增长与商家经营策略",
+    "confidence_note": "JD 与北极星已提供，结论置信度中高；但当前仅基于单轮面试材料，仍需结合背调与 case 追问。"
+  },
+  "speaker_separation": [
+    {
+      "timestamp": "00:01:12",
+      "speaker": "interviewer",
+      "snippet": "你能讲一个你从 0 到 1 做增长项目的案例吗？",
+      "confidence": "high"
+    },
+    {
+      "timestamp": "00:01:24",
+      "speaker": "candidate",
+      "snippet": "我接手时月活跃商家只有 320 个，三个月后做到 510 个，主要是重做了招商分层和扶持节奏。",
+      "confidence": "high"
+    },
+    {
+      "timestamp": "00:06:48",
+      "speaker": "candidate",
+      "snippet": "我把 1200 个商家按动销和履约稳定性分成四层，先集中资源把最有机会的 180 个商家做起来。",
+      "confidence": "high"
+    }
+  ],
+  "star_evidence": [
+    {
+      "timestamp": "00:01:24",
+      "theme": "商家增长",
+      "situation": "接手时月活跃商家仅 320 个，增长停滞。",
+      "task": "三个月内提升活跃商家规模与质量。",
+      "action": "重做招商分层和扶持节奏，优先聚焦高潜商家。",
+      "result": "月活跃商家提升至 510 个。",
+      "numbers_mentioned": ["320", "510", "三个月"],
+      "evidence_strength": "strong"
+    },
+    {
+      "timestamp": "00:06:48",
+      "theme": "资源聚焦",
+      "situation": "商家池大、资源有限。",
+      "task": "提升资源使用效率。",
+      "action": "将 1200 个商家按动销和履约稳定性分层，优先打 180 个高潜商家。",
+      "result": "资源聚焦逻辑清晰，但结果量化不足。",
+      "numbers_mentioned": ["1200", "180"],
+      "evidence_strength": "medium"
+    }
+  ],
+  "zero_trust_checks": {
+    "logic_blindspots": [
+      "候选人强调结果较多，但对失败尝试与复盘机制展开不足。",
+      "关于个人贡献与团队协作边界，仍需追问。"
+    ],
+    "baseline_drift": [
+      "候选人更擅长商家增长与分层运营，和岗位北极星“可售商家数”基本对齐。",
+      "但对 UK 市场的本地化复杂度回答偏少，存在区域口径漂移风险。"
+    ],
+    "evidence_gaps": [
+      "缺少对低资源情境下跨团队博弈的完整案例。",
+      "缺少对失败项目或纠偏能力的直接证据。"
+    ],
+    "follow_up_questions": [
+      "请讲一个你推进失败后复盘并修正策略的案例。",
+      "如果 UK 市场商家供给不足，但预算和人力都不增加，你会怎么拆第一季度动作？"
+    ]
+  },
+  "radar": {
+    "dimensions": [
+      {"name": "业务理解", "score": 4.2, "reason": "能围绕商家分层与增长目标组织案例。"},
+      {"name": "结构化拆解", "score": 4.4, "reason": "案例拆解较清楚，能说清分层与资源聚焦逻辑。"},
+      {"name": "数据敏感度", "score": 4.0, "reason": "能给出核心数字，但验证链还不够完整。"},
+      {"name": "推动力", "score": 4.1, "reason": "呈现出较强主动推进意识。"},
+      {"name": "协同影响力", "score": 3.4, "reason": "协同细节有提及，但冲突处理证据偏少。"},
+      {"name": "学习迭代力", "score": 3.2, "reason": "复盘与纠偏案例不足。"}
+    ],
+    "summary": "候选人在增长型运营和结构化拆题上表现较强，但复盘深度与跨团队复杂协同证据仍需补。"
+  },
+  "swot": {
+    "strengths": [
+      "对增长问题有较强拆解能力",
+      "能在资源有限情况下做优先级聚焦",
+      "表达相对结构化"
+    ],
+    "weaknesses": [
+      "失败复盘证据不足",
+      "区域本地化经验展开不足"
+    ],
+    "opportunities": [
+      "若补足 UK/EU 市场复杂案例，适合承担增长型岗位",
+      "可在商家分层、供给诊断方向快速形成产出"
+    ],
+    "threats": [
+      "若岗位更强调跨团队政治复杂度，当前证据可能不够",
+      "若只基于单轮面试就下判断，存在误判风险"
+    ]
+  },
+  "day_30_60_90": {
+    "day_30": [
+      "快速熟悉 UK POP 商家供给现状与北极星拆解方式",
+      "完成商家分层框架与问题地图"
+    ],
+    "day_60": [
+      "落地一轮高潜商家扶持试点",
+      "与招商、治理、产品建立周度协同节奏"
+    ],
+    "day_90": [
+      "形成可复制的商家增长打法",
+      "输出首版市场经营复盘并验证北极星改善"
+    ]
+  },
+  "final_conclusion": {
+    "business_ability": "强推荐",
+    "business_reason": "候选人在增长拆题、商家分层和资源聚焦方面表现突出，且案例与岗位北极星“可售商家数”较为贴合。主要保留意见在于失败复盘与复杂协同案例仍不足。",
+    "byte_style": {
+      "dimension_scores": [
+        {"dimension": "始终创业", "score": 4.5, "evidence_note": "00:01:24 提到主动重做招商分层与扶持节奏，体现较强主人翁意识。"},
+        {"dimension": "多元兼容", "score": 3.2, "evidence_note": "有协同意识，但跨团队冲突化解案例不足。"},
+        {"dimension": "坦诚清晰", "score": 4.2, "evidence_note": "回答结构较清楚，能给出数字和逻辑链。"},
+        {"dimension": "求真务实", "score": 4.0, "evidence_note": "能给出 320→510、1200→180 等量化信息，但验证方法细节不足。"},
+        {"dimension": "敢为极致", "score": 3.8, "evidence_note": "能看出追求优化，但极致打磨案例不够硬。"},
+        {"dimension": "共同成长", "score": 3.0, "evidence_note": "带人和方法沉淀的证据不足。"}
+      ],
+      "total_score": 22.7,
+      "summary": "整体 ByteStyle 表现中上，优势集中在主人翁意识、表达清晰和结果导向；低分项主要是共同成长与复杂协同证据不足。"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "📌 任务巡检提醒"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-06-02"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "markdown",
+          "content": "**📊 巡检统计**\n🔴 **已超期** 13 ｜ 🟡 **缺失 DDL** 9 ｜ 🟣 **格式异常** 1"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "markdown",
+          "content": "**📌 重点关注**\n<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at> <at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at> <at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "markdown",
+          "content": "**🖼️ 异常总览表**\n负责人 × 异常分类（已超期 / 临近到期 / 缺失 DDL / 格式异常）"
+        },
+        {
+          "tag": "markdown",
+          "content": "_异常总览表图片已在本地生成；真实发送时会嵌入卡片正文。_"
+        },
+        {
+          "tag": "button",
+          "type": "primary",
+          "text": {
+            "tag": "plain_text",
+            "content": "前往任务工作站处理"
+          },
+          "behaviors": [
+            {
+              "type": "open_url",
+              "default_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

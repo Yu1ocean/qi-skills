@@ -9,8 +9,10 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
+from urllib.parse import parse_qs, urlparse
 
 from scripts.chat_task_extractor import (
     TaskExtractionError,
@@ -46,12 +48,7 @@ def _run_cmd(cmd: List[str], timeout: int = 60) -> str:
 
 
 def _parse_json_from_stdout(text: str) -> Any:
-    """Parse JSON from tool stdout.
-
-    Many scripts print logs mixed with a final JSON blob.
-    This parser tries the whole stdout first, then last ~20 non-empty lines.
-    """
-
+    """Parse JSON from tool stdout."""
     text = text.strip()
     if not text:
         raise FetchError("empty stdout")
@@ -61,26 +58,27 @@ def _parse_json_from_stdout(text: str) -> Any:
     except Exception:
         pass
 
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    for ln in reversed(lines[-20:]):
-        # Try pure JSON
+    import json
+    decoder = json.JSONDecoder()
+    starts = [m.start() for m in re.finditer(r'\{|\[', text)]
+    candidates = []
+    for start in starts:
         try:
-            return json.loads(ln)
-        except Exception:
-            pass
-
-    # Try searching for a JSON block anywhere in the text if line-by-line fails
-    # This handles cases where JSON is embedded in a wrapper string
-    blocks = re.findall(r"(\[[\s\S]*?\]|\{[\s\S]*?\})", text)
-    for b in reversed(blocks):
-        try:
-            # Basic heuristic: must contain at least one key-value pair or list item
-            if len(b) > 2:
-                return json.loads(b)
+            obj, _ = decoder.raw_decode(text[start:])
+            candidates.append(obj)
         except Exception:
             continue
 
-    raise FetchError(f"stdout is not valid json:\n{text[-2000:]}")
+    if not candidates:
+        raise FetchError(f"stdout is not valid json:\n{text[-2000:]}")
+
+    # Prioritize dicts with known keys (messages, data, items)
+    for obj in reversed(candidates):
+        if isinstance(obj, dict) and any(k in obj for k in ("messages", "data", "items")):
+            return obj
+
+    # Fallback to the last successfully parsed object
+    return candidates[-1]
 
 
 def _try_bytedcli_auth(verbose: bool, dlq_path: Path) -> bool:
@@ -150,6 +148,42 @@ def _guess_chat_name(msg: Dict[str, Any]) -> str:
     return ""
 
 
+def _load_chat_registry() -> Dict[str, str]:
+    """Load verified chat_id -> chat name mapping from workspace CHAT_REGISTRY.json."""
+    registry_path = _workspace_root() / "CHAT_REGISTRY.json"
+    if not registry_path.exists():
+        return {}
+
+    try:
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+    chats = data.get("chats") if isinstance(data, dict) else None
+    if not isinstance(chats, dict):
+        return {}
+
+    mapping: Dict[str, str] = {}
+    for item in chats.values():
+        if not isinstance(item, dict):
+            continue
+        chat_id = item.get("chat_id")
+        name = item.get("name")
+        if isinstance(chat_id, str) and chat_id.startswith("oc_") and isinstance(name, str) and name.strip():
+            mapping[chat_id] = name.strip()
+    return mapping
+
+
+def _verified_chat_name(chat_id: str, chat_registry: Dict[str, str]) -> str:
+    """Return only registry-verified chat names; never trust natural-language names from messages/config."""
+    if isinstance(chat_id, str) and chat_id.startswith("oc_"):
+        name = chat_registry.get(chat_id)
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+        return f"未知群聊 (chat_id: {chat_id})"
+    return "未知群聊"
+
+
 def _guess_chat_id(msg: Dict[str, Any]) -> str:
     for k in ["chat_id", "open_chat_id", "openChatId"]:
         v = msg.get(k)
@@ -163,6 +197,26 @@ def _guess_chat_id(msg: Dict[str, Any]) -> str:
             if isinstance(v, str) and v.startswith("oc_"):
                 return v
 
+    return ""
+
+
+def _extract_chat_id_from_applink(link: Any) -> str:
+    normalized = _normalize_http_link(link)
+    if not normalized:
+        return ""
+
+    try:
+        parsed = urlparse(normalized)
+        params = parse_qs(parsed.query)
+    except Exception:
+        return ""
+
+    for key in ("open_chat_id", "openchatid"):
+        values = params.get(key) or []
+        if values:
+            candidate = str(values[0] or "").strip()
+            if candidate.startswith("oc_"):
+                return candidate
     return ""
 
 
@@ -199,20 +253,20 @@ def _guess_chat_link(msg: Dict[str, Any]) -> str:
 
 
 def _enrich_chat_message_context(
-    msg: Dict[str, Any], *, default_chat_name: str = "", default_chat_id: str = ""
+    msg: Dict[str, Any], *, default_chat_name: str = "", default_chat_id: str = "", chat_registry: Dict[str, str] | None = None
 ) -> Dict[str, Any]:
     out = dict(msg)
 
     chat_id = default_chat_id or _guess_chat_id(out)
-    chat_name = _guess_chat_name(out) or (default_chat_name.strip() if isinstance(default_chat_name, str) else "")
+    registry = chat_registry if isinstance(chat_registry, dict) else {}
+    chat_name = _verified_chat_name(chat_id, registry)
     chat_link = _guess_chat_link(out) or _build_feishu_chat_link(chat_id)
     message_link = _guess_message_link(out)
     jump_link = message_link or chat_link
 
     if chat_id:
         out["chat_id"] = chat_id
-    if chat_name:
-        out["chat_name"] = chat_name
+    out["chat_name"] = chat_name
     if chat_link:
         out["chat_link"] = chat_link
     if message_link:
@@ -221,6 +275,44 @@ def _enrich_chat_message_context(
         out["jump_link"] = jump_link
 
     return out
+
+
+def _looks_like_system_broadcast(msg: Dict[str, Any]) -> bool:
+    sender = _guess_sender_name(msg).strip().lower()
+    sender_markers = {
+        "system",
+        "system message",
+        "system notification",
+        "系统",
+        "系统消息",
+        "系统通知",
+        "系统广播",
+        "飞书提醒",
+        "lark notification",
+    }
+    if sender in sender_markers:
+        return True
+
+    for key in ("message_type", "msg_type", "type", "sender_type", "scene"):
+        value = msg.get(key)
+        if not isinstance(value, str):
+            continue
+        normalized = value.strip().lower()
+        if normalized in {"system", "system_message", "system_notice", "broadcast", "notification"}:
+            return True
+
+    return False
+
+
+def _contains_programmatic_broadcast_mention(text: str) -> bool:
+    if not isinstance(text, str) or not text:
+        return False
+    return bool(re.search(r"(?:@_all|@all|@所有人|<at\s+id=all></at>)", text, flags=re.IGNORECASE))
+
+
+def _should_filter_zero_trust_message(msg: Dict[str, Any]) -> bool:
+    text = _message_text_full(msg)
+    return _looks_like_system_broadcast(msg) or _contains_programmatic_broadcast_mention(text)
 
 
 def _first_source_message(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -232,7 +324,65 @@ def _first_source_message(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {}
 
 
-def _search_chat_id_by_name(chat_name: str) -> str:
+def _pick_message_lookup_entry(message_id: str, payload: Any) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+
+    messages = payload.get("messages")
+    if not isinstance(messages, list):
+        return {}
+
+    fallback: Dict[str, Any] = {}
+    for item in messages:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("message_id") or "") == message_id:
+            return item
+        if not fallback and (
+            _guess_chat_id(item)
+            or _extract_chat_id_from_applink(item.get("message_app_link"))
+            or _extract_chat_id_from_applink(item.get("message_link"))
+        ):
+            fallback = item
+    return fallback
+
+
+def _lookup_message_meta_by_id(message_id: str) -> Dict[str, str]:
+    cmd = [
+        "lark-cli",
+        "im",
+        "+messages-mget",
+        "--message-ids",
+        message_id,
+        "--format",
+        "json",
+        "--as",
+        "user",
+    ]
+    out = _run_cmd(cmd, timeout=90)
+    data = _parse_json_from_stdout(out)
+    picked = _pick_message_lookup_entry(message_id, data)
+    if not picked:
+        raise FetchError(f"message_id 未找到详情：{message_id}")
+
+    chat_id = (
+        _guess_chat_id(picked)
+        or _extract_chat_id_from_applink(picked.get("message_app_link"))
+        or _extract_chat_id_from_applink(picked.get("message_link"))
+    )
+    if not chat_id:
+        raise FetchError(f"message_id 详情缺少 chat_id：{message_id}")
+
+    message_link = _normalize_http_link(picked.get("message_app_link")) or _normalize_http_link(picked.get("message_link"))
+    return {
+        "chat_id": chat_id,
+        "chat_link": _build_feishu_chat_link(chat_id),
+        "message_link": message_link,
+        "jump_link": message_link or _build_feishu_chat_link(chat_id),
+    }
+
+
+def _search_chat_meta_by_name(chat_name: str) -> Dict[str, str]:
     root = _workspace_root()
     script = root / "inner_skills" / "feishu-im-read" / "scripts" / "feishu_im_user_search_chats.js"
     if not script.exists():
@@ -249,18 +399,98 @@ def _search_chat_id_by_name(chat_name: str) -> str:
     if isinstance(exact, dict):
         chat_id = exact.get("chat_id")
         if isinstance(chat_id, str) and chat_id.startswith("oc_"):
-            return chat_id
+            return {"chat_id": chat_id, "name": str(exact.get("name") or chat_name).strip()}
 
     chats = data.get("chats")
     if isinstance(chats, list):
         candidates = [c for c in chats if isinstance(c, dict) and isinstance(c.get("chat_id"), str)]
         if len(candidates) == 1:
-            return str(candidates[0]["chat_id"])
+            item = candidates[0]
+            return {"chat_id": str(item["chat_id"]), "name": str(item.get("name") or chat_name).strip()}
         if len(candidates) > 1:
             names = [str(c.get("name") or "") for c in candidates[:5]]
             raise FetchError(f"chat_name 命中多个群聊，无法唯一确定：{chat_name} candidates={names}")
 
     raise FetchError(f"chat_name 未找到匹配群聊：{chat_name}")
+
+
+def _search_chat_id_by_name(chat_name: str) -> str:
+    return _search_chat_meta_by_name(chat_name)["chat_id"]
+
+
+def _recover_mention_chat_meta(
+    msg: Dict[str, Any], chat_registry: Dict[str, str], runtime_cache: Dict[str, Any], dlq_path: Path
+) -> Dict[str, str]:
+    """Recover chat_id/chat_name for global mentions when search result omits chat context."""
+
+    chat_id = _guess_chat_id(msg)
+    if chat_id:
+        return {"chat_id": chat_id, "name": _verified_chat_name(chat_id, chat_registry)}
+
+    message_id = str(msg.get("message_id") or "")
+    message_cache = runtime_cache.setdefault("mention_message_meta_cache", {})
+    if message_id and isinstance(message_cache, dict):
+        cached = message_cache.get(message_id)
+        if isinstance(cached, dict):
+            cached_id = str(cached.get("chat_id") or "")
+            if cached_id.startswith("oc_"):
+                cached_name = str(cached.get("name") or chat_registry.get(cached_id) or "").strip()
+                out = dict(cached)
+                out["chat_id"] = cached_id
+                out["name"] = cached_name or _verified_chat_name(cached_id, chat_registry)
+                return out
+
+    if message_id:
+        try:
+            meta = _lookup_message_meta_by_id(message_id)
+            recovered_id = meta["chat_id"]
+            recovered_name = _verified_chat_name(recovered_id, chat_registry)
+            out = dict(meta)
+            out["name"] = recovered_name
+            if isinstance(message_cache, dict):
+                message_cache[message_id] = out
+            return out
+        except Exception as e:
+            append_dlq(
+                dlq_path,
+                {
+                    "type": "recover_mention_chat_by_message_id",
+                    "message_id": message_id,
+                    "error": str(e),
+                },
+            )
+
+    raw_name = _guess_chat_name(msg)
+    if not raw_name:
+        return {"chat_id": "", "name": "未知群聊"}
+
+    cache = runtime_cache.setdefault("mention_chat_name_cache", {})
+    if isinstance(cache, dict):
+        cached = cache.get(raw_name)
+        if isinstance(cached, dict):
+            cached_id = cached.get("chat_id")
+            cached_name = cached.get("name")
+            if isinstance(cached_id, str) and cached_id.startswith("oc_"):
+                return {"chat_id": cached_id, "name": str(cached_name or raw_name).strip()}
+
+    try:
+        meta = _search_chat_meta_by_name(raw_name)
+        recovered_id = meta["chat_id"]
+        recovered_name = str(chat_registry.get(recovered_id) or meta.get("name") or raw_name).strip()
+        if isinstance(cache, dict):
+            cache[raw_name] = {"chat_id": recovered_id, "name": recovered_name}
+        return {"chat_id": recovered_id, "name": recovered_name}
+    except Exception as e:
+        append_dlq(
+            dlq_path,
+            {
+                "type": "recover_mention_chat",
+                "message_id": message_id,
+                "chat_name": raw_name,
+                "error": str(e),
+            },
+        )
+        return {"chat_id": "", "name": "未知群聊"}
 
 
 def _resolve_chat_id(target: Target, prev_state: Dict[str, Any], dlq_path: Path) -> str:
@@ -310,9 +540,10 @@ def fetch_feishu_chat_messages(chat_id: str, relative_time: str, page_size: int)
     data = _parse_json_from_stdout(out)
 
     if isinstance(data, dict):
-        msgs = data.get("messages") or data.get("data") or data.get("items")
-        if isinstance(msgs, list):
-            return [m for m in msgs if isinstance(m, dict)]
+        for key in ("messages", "data", "items"):
+            msgs = data.get(key)
+            if isinstance(msgs, list):
+                return [m for m in msgs if isinstance(m, dict)]
 
     raise FetchError(f"unexpected feishu messages schema: {type(data)}")
 
@@ -373,27 +604,77 @@ def _get_self_open_id(runtime_cache: Dict[str, Any], dlq_path: Path) -> str:
     return open_id
 
 
-def fetch_feishu_mentions_global(self_open_id: str, relative_time: str, page_size: int) -> List[Dict[str, Any]]:
-    root = _workspace_root()
-    script = root / "inner_skills" / "feishu-im-read" / "scripts" / "feishu_im_user_search_messages.js"
-    if not script.exists():
-        raise FetchError(f"script_not_found: {script}")
+def _relative_time_to_iso_window(relative_time: str) -> Dict[str, str]:
+    value = (relative_time or "last_6_hours").strip().lower()
+    now = datetime.now().astimezone().replace(microsecond=0)
 
-    inp = {
-        "chat_type": "group",
-        "mention_ids": [self_open_id],
-        "relative_time": relative_time,
-        "page_size": page_size,
-        "sort_rule": "create_time_asc",
+    presets = {
+        "last_30_minutes": timedelta(minutes=30),
+        "last_1_hour": timedelta(hours=1),
+        "last_3_hours": timedelta(hours=3),
+        "last_6_hours": timedelta(hours=6),
+        "last_12_hours": timedelta(hours=12),
+        "last_24_hours": timedelta(hours=24),
+        "last_2_days": timedelta(days=2),
+        "last_3_days": timedelta(days=3),
+        "last_7_days": timedelta(days=7),
+    }
+    delta = presets.get(value)
+
+    if delta is None:
+        m = re.fullmatch(r"last_(\d+)_(minute|minutes|hour|hours|day|days|week|weeks)", value)
+        if not m:
+            raise FetchError(f"unsupported relative_time: {relative_time}")
+        amount = int(m.group(1))
+        unit = m.group(2)
+        if "minute" in unit:
+            delta = timedelta(minutes=amount)
+        elif "hour" in unit:
+            delta = timedelta(hours=amount)
+        elif "day" in unit:
+            delta = timedelta(days=amount)
+        else:
+            delta = timedelta(weeks=amount)
+
+    start = now - delta
+    return {
+        "start": start.isoformat(timespec="seconds"),
+        "end": now.isoformat(timespec="seconds"),
     }
 
-    out = _run_cmd(["node", str(script), "--input", json.dumps(inp, ensure_ascii=False)], timeout=120)
+
+
+def fetch_feishu_mentions_global(relative_time: str, page_size: int) -> List[Dict[str, Any]]:
+    window = _relative_time_to_iso_window(relative_time)
+    cmd = [
+        "lark-cli",
+        "im",
+        "+messages-search",
+        "--chat-type",
+        "group",
+        "--is-at-me",
+        "--start",
+        window["start"],
+        "--end",
+        window["end"],
+        "--page-size",
+        str(page_size),
+        "--as",
+        "user",
+        "--format",
+        "json",
+    ]
+
+    out = _run_cmd(cmd, timeout=120)
     data = _parse_json_from_stdout(out)
 
     if isinstance(data, dict):
-        msgs = data.get("messages") or data.get("data") or data.get("items")
-        if isinstance(msgs, list):
-            return [m for m in msgs if isinstance(m, dict)]
+        payload = data.get("data") if isinstance(data.get("data"), dict) else data
+        if isinstance(payload, dict):
+            for key in ("messages", "items"):
+                msgs = payload.get(key)
+                if isinstance(msgs, list):
+                    return [m for m in msgs if isinstance(m, dict)]
 
     raise FetchError(f"unexpected search_messages schema: {type(data)}")
 
@@ -515,6 +796,7 @@ def main() -> int:
 
     state = load_state(state_path)
     runtime_cache = state.setdefault("runtime_cache", {})
+    chat_registry = _load_chat_registry()
     state_targets = state.setdefault("targets", {})
 
     alerts: List[str] = []
@@ -532,7 +814,7 @@ def main() -> int:
                 if t.type == "feishu_chat":
                     chat_id = _resolve_chat_id(t, prev, dlq_path)
 
-                    relative_time = str(t.raw.get("relative_time") or "last_24_hours")
+                    relative_time = str(t.raw.get("relative_time") or "last_6_hours")
                     page_size = int(t.raw.get("page_size") or 50)
 
                     msgs = fetch_feishu_chat_messages(chat_id, relative_time=relative_time, page_size=page_size)
@@ -542,6 +824,7 @@ def main() -> int:
                             m,
                             default_chat_name=default_chat_name,
                             default_chat_id=chat_id,
+                            chat_registry=chat_registry,
                         )
                         for m in msgs
                     ]
@@ -556,7 +839,7 @@ def main() -> int:
                             mid = str(m.get("message_id") or "")
                             sender = _guess_sender_name(m)
                             msg_text = _message_text_full(m)
-                            chat_name = _guess_chat_name(m) or default_chat_name
+                            chat_name = _verified_chat_name(chat_id, chat_registry)
                             chat_link = _guess_chat_link(m)
                             message_link = _guess_message_link(m)
                             jump_link = message_link or chat_link
@@ -594,7 +877,7 @@ def main() -> int:
                             )
                             for task in tasks:
                                 source0 = _first_source_message(task)
-                                chat_name = str(source0.get("chat_name") or default_chat_name)
+                                chat_name = _verified_chat_name(chat_id, chat_registry)
                                 chat_link = str(source0.get("chat_link") or _build_feishu_chat_link(chat_id))
                                 message_link = str(source0.get("message_link") or source0.get("jump_link") or "")
                                 jump_link = message_link or chat_link
@@ -639,7 +922,7 @@ def main() -> int:
                                 known_task_names=[str(tk.get("task_name") or "") for tk in tasks],
                             )
                             for su in status_updates:
-                                chat_name = str(su.get("chat_name") or default_chat_name)
+                                chat_name = _verified_chat_name(chat_id, chat_registry)
                                 chat_link = str(su.get("chat_link") or _build_feishu_chat_link(chat_id))
                                 message_link = str(su.get("message_link") or su.get("jump_link") or "")
                                 jump_link = message_link or chat_link
@@ -682,28 +965,38 @@ def main() -> int:
                     any_success = True
 
                 elif t.type == "feishu_mentions_global":
-                    relative_time = str(t.raw.get("relative_time") or "last_24_hours")
+                    relative_time = str(t.raw.get("relative_time") or "last_6_hours")
                     page_size = int(t.raw.get("page_size") or 50)
 
-                    self_open_id = _get_self_open_id(runtime_cache, dlq_path)
-                    msgs = fetch_feishu_mentions_global(self_open_id, relative_time=relative_time, page_size=page_size)
-                    msgs = [
-                        _enrich_chat_message_context(
-                            m,
-                            default_chat_name=_guess_chat_name(m) or "未知群聊",
-                            default_chat_id=_guess_chat_id(m),
+                    msgs = fetch_feishu_mentions_global(relative_time=relative_time, page_size=page_size)
+                    enriched_msgs = []
+                    for m in msgs:
+                        recovered_meta = _recover_mention_chat_meta(m, chat_registry, runtime_cache, dlq_path)
+                        merged_msg = dict(m)
+                        for k, v in recovered_meta.items():
+                            if isinstance(v, str) and v:
+                                merged_msg[k] = v
+                        recovered_chat_id = recovered_meta.get("chat_id") or _guess_chat_id(merged_msg)
+                        recovered_chat_name = recovered_meta.get("name") or ""
+                        if recovered_chat_id and recovered_chat_name:
+                            chat_registry.setdefault(recovered_chat_id, recovered_chat_name)
+                        enriched = _enrich_chat_message_context(
+                            merged_msg,
+                            default_chat_name=recovered_chat_name,
+                            chat_registry=chat_registry,
+                            default_chat_id=recovered_chat_id,
                         )
-                        for m in msgs
-                    ]
+                        enriched_msgs.append(enriched)
+                    msgs = enriched_msgs
                     new_msgs, new_frag = diff_feishu_messages(prev, msgs)
-
+                    actionable_new_msgs = [m for m in new_msgs if not _should_filter_zero_trust_message(m)]
                     is_first_run = not bool(prev.get("last_seen_message_id"))
-                    if new_msgs:
+                    if actionable_new_msgs:
                         mention_view_messages = []
                         new_ids: List[str] = []
 
-                        for m in new_msgs:
-                            chat_name = _guess_chat_name(m) or "未知群聊"
+                        for m in actionable_new_msgs:
+                            chat_name = _verified_chat_name(_guess_chat_id(m), chat_registry)
                             chat_id = _guess_chat_id(m)
                             chat_link = _guess_chat_link(m)
                             message_link = _guess_message_link(m)
@@ -744,6 +1037,8 @@ def main() -> int:
                                 "text": msg_text,
                             }
                             alert_events.append(obj)
+                            if args.verbose:
+                                print(f"[Debug] Appended mention, alert_events size: {len(alert_events)}", file=sys.stderr)
                             alerts.append(
                                 json.dumps(
                                     obj,
@@ -763,7 +1058,7 @@ def main() -> int:
                             for task in tasks:
                                 source0 = _first_source_message(task)
                                 event_chat_id = str(source0.get("chat_id") or "")
-                                event_chat_name = str(source0.get("chat_name") or "未知群聊")
+                                event_chat_name = _verified_chat_name(_guess_chat_id(source0), chat_registry)
                                 event_chat_link = str(source0.get("chat_link") or _build_feishu_chat_link(event_chat_id))
                                 event_message_link = str(source0.get("message_link") or source0.get("jump_link") or "")
                                 event_jump_link = event_message_link or event_chat_link
@@ -806,7 +1101,7 @@ def main() -> int:
                             )
                             for su in status_updates:
                                 event_chat_id = str(su.get("chat_id") or "")
-                                event_chat_name = str(su.get("chat_name") or "未知群聊")
+                                event_chat_name = _verified_chat_name(_guess_chat_id(su), chat_registry)
                                 event_chat_link = str(su.get("chat_link") or _build_feishu_chat_link(event_chat_id))
                                 event_message_link = str(su.get("message_link") or su.get("jump_link") or "")
                                 event_jump_link = event_message_link or event_chat_link

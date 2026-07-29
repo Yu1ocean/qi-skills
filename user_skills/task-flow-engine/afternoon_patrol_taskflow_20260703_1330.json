@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "today": "2026-07-03",
+    "task_patrol": {
+      "total_findings": 21,
+      "counts": {
+        "临近到期": 0,
+        "已超期": 9,
+        "缺失 DDL": 12,
+        "格式异常": 0
+      },
+      "task_counts": {
+        "开启": 18,
+        "完成": 13,
+        "暂停": 0
+      },
+      "source": {
+        "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+        "task_sheet": "KmlJhs",
+        "roster_sheet": "L5xh7h",
+        "task_rows": 34,
+        "roster_rows": 17
+      }
+    },
+    "dreaming": {
+      "cycle": 47,
+      "nodes": 38,
+      "edges": 288,
+      "dangling": 0,
+      "density": "20.48%",
+      "status": "stable",
+      "mode": "structure_hold_day_8"
+    },
+    "continuous_observation": {
+      "chat_id_p1": "ongoing_until_2026-07-05",
+      "daily_logs_duplicate": "waiting_user_confirmation_delete_tail_DL-20260702",
+      "skill_p0_reform": "trace_exists_but_no_active_async_task",
+      "debt_trend": "flat_21_findings_day_over_day"
+    }
+  },
+  "artifacts": {
+    "report_md": "projects/Aime-Dreaming/output/dreaming_20260703/afternoon_joint_patrol_20260703_1330.md",
+    "task_patrol_json": "user_skills/task-flow-engine/afternoon_patrol_taskflow_20260703_1330.json",
+    "context_md": "projects/Aime-Dreaming/CONTEXT.md",
+    "patrol_log": "projects/Aime-Dreaming/PATROL.log"
+  },
+  "decision": {
+    "health": "red",
+    "reason": "异常任务数21条，且9条已超期、12条缺失DDL，债务结构与昨日持平但整体继续老化。"
+  }
+}

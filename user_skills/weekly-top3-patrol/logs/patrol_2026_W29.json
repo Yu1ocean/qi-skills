@@ -1,0 +1,40 @@
+{
+  "week": "2026-W29",
+  "mode_a_runs": [
+    {
+      "run_id": "weekly-top3-patrol-2026-W29-20260719T160732+0800",
+      "timestamp": "2026-07-19T16:07:42.350626+08:00",
+      "pending_users": [
+        {
+          "name": "张志强",
+          "email": "zhangzhiqiang@bytedance.com"
+        },
+        {
+          "name": "杨昊 Jason",
+          "email": "yanghao.1016@bytedance.com"
+        },
+        {
+          "name": "夏春雨",
+          "email": "xiachunyu.123@bytedance.com"
+        },
+        {
+          "name": "叶佳智",
+          "email": "yejiazhi@bytedance.com"
+        },
+        {
+          "name": "宋欣蕖",
+          "email": "songxinqu@bytedance.com"
+        },
+        {
+          "name": "谢紫滢",
+          "email": "ziying.xie@bytedance.com"
+        },
+        {
+          "name": "金慧婷",
+          "email": "jinhuiting@bytedance.com"
+        }
+      ]
+    }
+  ],
+  "mode_b_bookings": []
+}

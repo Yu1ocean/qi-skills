@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "updated_at": "2026-05-11",
+  "description": "Chat Registry SSOT。所有 chat_id 必须从飞书主表同步到此文件，禁止从上下文、缓存或历史日志猜测。",
+  "default_usage": "task_patrol_broadcast",
+  "source": {
+    "spreadsheet_token": "FvkIslPSgh4XGqtcUqychqU7nzb",
+    "sheet_title": "Sheet1",
+    "synced_at": "2026-07-11T18:49:46.986907+00:00"
+  },
+  "chats": {
+    "task_patrol_broadcast": {
+      "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
+      "name": "UK/EU/JP POP BD",
+      "lookup_query": "UK/EU/JP POP BD",
+      "expected_name_keywords": [
+        "UK/EU/JP POP BD"
+      ],
+      "description": "任务 DDL 巡检/催办提醒默认群广播目标；历史 hardcode oc_b566689fc5704ba70cc0f43fc32f0cc4 已迁入此注册表。",
+      "admin_email": "yuqinan@bytedance.com",
+      "allow_group_broadcast_by_default": false
+    }
+  }
+}

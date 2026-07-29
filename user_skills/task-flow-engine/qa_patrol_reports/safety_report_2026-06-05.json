@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-06-05T00:08:18.726364+00:00",
+  "pipeline": "qa_patrol_daily_pipeline",
+  "mode": "safety_only",
+  "weekday": 4,
+  "business_dispatch_enabled": false,
+  "business_dispatch_disabled": true,
+  "skipped_steps": [
+    "run_task_patrol_save",
+    "task_patrol_notify",
+    "upload_notify_logs_to_sheet"
+  ],
+  "chat_registry_sync": {
+    "ok": true,
+    "output": null,
+    "source_spreadsheet": "https://bytedance.larkoffice.com/sheets/FvkIslPSgh4XGqtcUqychqU7nzb"
+  },
+  "zombie_sweeper": {
+    "ok": true,
+    "scan_root": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.runtime/checkpoints",
+    "stale_after_seconds": 7200,
+    "detected_count": 0,
+    "findings": []
+  },
+  "business_pipeline": {
+    "enabled": false,
+    "steps": []
+  },
+  "notes": [
+    "脚本已硬编码：仅周二(1)/周四(3)允许业务催办，其余日期强制降级为 safety_only。",
+    "周二/周四会继续执行任务巡检、催办分发与通知日志回写。"
+  ]
+}

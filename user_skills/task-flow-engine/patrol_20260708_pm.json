@@ -1,0 +1,60 @@
+{
+  "source": {
+    "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_sheet": {
+      "sheet_id": "KmlJhs",
+      "title": "任务库",
+      "range_read": "A1:G60",
+      "filter": "完成情况=进行中"
+    },
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+  },
+  "run": {
+    "run_at": "2026-07-08 13:32:00+08:00",
+    "today": "2026-07-08",
+    "mode": "silent",
+    "notes": "本文件为午后联合巡检对任务库的轻量快照，用于与图谱巡检对齐；不触发私聊/群聊分发。"
+  },
+  "summary": {
+    "in_progress_count": 18,
+    "counts": {
+      "已超期": 7,
+      "缺失 DDL": 11,
+      "DDL 格式异常": 0,
+      "疑似阻塞": 3
+    }
+  },
+  "grouped_results": {
+    "已超期": [
+      {"row": 7, "task": "UK招商专项", "owners": ["@于奇楠"], "ddl": "2026/06/11"},
+      {"row": 17, "task": "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。", "owners": ["@于奇楠"], "ddl": "2026/06/11"},
+      {"row": 18, "task": "服务商/商家关于激励侧调研", "owners": ["@赵月晨"], "ddl": "2026/05/09"},
+      {"row": 21, "task": "【招商活动】设定目标并进行5分钟复盘", "owners": ["@江家徵", "@夏春雨"], "ddl": "2026/05/07"},
+      {"row": 24, "task": "SKM&HIPO新商家免佣周期的延长政策", "owners": ["@于奇楠"], "ddl": "2026/06/10"},
+      {"row": 27, "task": "BCCU周度分析", "owners": ["@李泽"], "ddl": "2026/05/20"},
+      {"row": 35, "task": "【调整有效Leads每周500产出SOP资源本周对齐】", "owners": ["负责人：江家徵"], "ddl": "2026/06/28"}
+    ],
+    "缺失 DDL": [
+      {"row": 19, "task": "US头商沟通入驻", "owners": ["@赵月晨"], "ddl": ""},
+      {"row": 20, "task": "CNOB协同", "owners": ["@赵月晨"], "ddl": ""},
+      {"row": 22, "task": "大商认证/打标流程提效", "owners": ["@夏春雨"], "ddl": ""},
+      {"row": 26, "task": "chinamaxxing可以研究下", "owners": ["@李京达"], "ddl": ""},
+      {"row": 28, "task": "623大会协助", "owners": ["@宋欣蕖", "@夏春雨"], "ddl": ""},
+      {"row": 29, "task": "【建立靶向商家入驻追踪表并持续优化效率】", "owners": ["@宋欣蕖"], "ddl": ""},
+      {"row": 30, "task": "BD考核方案确定并GTM", "owners": ["@王皓田"], "ddl": ""},
+      {"row": 31, "task": "Leads管理系统选型完成", "owners": ["@王皓田"], "ddl": ""},
+      {"row": 32, "task": "BD/POP weekly数据落为看板，每周二更新", "owners": ["@王皓田"], "ddl": ""},
+      {"row": 33, "task": "【制定ECCU、BCCU商家指引】", "owners": ["yejiazhi@bytedance.com"], "ddl": ""},
+      {"row": 34, "task": "【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】", "owners": ["wanghaotian.666"], "ddl": ""}
+    ],
+    "疑似阻塞": [
+      {"row": 19, "task": "US头商沟通入驻", "owners": ["@赵月晨"], "ddl": "", "progress": ""},
+      {"row": 28, "task": "623大会协助", "owners": ["@宋欣蕖", "@夏春雨"], "ddl": "", "progress": ""},
+      {"row": 29, "task": "【建立靶向商家入驻追踪表并持续优化效率】", "owners": ["@宋欣蕖"], "ddl": "", "progress": ""}
+    ]
+  },
+  "artifact": {
+    "report_path": "projects/Aime-Dreaming/output/dreaming_20260708/afternoon_joint_patrol_20260708_1332.md",
+    "patrol_log_path": "projects/Aime-Dreaming/PATROL.log"
+  }
+}

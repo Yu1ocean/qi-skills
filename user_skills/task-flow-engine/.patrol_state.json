@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "updated_at": "2026-07-28",
+  "tasks": {
+    "r10:BD重点专项（5月）": {
+      "last_seen": "2026-05-08",
+      "issue_type": "format_error",
+      "consecutive_days": 6
+    },
+    "r13:UK招商专项": {
+      "last_seen": "2026-05-06",
+      "issue_type": "format_error",
+      "consecutive_days": 4
+    },
+    "r14:合作伙伴网络 & 市场影响力": {
+      "last_seen": "2026-05-03",
+      "issue_type": "format_error",
+      "consecutive_days": 1
+    },
+    "r15:新开国商家储备": {
+      "last_seen": "2026-05-03",
+      "issue_type": "format_error",
+      "consecutive_days": 1
+    },
+    "r17:其他(关店挽回GMV)": {
+      "last_seen": "2026-05-03",
+      "issue_type": "format_error",
+      "consecutive_days": 1
+    },
+    "r18:针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 2
+    },
+    "r19:US头商沟通入驻": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r19:飞书词典跨公司同步，将TTS专有名词同步给商家飞书。": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 2
+    },
+    "r20:CNOB协同": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r21:US头商沟通入驻": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 1
+    },
+    "r22:CNOB协同": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 1
+    },
+    "r22:大商认证/打标流程提效": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r23:6.23新市场上线商家大会": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r24:大商认证/打标流程提效": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 1
+    },
+    "r25:6.23新市场上线商家大会": {
+      "last_seen": "2026-05-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 1
+    },
+    "r26:chinamaxxing可以研究下": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r28:623大会协助": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r29:【建立靶向商家入驻追踪表并持续优化效率】": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r29:【建立靶向商家追踪表并持续优化效率 2026-06-12】": {
+      "last_seen": "2026-06-05",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 1
+    },
+    "r29:【建立靶向商家追踪表并持续优化效率】": {
+      "last_seen": "2026-06-08",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r30:BD考核方案确定并GTM": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r31:Leads管理系统选型完成": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r32:BD/POP weekly数据落为看板，每周二更新": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r33:【制定ECCU、BCCU商家指引】": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r34:【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】": {
+      "last_seen": "2026-07-28",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 3
+    },
+    "r3:Leads管理表": {
+      "last_seen": "2026-06-09",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 10
+    },
+    "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】": {
+      "last_seen": "2026-07-28",
+      "issue_type": "format_error",
+      "consecutive_days": 2
+    },
+    "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】": {
+      "last_seen": "2026-07-28",
+      "issue_type": "format_error",
+      "consecutive_days": 2
+    },
+    "r4:商家工具包": {
+      "last_seen": "2026-06-23",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 24
+    },
+    "r5:【可用Leads】梳理": {
+      "last_seen": "2026-06-09",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 10
+    },
+    "r6:新增HIPO商家类型": {
+      "last_seen": "2026-06-09",
+      "issue_type": "missing_ddl",
+      "consecutive_days": 10
+    },
+    "r7:商家入驻卡点收集": {
+      "last_seen": "2026-05-08",
+      "issue_type": "format_error",
+      "consecutive_days": 6
+    },
+    "r8:UK招商专项": {
+      "last_seen": "2026-05-08",
+      "issue_type": "format_error",
+      "consecutive_days": 2
+    },
+    "r8:US头商入UK": {
+      "last_seen": "2026-05-06",
+      "issue_type": "format_error",
+      "consecutive_days": 4
+    },
+    "r8:市场建设": {
+      "last_seen": "2026-06-09",
+      "issue_type": "format_error",
+      "consecutive_days": 10
+    },
+    "r9:市场建设": {
+      "last_seen": "2026-05-08",
+      "issue_type": "format_error",
+      "consecutive_days": 6
+    }
+  }
+}

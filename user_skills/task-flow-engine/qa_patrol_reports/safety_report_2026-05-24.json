@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-05-24T00:46:47.871555+00:00",
+  "pipeline": "qa_patrol_daily_pipeline",
+  "mode": "safety_only",
+  "business_dispatch_disabled": true,
+  "skipped_steps": [
+    "run_task_patrol_save",
+    "task_patrol_notify",
+    "upload_notify_logs_to_sheet"
+  ],
+  "chat_registry_sync": {
+    "ok": true,
+    "output": null,
+    "source_spreadsheet": "https://bytedance.larkoffice.com/sheets/FvkIslPSgh4XGqtcUqychqU7nzb"
+  },
+  "zombie_sweeper": {
+    "ok": true,
+    "detected_count": 1,
+    "findings": []
+  },
+  "notes": [
+    "TaskFlow 任务库读取/催办分发逻辑已从每日 8 点 QA Patrol 移除。",
+    "保留 CLI 参数仅为兼容既有 cron 配置，不代表仍会执行业务层催办。"
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "deprecated": true,
+  "message": "Chat Registry SSOT 已迁移到工作区根目录 CHAT_REGISTRY.json；此文件不再保存任何 chat_id 数据。"
+}

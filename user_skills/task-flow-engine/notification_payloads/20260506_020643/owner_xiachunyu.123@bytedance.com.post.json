@@ -1,0 +1,13 @@
+{
+  "zh_cn": {
+    "title": "",
+    "content": [
+      [
+        {
+          "tag": "md",
+          "text": "📌 **任务巡检提醒**（2026-05-06，共 4 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `靶向100个商家` (超期6天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【可用Leads】梳理` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新增HIPO商家类型` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `市场建设` (DDL无法解析（unrecognized）)"
+        }
+      ]
+    ]
+  }
+}

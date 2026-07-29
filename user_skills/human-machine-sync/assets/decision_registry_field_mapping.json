@@ -1,0 +1,14 @@
+{
+  "id": "ID",
+  "title": "标题",
+  "type": "类型",
+  "scope": "作用域",
+  "status": "状态",
+  "context": "决策背景",
+  "chosen": "最终选择",
+  "rationale": "选择理由",
+  "tradeoffs": "已知代价",
+  "upgrade_path": "升格目标",
+  "created_at": "创建时间",
+  "updated_at": "最后更新"
+}

@@ -19,8 +19,8 @@ def _workspace_root() -> Path:
     env = os.environ.get("IRIS_WORKSPACE_PATH")
     if env:
         return Path(env).resolve()
-    # Fallback: assume current working directory is workspace
-    return Path.cwd().resolve()
+    # Fallback to repository workspace root derived from this file location
+    return Path(__file__).resolve().parents[3]
 
 
 def assert_in_workspace_root(path: Path) -> None:

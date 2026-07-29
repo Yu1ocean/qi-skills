@@ -1,0 +1,53 @@
+{
+  "context": "晚6点归档质检与日报生成",
+  "date": "2026-07-03",
+  "generated_at_cst": "2026-07-03 18:20",
+  "task_ledger": {
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs",
+    "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_sheet_title": "任务库",
+    "roster_sheet_title": "团队名单"
+  },
+  "patrol": {
+    "total_findings": "⚠️[未执行_DDL巡检]",
+    "counts": {
+      "临近到期": "⚠️[未执行_DDL巡检]",
+      "已超期": "⚠️[未执行_DDL巡检]",
+      "缺失 DDL": "⚠️[未执行_DDL巡检]",
+      "格式异常": "⚠️[未执行_DDL巡检]"
+    },
+    "task_counts": {
+      "开启": 20,
+      "完成": 13,
+      "暂停": 0
+    },
+    "routes": {
+      "private_items": "⚠️[未执行_路由统计]",
+      "group_items": "⚠️[未执行_路由统计]",
+      "unmapped_items": "⚠️[未执行_路由统计]"
+    },
+    "raw_output_file": "user_skills/task-flow-engine/patrol_20260703_pm_raw.json"
+  },
+  "aime_dreaming": {
+    "cycle": "#47",
+    "status": "healthy",
+    "snapshot": "38节点/288边/0悬挂/结构保持第8日/全绿",
+    "note": "按要求仅记录状态，不触发重新生成。"
+  },
+  "daily_log": {
+    "sheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+    "sheet_name": "Daily_Logs",
+    "write_policy": "先读后写；插入第2行（insert row + write A2:C2）；写后即读RAW回捞",
+    "primary_keys": [
+      "DL-20260703",
+      "DL-20260702-02",
+      "DL-20260702"
+    ],
+    "qa": {
+      "schema_ok": true,
+      "idempotency_check": "写入前 A列A1:A80 未发现 DL-20260703",
+      "raw_readback_ok": true
+    },
+    "note": "历史幂等缺陷仍在：表尾存在重复行 DL-20260702；用户尚未确认删除，本次保持只读并在日报建议中标记待处理。"
+  }
+}

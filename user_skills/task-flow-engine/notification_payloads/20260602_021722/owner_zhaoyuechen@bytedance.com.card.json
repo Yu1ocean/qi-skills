@@ -1,0 +1,28 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "任务巡检提醒（私聊）"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-06-02\n\n**需关注条目**：3"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "markdown",
+          "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n⏰ **DDL**：2026-05-09（已超期 24 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+        }
+      ]
+    }
+  }
+}

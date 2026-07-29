@@ -1,0 +1,22 @@
+{
+  "type": "Daily_Logs_ReadAfterWriteMismatch",
+  "timestamp": "2026-05-16T18:01:34.091511",
+  "sheet_url": "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+  "sheet_name": "Daily_Logs",
+  "row_index": 2,
+  "expected": [
+    "DL-20260516",
+    "2026-05-16",
+    "【2026-05-16】完成《五年级学习伴侣》复盘大纲补充；交付 1 份《FABE 自动文案生产流方案》；细化 Bitable 字段清单与状态机。今日推进核心方案交付 100%，Bitable 字段定义进度 60%，状态机逻辑初步闭环。"
+  ],
+  "read_back": [
+    "DL-20260513",
+    "2026-05-13",
+    "1. 记忆图谱升维：构建本地双链+飞书 Bitable 双轨记忆网络。2. 情报高保真萃取：溯源并交付《姚顺宇 AI 思想研报》。3. 巡检引擎手术：重构 heartbeat-inspector 批量提取逻辑防超时。4. 纪律锁死：排查异动，阻断“盖楼”机制。"
+  ],
+  "snapshots": {
+    "pre": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_pre_20260516_180127.xlsx",
+    "post": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_post_20260516_180134.xlsx"
+  },
+  "note": "⚠️[数据断链_待自愈] 写后即读不一致，已熔断并落 DLQ。"
+}

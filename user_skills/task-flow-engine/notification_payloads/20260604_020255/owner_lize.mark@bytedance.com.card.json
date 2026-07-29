@@ -1,0 +1,28 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "任务巡检提醒（私聊）"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-06-04\n\n**需关注条目**：3"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "markdown",
+          "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：新开国商家储备\n⏰ **DDL**：2026-05-20（已超期 15 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BCCU周度分析\n⏰ **DDL**：2026-05-20（已超期 15 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：商家工具包\n⏰ **DDL**：无（连续 5 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+        }
+      ]
+    }
+  }
+}

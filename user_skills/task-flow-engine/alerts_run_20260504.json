@@ -1,0 +1,734 @@
+{
+  "summary": {
+    "today": "2026-05-04",
+    "total_findings": 11,
+    "counts": {
+      "临近到期": 0,
+      "已超期": 2,
+      "缺失 DDL": 4,
+      "格式异常": 5
+    },
+    "private_count": 9,
+    "group_count": 2
+  },
+  "grouped_results": {
+    "临近到期": [],
+    "已超期": [
+      {
+        "key": "r12:靶向100个商家",
+        "row": 12,
+        "task": "靶向100个商家",
+        "status": null,
+        "owners": [
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+            "email": "lize.mark@bytedance.com",
+            "source": "sheet_roster"
+          },
+          {
+            "raw": "江家徵",
+            "display_name": "江家徵",
+            "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+            "email": "jiazheng.jiang@bytedance.com",
+            "source": "sheet_roster"
+          },
+          {
+            "raw": "黄忆卓",
+            "display_name": "黄忆卓",
+            "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+            "email": "huangyizhuo.1992@bytedance.com",
+            "source": "sheet_roster"
+          },
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46142,
+        "ddl_parsed": "2026-04-30",
+        "delta_days": -4,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 4,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r16:BD和AM的配合",
+        "row": 16,
+        "task": "BD和AM的配合",
+        "status": null,
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46142,
+        "ddl_parsed": "2026-04-30",
+        "delta_days": -4,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 4,
+        "abnormal_days": null,
+        "stage": "group"
+      }
+    ],
+    "缺失 DDL": [
+      {
+        "key": "r3:Leads管理表",
+        "row": 3,
+        "task": "Leads管理表",
+        "status": null,
+        "owners": [
+          {
+            "raw": "江家徵",
+            "display_name": "江家徵",
+            "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+            "email": "jiazheng.jiang@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r4:商家工具包",
+        "row": 4,
+        "task": "商家工具包",
+        "status": null,
+        "owners": [
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+            "email": "lize.mark@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r5:【可用Leads】梳理",
+        "row": 5,
+        "task": "【可用Leads】梳理",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r6:新增HIPO商家类型",
+        "row": 6,
+        "task": "新增HIPO商家类型",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      }
+    ],
+    "格式异常": [
+      {
+        "key": "r7:商家入驻卡点收集",
+        "row": 7,
+        "task": "商家入驻卡点收集",
+        "status": null,
+        "owners": [],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "负责人为空",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r8:US头商入UK",
+        "row": 8,
+        "task": "US头商入UK",
+        "status": null,
+        "owners": [],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "负责人为空",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r9:市场建设",
+        "row": 9,
+        "task": "市场建设",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": "本季度20场",
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "DDL无法解析（unrecognized）",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r10:BD重点专项（5月）",
+        "row": 10,
+        "task": "BD重点专项（5月）",
+        "status": null,
+        "owners": [],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "负责人为空",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      },
+      {
+        "key": "r13:UK招商专项",
+        "row": 13,
+        "task": "UK招商专项",
+        "status": "准备中",
+        "owners": [],
+        "ddl_raw": 46162,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "负责人为空",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 2,
+        "stage": "private"
+      }
+    ]
+  },
+  "routes": {
+    "private": {
+      "jiazheng.jiang@bytedance.com": {
+        "owner": {
+          "raw": "江家徵",
+          "display_name": "江家徵",
+          "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+          "email": "jiazheng.jiang@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r3:Leads管理表",
+            "row": 3,
+            "task": "Leads管理表",
+            "status": null,
+            "owners": [
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+                "email": "jiazheng.jiang@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 2,
+            "stage": "private"
+          }
+        ],
+        "message": "🚨 **[任务巡检·私聊催办] 2026-05-04**（共 1 条）\n📌 **【任务名】**：Leads管理表\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-04\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "📌 **【任务名】**：Leads管理表\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "lize.mark@bytedance.com": {
+        "owner": {
+          "raw": "李泽",
+          "display_name": "李泽",
+          "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+          "email": "lize.mark@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r4:商家工具包",
+            "row": 4,
+            "task": "商家工具包",
+            "status": null,
+            "owners": [
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+                "email": "lize.mark@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 2,
+            "stage": "private"
+          }
+        ],
+        "message": "🚨 **[任务巡检·私聊催办] 2026-05-04**（共 1 条）\n📌 **【任务名】**：商家工具包\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-04\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "📌 **【任务名】**：商家工具包\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "xiachunyu.123@bytedance.com": {
+        "owner": {
+          "raw": "夏春雨",
+          "display_name": "夏春雨",
+          "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+          "email": "xiachunyu.123@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 3,
+        "items": [
+          {
+            "key": "r5:【可用Leads】梳理",
+            "row": 5,
+            "task": "【可用Leads】梳理",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 2,
+            "stage": "private"
+          },
+          {
+            "key": "r6:新增HIPO商家类型",
+            "row": 6,
+            "task": "新增HIPO商家类型",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 2,
+            "stage": "private"
+          },
+          {
+            "key": "r9:市场建设",
+            "row": 9,
+            "task": "市场建设",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": "本季度20场",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 2,
+            "stage": "private"
+          }
+        ],
+        "message": "🚨 **[任务巡检·私聊催办] 2026-05-04**（共 3 条）\n📌 **【任务名】**：【可用Leads】梳理\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：新增HIPO商家类型\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：市场建设\n⏰ **DDL**：本季度20场（连续 2 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-04\n\n**需关注条目**：3"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "📌 **【任务名】**：【可用Leads】梳理\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：新增HIPO商家类型\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：市场建设\n⏰ **DDL**：本季度20场（连续 2 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      }
+    },
+    "group": {
+      "target_chat": {
+        "chat_id": "oc_5c82ffc008064b281fdbf35c6ec9412f",
+        "name": ""
+      },
+      "count": 2,
+      "items": [
+        {
+          "key": "r12:靶向100个商家",
+          "row": 12,
+          "task": "靶向100个商家",
+          "status": null,
+          "owners": [
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+              "email": "jiazheng.jiang@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "黄忆卓",
+              "display_name": "黄忆卓",
+              "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+              "email": "huangyizhuo.1992@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46142,
+          "ddl_parsed": "2026-04-30",
+          "delta_days": -4,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 4,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r16:BD和AM的配合",
+          "row": 16,
+          "task": "BD和AM的配合",
+          "status": null,
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46142,
+          "ddl_parsed": "2026-04-30",
+          "delta_days": -4,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 4,
+          "abnormal_days": null,
+          "stage": "group"
+        }
+      ],
+      "mentions_open_ids": [
+        "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+        "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+        "ou_4ad4ccbd30c3f911f3ef48f851323269",
+        "ou_6c70ae770e15cbea5f29d590de12b26d",
+        "ou_900ddd9ff611254a74ac32adafc016b4"
+      ],
+      "message": "📣 **[任务巡检·公开提醒] 2026-05-04**（共 2 条）\n📌 **【任务名】**：靶向100个商家\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>、<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>、<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>、<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：2026-04-30（已超期 4 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BD和AM的配合\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-04-30（已超期 4 天）\n🧭 **分类**：已超期",
+      "card": {
+        "name": "AimeCard",
+        "dsl": {
+          "schema": "2.0",
+          "header": {
+            "title": {
+              "tag": "plain_text",
+              "content": "任务巡检提醒（群聊）"
+            },
+            "template": "red"
+          },
+          "body": {
+            "elements": [
+              {
+                "tag": "markdown",
+                "content": "**日期**：2026-05-04\n\n**需公开提醒条目**：2"
+              },
+              {
+                "tag": "hr"
+              },
+              {
+                "tag": "markdown",
+                "content": "📌 **【任务名】**：靶向100个商家\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>、<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>、<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>、<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：2026-04-30（已超期 4 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BD和AM的配合\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-04-30（已超期 4 天）\n🧭 **分类**：已超期"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "unmapped": {
+      "count": 4,
+      "items": [
+        {
+          "key": "r7:商家入驻卡点收集",
+          "row": 7,
+          "task": "商家入驻卡点收集",
+          "status": null,
+          "owners": [],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "负责人为空",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 2,
+          "stage": "private"
+        },
+        {
+          "key": "r8:US头商入UK",
+          "row": 8,
+          "task": "US头商入UK",
+          "status": null,
+          "owners": [],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "负责人为空",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 2,
+          "stage": "private"
+        },
+        {
+          "key": "r10:BD重点专项（5月）",
+          "row": 10,
+          "task": "BD重点专项（5月）",
+          "status": null,
+          "owners": [],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "负责人为空",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 2,
+          "stage": "private"
+        },
+        {
+          "key": "r13:UK招商专项",
+          "row": 13,
+          "task": "UK招商专项",
+          "status": "准备中",
+          "owners": [],
+          "ddl_raw": 46162,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "负责人为空",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 2,
+          "stage": "private"
+        }
+      ]
+    }
+  },
+  "state": {
+    "path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.patrol_state.json",
+    "enabled": true
+  },
+  "source": {
+    "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_sheet": {
+      "title": "任务库",
+      "sheet_id": "KmlJhs",
+      "total_rows_read": 16
+    },
+    "roster_sheet": {
+      "title": "团队名单",
+      "sheet_id": "L5xh7h",
+      "total_rows_read": 7
+    }
+  },
+  "directory": {
+    "target_chat": {
+      "chat_id": "oc_5c82ffc008064b281fdbf35c6ec9412f",
+      "name": ""
+    },
+    "mapped_members": 7,
+    "roster_duplicates": []
+  }
+}

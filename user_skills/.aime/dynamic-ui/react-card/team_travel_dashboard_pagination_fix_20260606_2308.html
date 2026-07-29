@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>团队全景差旅大屏 V2.0</title>
+  <script src="https://sf-unpkg-src.bytedance.net/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    .card-container {
+      width: 100%;
+      min-width: 300px;
+      padding: 0;
+      box-shadow: none !important;
+      color: var(--aime-color-text-base-1, #232938);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .travel-shell {
+      background:
+        radial-gradient(circle at top left, rgba(77,124,255,0.16), transparent 34%),
+        radial-gradient(circle at top right, rgba(79,214,255,0.13), transparent 26%),
+        linear-gradient(180deg, #06101d 0%, #07111f 52%, #040914 100%);
+      color: #ecf4ff;
+      padding: 18px;
+      border: 1px solid rgba(92, 137, 196, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+    .travel-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+    .header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(95, 150, 219, 0.18);
+    }
+    .title { font-size: 22px; font-weight: 800; letter-spacing: 0.8px; }
+    .subtitle { margin-top: 6px; color: #9ab2d7; font-size: 12px; }
+    .stamp { font-size: 12px; color: #79d8ff; text-align: right; line-height: 1.5; }
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      background: linear-gradient(180deg, rgba(13, 31, 55, 0.94), rgba(8, 17, 32, 0.94));
+      border: 1px solid rgba(92, 137, 196, 0.24);
+      padding: 12px 14px;
+      min-height: 96px;
+    }
+    .stat-label { font-size: 11px; color: #9ab2d7; text-transform: uppercase; letter-spacing: 0.8px; }
+    .stat-value { font-size: 28px; font-weight: 800; line-height: 1; margin-top: 6px; }
+    .stat-hint { font-size: 11px; color: #7fe7c8; margin-top: 8px; line-height: 1.4; }
+    .main-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .right-grid { display: grid; grid-template-rows: 1fr 1fr 1fr; gap: 10px; }
+    .panel {
+      background: linear-gradient(180deg, rgba(10, 23, 40, 0.96), rgba(7, 16, 30, 0.96));
+      border: 1px solid rgba(92, 137, 196, 0.22);
+      padding: 12px;
+      position: relative;
+    }
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #d8ebff;
+      font-size: 13px;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .panel-title span:last-child { color: #9ab2d7; font-size: 11px; text-align: right; }
+    .route-shell { position: relative; height: 360px; }
+    .route-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.42;
+      pointer-events: none;
+    }
+    .route-bg .continent { fill: rgba(40,97,160,0.25); stroke: rgba(108,178,255,0.12); stroke-width: 2; }
+    .route-bg .gridline { stroke: rgba(108,178,255,0.08); stroke-width: 1; stroke-dasharray: 4 8; }
+    .chart-lg { height: 360px; }
+    .chart-md { height: 170px; }
+    .radar-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .radar-metric {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(92, 137, 196, 0.16);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+    .metric-name { color: #9ab2d7; font-size: 10px; }
+    .metric-value { margin-top: 4px; color: #fff0b1; font-size: 16px; font-weight: 700; }
+    .footer-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 10px;
+    }
+    .chart-sm { height: 260px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid rgba(92,137,196,0.14); vertical-align: top; }
+    th { color: #9ab2d7; font-size: 11px; text-transform: uppercase; }
+    td { color: #dceaff; }
+    .table-wrap { max-height: 260px; overflow: auto; }
+    .empty { height: 160px; display: flex; align-items: center; justify-content: center; color: #9ab2d7; font-size: 12px; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-first {
+      color: #fff0f3;
+      background: rgba(255, 93, 115, 0.16);
+      border-color: rgba(255, 93, 115, 0.32);
+      animation: breathe 1.8s ease-in-out infinite;
+    }
+    .badge-alert { color: #ffe4ae; background: rgba(255, 183, 64, 0.14); border-color: rgba(255, 183, 64, 0.28); }
+    .badge-good { color: #baf6d8; background: rgba(63, 224, 184, 0.14); border-color: rgba(63, 224, 184, 0.26); }
+    .muted { color: #9ab2d7; }
+    .warning-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .violation-overview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(92, 137, 196, 0.18);
+      background: rgba(255,255,255,0.03);
+    }
+    .violation-overview.alert {
+      border-color: rgba(255, 93, 115, 0.34);
+      background: linear-gradient(90deg, rgba(255,93,115,0.16), rgba(255,183,64,0.08));
+    }
+    .violation-overview.safe {
+      border-color: rgba(63, 224, 184, 0.26);
+      background: linear-gradient(90deg, rgba(63,224,184,0.14), rgba(79,214,255,0.08));
+    }
+    .violation-overview strong { display: block; font-size: 15px; margin-bottom: 4px; color: #fff3c4; }
+    .violation-overview.safe strong { color: #baf6d8; }
+    .violation-overview span { color: #9ab2d7; font-size: 12px; line-height: 1.6; }
+    .violation-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .violation-column {
+      border: 1px solid rgba(92, 137, 196, 0.18);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+      min-height: 220px;
+    }
+    .violation-column.safe { border-color: rgba(63, 224, 184, 0.22); }
+    .violation-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(92, 137, 196, 0.12);
+    }
+    .violation-head strong { font-size: 13px; color: #eaf5ff; }
+    .violation-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffe4ae;
+      background: rgba(255, 183, 64, 0.14);
+      border: 1px solid rgba(255, 183, 64, 0.22);
+    }
+    .violation-column.safe .violation-count {
+      color: #baf6d8;
+      background: rgba(63, 224, 184, 0.14);
+      border-color: rgba(63, 224, 184, 0.22);
+    }
+    .violation-list { display: flex; flex-direction: column; gap: 8px; }
+    .violation-item {
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(92, 137, 196, 0.14);
+    }
+    .violation-item strong { display: block; margin-bottom: 6px; color: #fff2bf; font-size: 13px; }
+    .violation-route { color: #dceaff; font-size: 12px; line-height: 1.5; }
+    .violation-meta { margin-top: 6px; color: #9ab2d7; font-size: 11px; line-height: 1.6; }
+    .violation-empty {
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 10px;
+      border: 1px dashed rgba(63, 224, 184, 0.28);
+      color: #baf6d8;
+      background: rgba(63,224,184,0.08);
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 12px;
+    }
+    @keyframes breathe {
+      0%, 100% { box-shadow: 0 0 6px rgba(255,93,115,0.18); transform: scale(1); }
+      50% { box-shadow: 0 0 20px rgba(255,93,115,0.45); transform: scale(1.03); }
+    }
+    @media (max-width: 1200px) {
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .main-grid, .footer-grid { grid-template-columns: 1fr; }
+      .right-grid { grid-template-rows: auto; }
+      .violation-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 960px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .radar-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .violation-board { grid-template-columns: 1fr; }
+      .violation-overview { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const DATA = {
+  "version": "2.2",
+  "generated_at": "2026-06-06 23:08",
+  "filters": {
+    "months": 3,
+    "mode": "auto",
+    "query_terms": [
+      "差旅审批",
+      "出差审批",
+      "travel approval",
+      "trip approval",
+      "差旅",
+      "【差旅】",
+      "Hi Travel 火车票",
+      "预订了机票",
+      "预订了酒店",
+      "员工商旅系统"
+    ],
+    "capture_scope": "ALL_PARSED_TRAVELERS",
+    "window_start": "2026-06-01 00:00",
+    "window_end": "2026-06-06 23:59"
+  },
+  "summary": {
+    "total_trips": 15,
+    "active_people": 6,
+    "ongoing_trips": 0,
+    "unique_destinations": 7,
+    "first_time_destinations": 7,
+    "compliance_alerts": 13,
+    "timeline_start": "2026-06-04 00:00",
+    "timeline_end": "2026-06-12 00:00"
+  },
+  "rankings": {
+    "departure_cities": [
+      {
+        "name": "上海",
+        "value": 8
+      },
+      {
+        "name": "深圳",
+        "value": 2
+      },
+      {
+        "name": "厦门",
+        "value": 2
+      },
+      {
+        "name": "杭州",
+        "value": 2
+      },
+      {
+        "name": "首尔",
+        "value": 1
+      }
+    ],
+    "destination_cities": [
+      {
+        "name": "深圳",
+        "value": 6,
+        "first_time_count": 3
+      },
+      {
+        "name": "上海",
+        "value": 2,
+        "first_time_count": 1
+      },
+      {
+        "name": "厦门",
+        "value": 2,
+        "first_time_count": 1
+      },
+      {
+        "name": "杭州",
+        "value": 2,
+        "first_time_count": 1
+      },
+      {
+        "name": "南通",
+        "value": 1,
+        "first_time_count": 0
+      },
+      {
+        "name": "首尔",
+        "value": 1,
+        "first_time_count": 0
+      },
+      {
+        "name": "威海",
+        "value": 1,
+        "first_time_count": 1
+      }
+    ],
+    "reasons": [
+      {
+        "name": "预订通知未披露",
+        "value": 15
+      }
+    ]
+  },
+  "compliance": {
+    "metrics": {
+      "booking_lead_days": {
+        "known_count": 15,
+        "avg_days": 1.4,
+        "late_booking_count": 13,
+        "healthy_rate": 13.3
+      },
+      "is_booked_before_approval": {
+        "known_count": 0,
+        "violation_count": 0,
+        "healthy_rate": null
+      },
+      "is_over_cabin_policy": {
+        "known_count": 0,
+        "violation_count": 0,
+        "healthy_rate": null
+      },
+      "is_hotel_over_policy": {
+        "known_count": 0,
+        "violation_count": 0,
+        "healthy_rate": null
+      },
+      "duplicate_booking_flag": {
+        "known_count": 15,
+        "violation_count": 0,
+        "healthy_rate": 100.0
+      },
+      "is_first_time_destination": {
+        "known_count": 15,
+        "first_time_count": 7,
+        "attention_rate": 46.7
+      }
+    },
+    "radar": [
+      {
+        "name": "提前预订",
+        "field": "booking_lead_days",
+        "value": 13.3
+      },
+      {
+        "name": "审批顺序",
+        "field": "is_booked_before_approval",
+        "value": null
+      },
+      {
+        "name": "舱位合规",
+        "field": "is_over_cabin_policy",
+        "value": null
+      },
+      {
+        "name": "酒店合规",
+        "field": "is_hotel_over_policy",
+        "value": null
+      },
+      {
+        "name": "重复预订",
+        "field": "duplicate_booking_flag",
+        "value": 100.0
+      },
+      {
+        "name": "首次提醒",
+        "field": "is_first_time_destination",
+        "value": 46.7
+      }
+    ],
+    "alert_count": 13
+  },
+  "footprint_library": {
+    "path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/output/travel_footprint_library.json"
+  },
+  "people": [
+    "叶佳智",
+    "夏春雨",
+    "李泽",
+    "江家徵",
+    "赵月晨",
+    "黄忆卓"
+  ],
+  "trips": [
+    {
+      "name": "李泽",
+      "departure_city": "深圳",
+      "destination_city": "上海",
+      "departure_time": "2026-06-04 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-03 16:16",
+      "approval_time": "",
+      "booking_lead_days": 0.3,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": 700.0,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight / hotel",
+      "source_message_id": "cjU2RWx3UmVYZ1BqcWw4U00ycitFeTlNY0g4PQ==",
+      "source_message_ids": [
+        "cjU2RWx3UmVYZ1BqcWw4U00ycitFeTlNY0g4PQ==",
+        "eHpuUjNDcEZlYTNnY21iWGxrTTREWk9lSnIwPQ=="
+      ],
+      "source_subject": "【差旅】李泽 预订了机票 深圳-上海 (单程) | 【差旅】李泽预订了酒店 6月4日 周四 至 6月5日 周五",
+      "source_sent_at": "2026-06-03 16:16",
+      "raw_excerpt": "【差旅】李泽 预订了机票 深圳-上海 (单程) 出行类型： 差旅 乘机人： 李泽 预订信息 航班信息： 深圳-上海 出发日期： 2026年6月4日 周四 价格信息 公司支付：¥ 2050.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「 差旅值班号 」。 ----------------- Hi Travel 高效预订，经济出行 出行类型：差旅 乘机人：李泽 预订信息 航班信息：深圳-上海 出发日期：2026年6月4日 周四 价格信息 公司支付：¥ 2050.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行 attachments cc mail_address yuqinan@bytedance.com name date_formatted 2026-06-03 16:16 folder_id INBOX head_from mail_address travel@bytedance.com name 员工商旅系统(请勿回复/no reply) internal_date 1780474598756 label_ids IMPORTANT message_id cjU2RWx3UmVYZ1BqcWw4U00ycitFeTlNY0g4PQ== message_state 1 message_state_text received references security_level smtp_message_id 6a1fe2e2.aac2276c.29d290.598bSMTPIN_ADDED_BROKEN@mx.google.com thread_id cjU2RWx3UmVYZ1BqcWw4U00ycitFeTlNY0g4PQ== to mail_address lize.mark@bytedance.com name\n---\n【差旅】李泽预订了酒店 6月4日 周四 至 6月5日 周五 出行类型： 差旅 入住人： 李泽 预订信息 入住城市： 上海 入离店日期： 6月4日 周四 至 6月5日 周五 取消政策： 06月04日 18:00 前免费取消 (酒店当地时间) 价格信息 公司支付：¥ 700 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系「 差旅值班号 」。 ----------------- Hi Travel 高效预订，经济出行 出行类型：差旅 入住人：李泽 预订信息 入住城市：上海 入离店日期：6",
+      "departure_coord": {
+        "query": "深圳, China",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "上海",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "叶佳智",
+      "departure_city": "上海",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-04 10:31",
+      "approval_time": "",
+      "booking_lead_days": 0.6,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "TWxCRVNJSWhid0ppWUEwd3ZiYkJDZmxmd1RZPQ==",
+      "source_message_ids": [
+        "TWxCRVNJSWhid0ppWUEwd3ZiYkJDZmxmd1RZPQ=="
+      ],
+      "source_subject": "【差旅】叶佳智 预订了机票 上海-深圳 (单程)",
+      "source_sent_at": "2026-06-04 10:31",
+      "raw_excerpt": "【差旅】叶佳智 预订了机票 上海-深圳 (单程)\n出行类型：\n差旅\n    \n乘机人：\n叶佳智 \n    \n    \n预订信息\n        \n航班信息：\n上海-深圳 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1050.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：叶佳智 预订信息 航班信息：上海-深圳 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1050.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-04 10:31\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780540304772\nlabel_ids\nIMPORTANT\nmessage_id\nTWxCRVNJSWhid0ppWUEwd3ZiYkJDZmxmd1RZPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a20e38c.18a66b66.93679.1be7SMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nTWxCRVNJSWhid0ppWUEwd3ZiYkJDZmxmd1RZPQ==\nto\nmail_address\nyejiazhi@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "夏春雨",
+      "departure_city": "上海",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-04 20:46",
+      "approval_time": "",
+      "booking_lead_days": 0.1,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "Q1lzeUxTS0F4Z0tVYlBUTzZPQnBKSVhSMlFnPQ==",
+      "source_message_ids": [
+        "Q1lzeUxTS0F4Z0tVYlBUTzZPQnBKSVhSMlFnPQ=="
+      ],
+      "source_subject": "【差旅】夏春雨 预订了机票 上海-深圳 (单程)",
+      "source_sent_at": "2026-06-04 20:46",
+      "raw_excerpt": "【差旅】夏春雨 预订了机票 上海-深圳 (单程)\n出行类型：\n差旅\n    \n乘机人：\n夏春雨 \n    \n    \n预订信息\n        \n航班信息：\n上海-深圳 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1490.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：夏春雨 预订信息 航班信息：上海-深圳 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1490.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-04 20:46\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780577198594\nlabel_ids\nIMPORTANT\nmessage_id\nQ1lzeUxTS0F4Z0tVYlBUTzZPQnBKSVhSMlFnPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a2173aa.cabb27c9.1f44e5.0dccSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nQ1lzeUxTS0F4Z0tVYlBUTzZPQnBKSVhSMlFnPQ==\nto\nmail_address\nxiachunyu.123@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "李泽",
+      "departure_city": "上海",
+      "destination_city": "厦门",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-03 16:16",
+      "approval_time": "",
+      "booking_lead_days": 1.3,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "RGQyVzdBUjlQUy93U1FHMGt5L3lXMDJCS2NnPQ==",
+      "source_message_ids": [
+        "RGQyVzdBUjlQUy93U1FHMGt5L3lXMDJCS2NnPQ=="
+      ],
+      "source_subject": "【差旅】李泽 预订了机票 上海-厦门 (单程)",
+      "source_sent_at": "2026-06-03 16:16",
+      "raw_excerpt": "【差旅】李泽 预订了机票 上海-厦门 (单程)\n出行类型：\n差旅\n    \n乘机人：\n李泽 \n    \n    \n预订信息\n        \n航班信息：\n上海-厦门 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1730.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：李泽 预订信息 航班信息：上海-厦门 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1730.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-03 16:16\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780474611997\nlabel_ids\nIMPORTANT\nmessage_id\nRGQyVzdBUjlQUy93U1FHMGt5L3lXMDJCS2NnPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a1fe2ef.6e1f8363.3ae77f.595aSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nRGQyVzdBUjlQUy93U1FHMGt5L3lXMDJCS2NnPQ==\nto\nmail_address\nlize.mark@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "厦门",
+        "city": "厦门",
+        "lat": 24.5438732,
+        "lon": 118.0768065,
+        "display_name": "厦门市, 福建省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "李泽",
+      "departure_city": "厦门",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 16:18",
+      "approval_time": "",
+      "booking_lead_days": -0.7,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "train",
+      "source_message_id": "aFJ4eVN3SmxPVUo4MjJ6NEhlRUZGOUFQb21zPQ==",
+      "source_message_ids": [
+        "aFJ4eVN3SmxPVUo4MjJ6NEhlRUZGOUFQb21zPQ=="
+      ],
+      "source_subject": "【差旅】李泽预订了Hi Travel火车票 厦门-深圳北 2026年6月5日 周五",
+      "source_sent_at": "2026-06-05 16:18",
+      "raw_excerpt": "【差旅】李泽预订了Hi Travel火车票 厦门-深圳北 2026年6月5日 周五\n出行类型：\n差旅\n \n乘车人：\n李泽\n \n预订信息\n \n车次信息：\n厦门-深圳北\n \n出发日期：\n2026年6月5日 周五\n \n价格信息\n  \n公司支付：¥230\n  本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。\n 如有任何问题或对该订单有异议，可直接联系 「\n差旅值班号\n」。\n \n-----------------\n \nHi Travel\n \n高效预订，经济出行\n出行类型：差旅 乘车人：李泽 预订信息 车次信息：厦门-深圳北 出发日期：2026年6月5日 周五 价格信息 公司支付：¥230 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-05 16:18\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780647507089\nlabel_ids\nIMPORTANT\nmessage_id\naFJ4eVN3SmxPVUo4MjJ6NEhlRUZGOUFQb21zPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a22864f.0dc59bdb.17efb6.3242SMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\naFJ4eVN3SmxPVUo4MjJ6NEhlRUZGOUFQb21zPQ==\nto\nmail_address\nlize.mark@bytedance.com\nname",
+      "departure_coord": {
+        "query": "厦门, China",
+        "city": "厦门",
+        "lat": 24.5438732,
+        "lon": 118.0768065,
+        "display_name": "厦门市, 福建省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "江家徵",
+      "departure_city": "上海",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-04 00:11",
+      "approval_time": "",
+      "booking_lead_days": 1.0,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "WGRuYVRtYVQ3T2lveWUvNHdPNmVUa1oyWHRjPQ==",
+      "source_message_ids": [
+        "WGRuYVRtYVQ3T2lveWUvNHdPNmVUa1oyWHRjPQ=="
+      ],
+      "source_subject": "【差旅】江家徵 预订了机票 上海-深圳 (单程)",
+      "source_sent_at": "2026-06-04 00:11",
+      "raw_excerpt": "【差旅】江家徵 预订了机票 上海-深圳 (单程)\n出行类型：\n差旅\n    \n乘机人：\n江家徵 \n    \n    \n预订信息\n        \n航班信息：\n上海-深圳 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1330.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：江家徵 预订信息 航班信息：上海-深圳 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1330.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-04 00:11\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780503113049\nlabel_ids\nIMPORTANT\nmessage_id\nWGRuYVRtYVQ3T2lveWUvNHdPNmVUa1oyWHRjPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a205244.ecefd16b.20ceb9.205dSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nWGRuYVRtYVQ3T2lveWUvNHdPNmVUa1oyWHRjPQ==\nto\nmail_address\njiazheng.jiang@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "赵月晨",
+      "departure_city": "上海",
+      "destination_city": "南通",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 10:40",
+      "approval_time": "",
+      "booking_lead_days": -0.4,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "train",
+      "source_message_id": "bjhUdWZ3L2lkeVBIcUErTHNmVmJvRm0rVzJzPQ==",
+      "source_message_ids": [
+        "bjhUdWZ3L2lkeVBIcUErTHNmVmJvRm0rVzJzPQ=="
+      ],
+      "source_subject": "【差旅】赵月晨预订了Hi Travel火车票 上海虹桥-南通西 2026年6月5日 周五",
+      "source_sent_at": "2026-06-05 10:40",
+      "raw_excerpt": "【差旅】赵月晨预订了Hi Travel火车票 上海虹桥-南通西 2026年6月5日 周五\n出行类型：\n差旅\n \n乘车人：\n赵月晨\n \n预订信息\n \n车次信息：\n上海虹桥-南通西\n \n出发日期：\n2026年6月5日 周五\n \n价格信息\n  \n公司支付：¥63\n  本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。\n 如有任何问题或对该订单有异议，可直接联系 「\n差旅值班号\n」。\n \n-----------------\n \nHi Travel\n \n高效预订，经济出行\n出行类型：差旅 乘车人：赵月晨 预订信息 车次信息：上海虹桥-南通西 出发日期：2026年6月5日 周五 价格信息 公司支付：¥63 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-05 10:40\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780627228668\nlabel_ids\nIMPORTANT\nmessage_id\nbjhUdWZ3L2lkeVBIcUErTHNmVmJvRm0rVzJzPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a223718.b10acd61.222742.b7caSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nbjhUdWZ3L2lkeVBIcUErTHNmVmJvRm0rVzJzPQ==\nto\nmail_address\nzhaoyuechen@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "南通",
+        "city": "南通",
+        "lat": 31.9827896,
+        "lon": 120.8904588,
+        "display_name": "南通市, 江苏省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "赵月晨",
+      "departure_city": "上海",
+      "destination_city": "杭州",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 11:06",
+      "approval_time": "",
+      "booking_lead_days": -0.5,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "train",
+      "source_message_id": "SGpOTEN6amVQcTNLZzBPYjlKcVJabzBKL1pRPQ==",
+      "source_message_ids": [
+        "SGpOTEN6amVQcTNLZzBPYjlKcVJabzBKL1pRPQ=="
+      ],
+      "source_subject": "【差旅】赵月晨预订了Hi Travel火车票 上海虹桥-杭州东 2026年6月5日 周五",
+      "source_sent_at": "2026-06-05 11:06",
+      "raw_excerpt": "【差旅】赵月晨预订了Hi Travel火车票 上海虹桥-杭州东 2026年6月5日 周五\n出行类型：\n差旅\n \n乘车人：\n赵月晨\n \n预订信息\n \n车次信息：\n上海虹桥-杭州东\n \n出发日期：\n2026年6月5日 周五\n \n价格信息\n  \n公司支付：¥87\n  本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。\n 如有任何问题或对该订单有异议，可直接联系 「\n差旅值班号\n」。\n \n-----------------\n \nHi Travel\n \n高效预订，经济出行\n出行类型：差旅 乘车人：赵月晨 预订信息 车次信息：上海虹桥-杭州东 出发日期：2026年6月5日 周五 价格信息 公司支付：¥87 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-05 11:06\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780628808342\nlabel_ids\nIMPORTANT\nmessage_id\nSGpOTEN6amVQcTNLZzBPYjlKcVJabzBKL1pRPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a223d44.030d6ed1.3a728f.1f00SMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nSGpOTEN6amVQcTNLZzBPYjlKcVJabzBKL1pRPQ==\nto\nmail_address\nzhaoyuechen@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "杭州",
+        "city": "杭州",
+        "lat": 30.2489634,
+        "lon": 120.2052342,
+        "display_name": "杭州市, 浙江省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "赵月晨",
+      "departure_city": "杭州",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 11:21",
+      "approval_time": "",
+      "booking_lead_days": -0.5,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "RHZ3UW1FUloxWXhSV3JQbUpnM3U3R0pCYldnPQ==",
+      "source_message_ids": [
+        "RHZ3UW1FUloxWXhSV3JQbUpnM3U3R0pCYldnPQ=="
+      ],
+      "source_subject": "【差旅】赵月晨 预订了机票 杭州-深圳 (单程)",
+      "source_sent_at": "2026-06-05 11:21",
+      "raw_excerpt": "【差旅】赵月晨 预订了机票 杭州-深圳 (单程)\n出行类型：\n差旅\n    \n乘机人：\n赵月晨 \n    \n    \n预订信息\n        \n航班信息：\n杭州-深圳 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1190.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：赵月晨 预订信息 航班信息：杭州-深圳 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1190.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-05 11:21\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780629719234\nlabel_ids\nIMPORTANT\nmessage_id\nRHZ3UW1FUloxWXhSV3JQbUpnM3U3R0pCYldnPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a2240d3.cc2f2c94.4438a.7eabSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nRHZ3UW1FUloxWXhSV3JQbUpnM3U3R0pCYldnPQ==\nto\nmail_address\nzhaoyuechen@bytedance.com\nname",
+      "departure_coord": {
+        "query": "杭州, China",
+        "city": "杭州",
+        "lat": 30.2489634,
+        "lon": 120.2052342,
+        "display_name": "杭州市, 浙江省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "赵月晨",
+      "departure_city": "上海",
+      "destination_city": "深圳",
+      "departure_time": "2026-06-05 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-03 22:51",
+      "approval_time": "",
+      "booking_lead_days": 1.0,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "dElLRnZSeGhhbGI0MGhPeS8rc1Q3bUEralJnPQ==",
+      "source_message_ids": [
+        "dElLRnZSeGhhbGI0MGhPeS8rc1Q3bUEralJnPQ=="
+      ],
+      "source_subject": "【差旅】赵月晨 预订了机票 上海-深圳 (单程)",
+      "source_sent_at": "2026-06-03 22:51",
+      "raw_excerpt": "【差旅】赵月晨 预订了机票 上海-深圳 (单程)\n出行类型：\n差旅\n    \n乘机人：\n赵月晨 \n    \n    \n预订信息\n        \n航班信息：\n上海-深圳 \n        \n出发日期：\n2026年6月5日 周五\n    \n    \n价格信息\n    \n公司支付：¥ 1150.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：赵月晨 预订信息 航班信息：上海-深圳 出发日期：2026年6月5日 周五 价格信息 公司支付：¥ 1150.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-03 22:51\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780498303737\nlabel_ids\nIMPORTANT\nmessage_id\ndElLRnZSeGhhbGI0MGhPeS8rc1Q3bUEralJnPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a203f7a.056d941f.df569.61efSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\ndElLRnZSeGhhbGI0MGhPeS8rc1Q3bUEralJnPQ==\nto\nmail_address\nzhaoyuechen@bytedance.com\nname",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "深圳",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "江家徵",
+      "departure_city": "深圳",
+      "destination_city": "厦门",
+      "departure_time": "2026-06-08 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 21:06",
+      "approval_time": "",
+      "booking_lead_days": 2.1,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": 437.49,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "train / hotel",
+      "source_message_id": "RzFrdWFYUHRZdDRpUHU3UU9PTWs0WllheS80PQ==",
+      "source_message_ids": [
+        "RzFrdWFYUHRZdDRpUHU3UU9PTWs0WllheS80PQ==",
+        "OVlRL0h2QmhEMHphZENXN2UrMGxhVlprU2FFPQ=="
+      ],
+      "source_subject": "【差旅】江家徵预订了Hi Travel火车票 深圳北-厦门北 2026年6月8日 周一 | 【差旅】江家徵预订了酒店 6月8日 周一 至 6月9日 周二",
+      "source_sent_at": "2026-06-05 21:06",
+      "raw_excerpt": "【差旅】江家徵预订了Hi Travel火车票 深圳北-厦门北 2026年6月8日 周一 出行类型： 差旅 乘车人： 江家徵 预订信息 车次信息： 深圳北-厦门北 出发日期： 2026年6月8日 周一 价格信息 公司支付：¥232 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「 差旅值班号 」。 ----------------- Hi Travel 高效预订，经济出行 出行类型：差旅 乘车人：江家徵 预订信息 车次信息：深圳北-厦门北 出发日期：2026年6月8日 周一 价格信息 公司支付：¥232 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行 attachments cc mail_address yuqinan@bytedance.com name date_formatted 2026-06-05 21:06 folder_id INBOX head_from mail_address travel@bytedance.com name 员工商旅系统(请勿回复/no reply) internal_date 1780664791100 label_ids IMPORTANT message_id RzFrdWFYUHRZdDRpUHU3UU9PTWs0WllheS80PQ== message_state 1 message_state_text received references security_level smtp_message_id 6a22c9d2.5fc88039.1c1b10.5242SMTPIN_ADDED_BROKEN@mx.google.com thread_id RzFrdWFYUHRZdDRpUHU3UU9PTWs0WllheS80PQ== to mail_address jiazheng.jiang@bytedance.com name\n---\n【差旅】江家徵预订了酒店 6月8日 周一 至 6月9日 周二 出行类型： 差旅 入住人： 江家徵 预订信息 入住城市： 厦门 入离店日期： 6月8日 周一 至 6月9日 周二 取消政策： 06月07日 23:59 前免费取消 (酒店当地时间) 价格信息 公司支付： ¥ 437.49 个人支付： ¥ 12.5 订单金额：¥ 449.99 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系「 差旅值班号 」。 -----",
+      "departure_coord": {
+        "query": "深圳, China",
+        "city": "深圳",
+        "lat": 22.5445741,
+        "lon": 114.0545429,
+        "display_name": "深圳市, 广东省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "厦门",
+        "city": "厦门",
+        "lat": 24.5438732,
+        "lon": 118.0768065,
+        "display_name": "厦门市, 福建省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "黄忆卓",
+      "departure_city": "首尔",
+      "destination_city": "上海",
+      "departure_time": "2026-06-08 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 12:21",
+      "approval_time": "",
+      "booking_lead_days": 2.5,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ==",
+      "source_message_ids": [
+        "WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ=="
+      ],
+      "source_subject": "【差旅】黄忆卓 预订了机票 上海-首尔 (往返)",
+      "source_sent_at": "2026-06-05 12:21",
+      "raw_excerpt": "【差旅】黄忆卓 预订了机票 上海-首尔 (往返)\n出行类型：\n差旅\n    \n乘机人：\n黄忆卓 \n    \n    \n预订信息\n        \n去程航班：\n        \n- 航班信息：\n上海-首尔 \n        \n- 出发日期：\n2026年6月8日 周一\n    \n        \n回程航班：\n        \n- 航班信息：\n首尔-上海 \n        \n- 出发日期：\n2026年6月12日 周五\n    \n价格信息\n    \n公司支付：¥ 2824.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：黄忆卓 预订信息 去程航班： - 航班信息：上海-首尔 - 出发日期：2026年6月8日 周一 回程航班： - 航班信息：首尔-上海 - 出发日期：2026年6月12日 周五 价格信息 公司支付：¥ 2824.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-05 12:21\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780633298065\nlabel_ids\nIMPORTANT\nmessage_id\nWkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a224ece.82c463ae.2e234.ac4aSMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nWkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ==\nto\nmail_address\nhuangyizhuo.1992@bytedance.com\nname",
+      "departure_coord": {
+        "query": "首尔, China",
+        "city": "首尔",
+        "lat": 39.9104601,
+        "lon": 116.3483754,
+        "display_name": "首都医科大学附属北京儿童医院, 南礼士路, 月坛街道, 首都功能核心区, 西城区, 北京市, 100032, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "上海",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "黄忆卓",
+      "departure_city": "上海",
+      "destination_city": "首尔",
+      "departure_time": "2026-06-08 00:00",
+      "return_time": "2026-06-12 00:00",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-05 12:21",
+      "approval_time": "",
+      "booking_lead_days": 2.5,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": 5092.44,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": false,
+      "source_channel": "booking",
+      "booking_template_type": "flight / hotel",
+      "source_message_id": "WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ==",
+      "source_message_ids": [
+        "WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ==",
+        "aEZBOHB1NjA4VzBiRGI0eTQzOUlCUmsvbGwwPQ=="
+      ],
+      "source_subject": "【差旅】黄忆卓 预订了机票 上海-首尔 (往返) | 【差旅】黄忆卓预订了酒店 6月8日 周一 至 6月12日 周五 (酒店当地时间)",
+      "source_sent_at": "2026-06-05 12:21",
+      "raw_excerpt": "【差旅】黄忆卓 预订了机票 上海-首尔 (往返) 出行类型： 差旅 乘机人： 黄忆卓 预订信息 去程航班： - 航班信息： 上海-首尔 - 出发日期： 2026年6月8日 周一 回程航班： - 航班信息： 首尔-上海 - 出发日期： 2026年6月12日 周五 价格信息 公司支付：¥ 2824.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「 差旅值班号 」。 ----------------- Hi Travel 高效预订，经济出行 出行类型：差旅 乘机人：黄忆卓 预订信息 去程航班： - 航班信息：上海-首尔 - 出发日期：2026年6月8日 周一 回程航班： - 航班信息：首尔-上海 - 出发日期：2026年6月12日 周五 价格信息 公司支付：¥ 2824.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行 attachments cc mail_address yuqinan@bytedance.com name date_formatted 2026-06-05 12:21 folder_id INBOX head_from mail_address travel@bytedance.com name 员工商旅系统(请勿回复/no reply) internal_date 1780633298065 label_ids IMPORTANT message_id WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ== message_state 1 message_state_text received references security_level smtp_message_id 6a224ece.82c463ae.2e234.ac4aSMTPIN_ADDED_BROKEN@mx.google.com thread_id WkdrckRTdHlVemUxdDJUQUNnbkZTRHdpZDlnPQ== to mail_address huangyizhuo.1992@bytedance.com name\n---\n【差旅】黄忆卓预订了酒店 6月8日 周一 至 6月12日 周五 (酒店当地时间) 出行类型： 差旅 入住人： 黄忆卓 预订信息 入住城市： 首尔 入离店日期： 6月8日 周一 至 6月12日 周五 取消政策： 06月07日 23:59 前免费取消 (酒店当地时间) 价格信息 公司支付：¥ 5092.44 本邮件仅做预订通知，如差旅计划发生变更，请同学及时",
+      "departure_coord": {
+        "query": "上海, China",
+        "city": "上海",
+        "lat": 31.2312707,
+        "lon": 121.4700152,
+        "display_name": "上海市, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "首尔",
+        "city": "首尔",
+        "lat": 37.5666791,
+        "lon": 126.9782914,
+        "display_name": "首尔特别市, 韩国 / 南韓",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "江家徵",
+      "departure_city": "厦门",
+      "destination_city": "杭州",
+      "departure_time": "2026-06-09 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-04 00:29",
+      "approval_time": "",
+      "booking_lead_days": 5.0,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": 1399.99,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "train / hotel",
+      "source_message_id": "MzZIaEs3WTBiVVlSa0hZdlFySUxzWHR2VjJjPQ==",
+      "source_message_ids": [
+        "MzZIaEs3WTBiVVlSa0hZdlFySUxzWHR2VjJjPQ==",
+        "dDZwL3pxczlldjlNMXVGRHRlV1BFL3ZFb0xRPQ=="
+      ],
+      "source_subject": "【差旅】江家徵预订了Hi Travel火车票 厦门北-杭州东 2026年6月9日 周二 | 【差旅】江家徵预订了酒店 6月9日 周二 至 6月11日 周四",
+      "source_sent_at": "2026-06-04 00:29",
+      "raw_excerpt": "【差旅】江家徵预订了Hi Travel火车票 厦门北-杭州东 2026年6月9日 周二 出行类型： 差旅 乘车人： 江家徵 预订信息 车次信息： 厦门北-杭州东 出发日期： 2026年6月9日 周二 价格信息 公司支付：¥479 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「 差旅值班号 」。 ----------------- Hi Travel 高效预订，经济出行 出行类型：差旅 乘车人：江家徵 预订信息 车次信息：厦门北-杭州东 出发日期：2026年6月9日 周二 价格信息 公司支付：¥479 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系 「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行 attachments cc mail_address yuqinan@bytedance.com name date_formatted 2026-06-04 00:29 folder_id INBOX head_from mail_address travel@bytedance.com name 员工商旅系统(请勿回复/no reply) internal_date 1780504152311 label_ids IMPORTANT message_id MzZIaEs3WTBiVVlSa0hZdlFySUxzWHR2VjJjPQ== message_state 1 message_state_text received references security_level smtp_message_id 6a205651.b2955b7d.de0b3.5105SMTPIN_ADDED_BROKEN@mx.google.com thread_id MzZIaEs3WTBiVVlSa0hZdlFySUxzWHR2VjJjPQ== to mail_address jiazheng.jiang@bytedance.com name\n---\n【差旅】江家徵预订了酒店 6月9日 周二 至 6月11日 周四 出行类型： 差旅 入住人： 江家徵 预订信息 入住城市： 杭州 入离店日期： 6月9日 周二 至 6月11日 周四 取消政策： 06月09日 18:00 前免费取消 (酒店当地时间) 价格信息 公司支付：¥ 1399.99 本邮件仅做预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属leader实际出差情况。 如有任何问题或对该订单有异议，可直接联系「 差旅值班号 」。 ----------------- Hi Travel 高效预",
+      "departure_coord": {
+        "query": "厦门, China",
+        "city": "厦门",
+        "lat": 24.5438732,
+        "lon": 118.0768065,
+        "display_name": "厦门市, 福建省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "杭州",
+        "city": "杭州",
+        "lat": 30.2489634,
+        "lon": 120.2052342,
+        "display_name": "杭州市, 浙江省, 中国",
+        "geocoder": "nominatim"
+      }
+    },
+    {
+      "name": "江家徵",
+      "departure_city": "杭州",
+      "destination_city": "威海",
+      "departure_time": "2026-06-11 00:00",
+      "return_time": "",
+      "reason": "BOOKING_NOTICE_UNDISCLOSED",
+      "booking_time": "2026-06-04 00:36",
+      "approval_time": "",
+      "booking_lead_days": 7.0,
+      "is_booked_before_approval": null,
+      "cabin_class": "",
+      "seat_class": "",
+      "is_over_cabin_policy": null,
+      "hotel_price_per_night": null,
+      "hotel_standard_amount": null,
+      "hotel_total_amount": null,
+      "is_hotel_over_policy": null,
+      "over_policy_reason": "",
+      "duplicate_booking_flag": false,
+      "is_first_time_destination": true,
+      "source_channel": "booking",
+      "booking_template_type": "flight",
+      "source_message_id": "MWRNcFJlbWdjYlZBYVFJZzF3ZFRVQmVUNkxvPQ==",
+      "source_message_ids": [
+        "MWRNcFJlbWdjYlZBYVFJZzF3ZFRVQmVUNkxvPQ=="
+      ],
+      "source_subject": "【差旅】江家徵 预订了机票 杭州-威海 (单程)",
+      "source_sent_at": "2026-06-04 00:36",
+      "raw_excerpt": "【差旅】江家徵 预订了机票 杭州-威海 (单程)\n出行类型：\n差旅\n    \n乘机人：\n江家徵 \n    \n    \n预订信息\n        \n航班信息：\n杭州-威海 \n        \n出发日期：\n2026年6月11日 周四\n    \n    \n价格信息\n    \n公司支付：¥ 760.00\n    本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。\n    如有任何问题或对该订单存在异议，请联系「\n差旅值班号\n」。\n    \n-----------------\n    \nHi Travel\n    \n高效预订，经济出行\n出行类型：差旅 乘机人：江家徵 预订信息 航班信息：杭州-威海 出发日期：2026年6月11日 周四 价格信息 公司支付：¥ 760.00 本邮件为预订通知，如差旅计划发生变更，请同学及时退改，并自行知会直属上级实际出差情况。 如有任何问题或对该订单存在异议，请联系「差旅值班号」。 ----------------- Hi Travel 高效预订，经济出行\nattachments\ncc\nmail_address\nyuqinan@bytedance.com\nname\ndate_formatted\n2026-06-04 00:36\nfolder_id\nINBOX\nhead_from\nmail_address\ntravel@bytedance.com\nname\n员工商旅系统(请勿回复/no reply)\ninternal_date\n1780504602093\nlabel_ids\nIMPORTANT\nmessage_id\nMWRNcFJlbWdjYlZBYVFJZzF3ZFRVQmVUNkxvPQ==\nmessage_state\n1\nmessage_state_text\nreceived\nreferences\nsecurity_level\nsmtp_message_id\n6a205815.abc002d6.3264f3.9707SMTPIN_ADDED_BROKEN@mx.google.com\nthread_id\nMWRNcFJlbWdjYlZBYVFJZzF3ZFRVQmVUNkxvPQ==\nto\nmail_address\njiazheng.jiang@bytedance.com\nname",
+      "departure_coord": {
+        "query": "杭州, China",
+        "city": "杭州",
+        "lat": 30.2489634,
+        "lon": 120.2052342,
+        "display_name": "杭州市, 浙江省, 中国",
+        "geocoder": "nominatim"
+      },
+      "destination_coord": {
+        "query": "威海",
+        "city": "威海",
+        "lat": 37.5120997,
+        "lon": 122.1152599,
+        "display_name": "威海市, 山东省, 264200, 中国",
+        "geocoder": "nominatim"
+      }
+    }
+  ]
+};
+
+    function equirectangular(coord) {
+      if (!coord || typeof coord.lon !== 'number' || typeof coord.lat !== 'number') return null;
+      const x = (coord.lon + 180) / 360 * 100;
+      const y = (90 - coord.lat) / 180 * 60;
+      return [Number(x.toFixed(4)), Number(y.toFixed(4))];
+    }
+
+    function formatTime(text) {
+      return text || '--';
+    }
+
+    function formatLeadDays(value) {
+      if (value === null || value === undefined || value === '') return '--';
+      return `${Number(value).toFixed(1)} 天`;
+    }
+
+    function tripWindowLabel(row) {
+      return `${formatTime(row.departure_time)} → ${formatTime(row.return_time)}`;
+    }
+
+    function isLateBooking(row) {
+      return typeof row.booking_lead_days === 'number' && row.booking_lead_days < 3;
+    }
+
+    function TravelApp() {
+      const routeRef = React.useRef(null);
+      const destinationRef = React.useRef(null);
+      const reasonRef = React.useRef(null);
+      const radarRef = React.useRef(null);
+      const ganttRef = React.useRef(null);
+
+      React.useEffect(() => {
+        const charts = [];
+        const trips = (DATA.trips || []).filter(t => t.departure_coord && t.destination_coord);
+
+        if (routeRef.current) {
+          const chart = echarts.init(routeRef.current);
+          const departureSeen = new Map();
+          const regularDestinations = new Map();
+          const firstDestinations = new Map();
+          const regularLineData = [];
+          const firstLineData = [];
+          trips.forEach(item => {
+            const from = equirectangular(item.departure_coord);
+            const to = equirectangular(item.destination_coord);
+            if (!from || !to) return;
+            departureSeen.set(item.departure_city, from);
+            const line = { coords: [from, to], value: `${item.name}｜${item.departure_city} → ${item.destination_city}`, firstTime: !!item.is_first_time_destination };
+            if (item.is_first_time_destination) {
+              firstDestinations.set(`${item.name}-${item.destination_city}`, { name: item.destination_city, city: item.destination_city, traveler: item.name, value: to });
+              firstLineData.push(line);
+            } else {
+              regularDestinations.set(item.destination_city, to);
+              regularLineData.push(line);
+            }
+          });
+          chart.setOption({
+            grid: { left: 0, right: 0, top: 0, bottom: 0 },
+            xAxis: { type: 'value', min: 0, max: 100, show: false },
+            yAxis: { type: 'value', min: 0, max: 60, inverse: true, show: false },
+            tooltip: {
+              backgroundColor: 'rgba(6,18,34,0.92)',
+              borderColor: 'rgba(79,214,255,0.25)',
+              textStyle: { color: '#eaf5ff' },
+              formatter(params) {
+                if (params.seriesName === '常规线路' || params.seriesName === '首次线路') return `${params.data.value}${params.data.firstTime ? '<br/>⚠️ 首次差旅地' : ''}`;
+                if (params.seriesName === '首次差旅地') return `⚠️ ${params.data.traveler} 首次到达 ${params.data.city}`;
+                return params.data.name || '';
+              }
+            },
+            series: [
+              {
+                name: '常规线路',
+                type: 'lines',
+                coordinateSystem: 'cartesian2d',
+                effect: { show: true, constantSpeed: 32, trailLength: 0.16, symbolSize: 5, color: '#4fd6ff' },
+                lineStyle: { width: 1.5, color: 'rgba(79,214,255,0.34)', curveness: 0.26, opacity: 0.7 },
+                data: regularLineData
+              },
+              {
+                name: '首次线路',
+                type: 'lines',
+                coordinateSystem: 'cartesian2d',
+                effect: { show: true, constantSpeed: 40, trailLength: 0.24, symbolSize: 7, color: '#ff5d73' },
+                lineStyle: { width: 2.4, color: 'rgba(255,93,115,0.78)', curveness: 0.34, opacity: 0.95 },
+                data: firstLineData
+              },
+              {
+                name: '出发城市',
+                type: 'scatter',
+                coordinateSystem: 'cartesian2d',
+                symbolSize: 8,
+                itemStyle: { color: '#3fe0b8', shadowBlur: 10, shadowColor: 'rgba(63,224,184,0.6)' },
+                label: { show: false },
+                data: Array.from(departureSeen.entries()).map(([name, value]) => ({ name, value }))
+              },
+              {
+                name: '常规目的地',
+                type: 'effectScatter',
+                coordinateSystem: 'cartesian2d',
+                rippleEffect: { scale: 3, brushType: 'stroke' },
+                symbolSize: 10,
+                itemStyle: { color: '#ffb15c' },
+                label: { show: false },
+                data: Array.from(regularDestinations.entries()).map(([name, value]) => ({ name, value }))
+              },
+              {
+                name: '首次差旅地',
+                type: 'effectScatter',
+                coordinateSystem: 'cartesian2d',
+                rippleEffect: { scale: 5, brushType: 'stroke' },
+                symbolSize: 14,
+                itemStyle: { color: '#ff5d73', shadowBlur: 18, shadowColor: 'rgba(255,93,115,0.56)' },
+                label: { show: false },
+                data: Array.from(firstDestinations.values())
+              }
+            ]
+          });
+          charts.push(chart);
+        }
+
+        if (destinationRef.current) {
+          const chart = echarts.init(destinationRef.current);
+          const rows = (DATA.rankings && DATA.rankings.destination_cities) || [];
+          chart.setOption({
+            grid: { left: 70, right: 16, top: 8, bottom: 20, containLabel: true },
+            xAxis: { type: 'value', axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+            yAxis: { type: 'category', inverse: true, data: rows.map(r => r.name), axisLabel: { color: '#dceaff', width: 84, overflow: 'truncate' }, axisLine: { show: false }, axisTick: { show: false } },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter(params) { const item = rows[params[0].dataIndex] || {}; return `${item.name}<br/>总行程：${item.value || 0}<br/>首次差旅地：${item.first_time_count || 0}`; } },
+            series: [{ type: 'bar', data: rows.map(r => ({ value: r.value, itemStyle: { borderRadius: [0, 8, 8, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, r.first_time_count > 0 ? [{ offset: 0, color: '#ff7d8f' }, { offset: 1, color: '#ffd76a' }] : [{ offset: 0, color: '#4d7cff' }, { offset: 1, color: '#4fd6ff' }]) } })), barWidth: 10, label: { show: true, position: 'right', color: '#dceaff' } }]
+          });
+          charts.push(chart);
+        }
+
+        if (reasonRef.current) {
+          const chart = echarts.init(reasonRef.current);
+          const rows = (DATA.rankings && DATA.rankings.reasons) || [];
+          const singleReason = rows.length <= 1;
+          chart.setOption({
+            grid: singleReason ? { left: 86, right: 18, top: 18, bottom: 18, containLabel: true } : { left: 40, right: 12, top: 10, bottom: 28, containLabel: true },
+            xAxis: singleReason
+              ? { type: 'value', minInterval: 1, axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } }
+              : { type: 'category', data: rows.map(r => r.name), axisLabel: { color: '#9ab2d7', interval: 0, rotate: 18 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.12)' } } },
+            yAxis: singleReason
+              ? { type: 'category', data: rows.map(r => r.name), axisLabel: { color: '#dceaff' }, axisLine: { show: false }, axisTick: { show: false } }
+              : { type: 'value', minInterval: 1, axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+            series: [{ type: 'bar', data: rows.map(r => r.value), barWidth: singleReason ? 18 : '42%', barMaxWidth: 28, itemStyle: { borderRadius: singleReason ? [0, 8, 8, 0] : [8, 8, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, singleReason ? 1 : 0, singleReason ? 0 : 1, [{ offset: 0, color: '#e67dff' }, { offset: 1, color: '#7a5cff' }]) }, label: { show: true, position: singleReason ? 'right' : 'top', color: '#eaf5ff' } }]
+          });
+          charts.push(chart);
+        }
+
+        if (radarRef.current) {
+          const chart = echarts.init(radarRef.current);
+          const radarRows = (DATA.compliance && DATA.compliance.radar) || [];
+          chart.setOption({
+            radar: {
+              radius: '58%',
+              splitNumber: 5,
+              axisName: { color: '#dceaff', fontSize: 10 },
+              splitArea: { areaStyle: { color: ['rgba(77,124,255,0.04)', 'rgba(77,124,255,0.08)'] } },
+              splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+              axisLine: { lineStyle: { color: 'rgba(255,255,255,0.12)' } },
+              indicator: radarRows.map(item => ({ name: item.name, max: 100 }))
+            },
+            series: [{ type: 'radar', symbol: 'circle', symbolSize: 6, lineStyle: { width: 2, color: '#79d8ff' }, areaStyle: { color: 'rgba(79,214,255,0.22)' }, itemStyle: { color: '#ffcf6d' }, data: [{ value: radarRows.map(item => item.value || 0), name: '合规健康度' }] }]
+          });
+          charts.push(chart);
+        }
+
+        if (ganttRef.current) {
+          const chart = echarts.init(ganttRef.current);
+          const trips = (DATA.trips || []).slice().sort((a, b) => (a.departure_time || '').localeCompare(b.departure_time || ''));
+          if (!trips.length) {
+            chart.setOption({ title: { text: '暂无行程数据', left: 'center', top: 'middle', textStyle: { color: '#9ab2d7', fontSize: 12 } } });
+          } else {
+            const toTimestamp = (value) => {
+              if (!value) return NaN;
+              const normalized = String(value).trim().replace(' ', 'T');
+              const ts = Date.parse(normalized);
+              return Number.isFinite(ts) ? ts : NaN;
+            };
+            const formatTs = (value) => {
+              if (!Number.isFinite(value)) return '--';
+              return new Date(value).toLocaleString();
+            };
+            const categories = Array.from(new Set(trips.map(item => item.name)));
+            const starts = trips.map(item => toTimestamp(item.departure_time)).filter(Number.isFinite);
+            const ends = trips.map(item => toTimestamp(item.return_time)).filter(Number.isFinite);
+            if (trips.length <= 3) {
+              chart.dispose();
+              ganttRef.current.innerHTML = trips.map(item => `
+                <div style="padding:10px 12px; margin-bottom:10px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid ${item.is_first_time_destination ? 'rgba(255,93,115,0.45)' : 'rgba(79,214,255,0.18)'}; box-shadow:${item.is_first_time_destination ? '0 0 18px rgba(255,93,115,0.18)' : 'none'};">
+                  <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:6px;">
+                    <strong style="color:#dceaff; font-size:13px;">${item.name}</strong>
+                    <span style="color:${item.is_first_time_destination ? '#ff9dad' : '#9ab2d7'}; font-size:11px;">${item.is_first_time_destination ? '首次差旅地' : '常规行程'}</span>
+                  </div>
+                  <div style="height:10px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:8px;">
+                    <div style="width:100%; height:100%; background:${item.is_first_time_destination ? 'linear-gradient(90deg,#ff7d8f,#ffb36b)' : 'linear-gradient(90deg,#4fd6ff,#4d7cff)'};"></div>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px 14px; color:#9ab2d7; font-size:11px; line-height:1.6;">
+                    <span>目的地：${item.destination_city || '--'}</span>
+                    <span>出发：${item.departure_time || '--'}</span>
+                    <span>返程：${item.return_time || '--'}</span>
+                    <span>事由：${item.reason || '--'}</span>
+                  </div>
+                </div>
+              `).join('');
+            } else if (!starts.length || !ends.length) {
+              chart.setOption({ title: { text: '时间轴缺少可用时间字段', left: 'center', top: 'middle', textStyle: { color: '#9ab2d7', fontSize: 12 } } });
+            } else {
+              const colors = ['#4fd6ff', '#4d7cff', '#3fe0b8', '#ffb15c', '#e67dff', '#79f0ff', '#6be6a8', '#ffd36b', '#83a8ff'];
+              chart.setOption({
+                grid: { left: 96, right: 20, top: 16, bottom: 26, containLabel: true },
+                xAxis: { type: 'time', min: Math.min.apply(null, starts), max: Math.max.apply(null, ends), axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+                yAxis: { type: 'category', data: categories, axisLabel: { color: '#dceaff' }, axisTick: { show: false }, axisLine: { show: false } },
+                tooltip: { formatter(params) { if (params.seriesType === 'effectScatter') return `⚠️ ${params.data.name}<br/>首次差旅地：${params.data.destination}`; const v = params.data.value; return `${params.data.name}<br/>${v[3]}<br/>${formatTs(v[1])} ~ ${formatTs(v[2])}<br/>${v[4]}${v[5] ? '<br/>⚠️ 首次差旅地' : ''}`; } },
+                series: [{
+                  type: 'custom',
+                  renderItem(params, api) {
+                    const categoryIndex = api.value(0);
+                    const start = api.coord([api.value(1), categoryIndex]);
+                    const end = api.coord([api.value(2), categoryIndex]);
+                    const bandHeight = api.size([0, 1])[1];
+                    const height = Math.max(12, Math.min(26, bandHeight * 0.56));
+                    const isFirst = !!api.value(5);
+                    const rectShape = echarts.graphic.clipRectByRect({ x: start[0], y: start[1] - height / 2, width: Math.max(2, end[0] - start[0]), height }, { x: params.coordSys.x, y: params.coordSys.y, width: params.coordSys.width, height: params.coordSys.height });
+                    if (!rectShape) return null;
+                    return { type: 'rect', shape: rectShape, style: api.style({ fill: api.visual('color'), shadowBlur: isFirst ? 16 : 10, shadowColor: isFirst ? 'rgba(255,93,115,0.56)' : api.visual('color'), stroke: isFirst ? '#ff5d73' : 'rgba(255,255,255,0.06)', lineWidth: isFirst ? 2 : 1, opacity: 0.94 }) };
+                  },
+                  encode: { x: [1, 2], y: 0 },
+                  data: trips.map((item, idx) => ({ name: item.name, value: [categories.indexOf(item.name), toTimestamp(item.departure_time), toTimestamp(item.return_time), item.destination_city, item.reason, item.is_first_time_destination ? 1 : 0], itemStyle: { color: item.is_first_time_destination ? '#ff7d8f' : colors[idx % colors.length] } })).filter(item => Number.isFinite(item.value[1]) && Number.isFinite(item.value[2]))
+                }, {
+                  type: 'effectScatter',
+                  coordinateSystem: 'cartesian2d',
+                  rippleEffect: { scale: 4, brushType: 'stroke' },
+                  symbolSize: 0,
+                  itemStyle: { color: '#ff5d73', shadowBlur: 16, shadowColor: 'rgba(255,93,115,0.56)' },
+                  data: trips.filter(item => item.is_first_time_destination).map(item => ({ name: item.name, destination: item.destination_city, value: [toTimestamp(item.departure_time), categories.indexOf(item.name)] })).filter(item => Number.isFinite(item.value[0]))
+                }]
+              });
+            }
+          }
+          charts.push(chart);
+        }
+
+        const onResize = () => charts.forEach(chart => chart.resize());
+        window.addEventListener('resize', onResize);
+        return () => {
+          window.removeEventListener('resize', onResize);
+          charts.forEach(chart => chart.dispose());
+        };
+      }, []);
+
+      const summary = DATA.summary || {};
+      const metrics = (DATA.compliance && DATA.compliance.metrics) || {};
+      const stats = [
+        { label: 'Total Trips', value: summary.total_trips || 0, hint: '当前时间窗内命中的差旅行程' },
+        { label: 'Active People', value: summary.active_people || 0, hint: '全量解析到的差旅人' },
+        { label: 'Ongoing Trips', value: summary.ongoing_trips || 0, hint: '当前仍在行程中的任务' },
+        { label: 'First Time Dest.', value: summary.first_time_destinations || 0, hint: '首次差旅地已高亮' },
+        { label: 'Compliance Alerts', value: summary.compliance_alerts || 0, hint: '晚订 / 未批先订 / 超标' },
+        { label: 'Avg Lead Days', value: metrics.booking_lead_days && metrics.booking_lead_days.avg_days != null ? metrics.booking_lead_days.avg_days : '--', hint: '已识别订单的平均提前天数' }
+      ];
+      const radarItems = [
+        { name: '晚订', value: (metrics.booking_lead_days && metrics.booking_lead_days.late_booking_count) || 0 },
+        { name: '先订后批', value: (metrics.is_booked_before_approval && metrics.is_booked_before_approval.violation_count) || 0 },
+        { name: '舱位超标', value: (metrics.is_over_cabin_policy && metrics.is_over_cabin_policy.violation_count) || 0 },
+        { name: '酒店超标', value: (metrics.is_hotel_over_policy && metrics.is_hotel_over_policy.violation_count) || 0 },
+        { name: '重复预订', value: (metrics.duplicate_booking_flag && metrics.duplicate_booking_flag.violation_count) || 0 },
+        { name: '首次差旅地', value: (metrics.is_first_time_destination && metrics.is_first_time_destination.first_time_count) || 0 },
+      ];
+      const rows = (DATA.trips || []).slice().sort((a, b) => (b.departure_time || '').localeCompare(a.departure_time || ''));
+      const violationGroups = [
+        {
+          key: 'late',
+          label: '晚订',
+          rows: rows.filter(row => isLateBooking(row)),
+          detail: row => `预订提前 ${formatLeadDays(row.booking_lead_days)}`
+        },
+        {
+          key: 'approval',
+          label: '未批先订',
+          rows: rows.filter(row => row.is_booked_before_approval === true),
+          detail: () => '命中先订后批规则'
+        },
+        {
+          key: 'transport',
+          label: '交通超标',
+          rows: rows.filter(row => row.is_over_cabin_policy === true),
+          detail: row => row.over_policy_reason || '命中交通舱位超标规则'
+        },
+        {
+          key: 'hotel',
+          label: '酒店超标',
+          rows: rows.filter(row => row.is_hotel_over_policy === true),
+          detail: row => row.over_policy_reason || '命中酒店差标超标规则'
+        }
+      ];
+      const violationTotal = violationGroups.reduce((sum, group) => sum + group.rows.length, 0);
+      const routeTrips = (DATA.trips || []).filter(t => t.departure_coord && t.destination_coord).length;
+
+      const renderBadges = row => {
+        const items = [];
+        if (row.is_first_time_destination) items.push(<span className="badge badge-first" key="first">首次差旅地</span>);
+        if (isLateBooking(row)) items.push(<span className="badge badge-alert" key="late">晚订</span>);
+        if (row.is_booked_before_approval === true) items.push(<span className="badge badge-alert" key="approval">先订后批</span>);
+        if (row.is_over_cabin_policy === true) items.push(<span className="badge badge-alert" key="cabin">舱位超标</span>);
+        if (row.is_hotel_over_policy === true) items.push(<span className="badge badge-alert" key="hotel">酒店超标</span>);
+        if (row.duplicate_booking_flag) items.push(<span className="badge badge-alert" key="dup">重复预订</span>);
+        if (!items.length) items.push(<span className="badge badge-good" key="ok">常规行程</span>);
+        return items;
+      };
+
+      return (
+        <div className="card-container w-full min-w-[300px]" data-markable="1">
+          <div className="travel-shell">
+            <div className="header">
+              <div>
+                <div className="title">TEAM TRAVEL OPS SCREEN V2.0</div>
+                <div className="subtitle">UK / EU / JP POP BD 团队全景差旅大屏 · 合规字段升级 + 首次差旅地强提醒</div>
+              </div>
+              <div className="stamp">Generated at {DATA.generated_at || '--'}<br/>Version {DATA.version || '2.0'}</div>
+            </div>
+
+            <div className="stats">
+              {stats.map(card => (
+                <div className="stat" key={card.label}>
+                  <div className="stat-label">{card.label}</div>
+                  <div className="stat-value">{card.value}</div>
+                  <div className="stat-hint">{card.hint}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="main-grid">
+              <div className="panel">
+                <div className="panel-title"><span>全球航线飞线总览</span><span>{routeTrips} 条有效航线｜首次差旅地 {(summary.first_time_destinations || 0)} 个</span></div>
+                <div className="route-shell">
+                  <svg className="route-bg" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true">
+                    <line className="gridline" x1="0" y1="100" x2="1200" y2="100"></line>
+                    <line className="gridline" x1="0" y1="200" x2="1200" y2="200"></line>
+                    <line className="gridline" x1="0" y1="300" x2="1200" y2="300"></line>
+                    <line className="gridline" x1="0" y1="400" x2="1200" y2="400"></line>
+                    <line className="gridline" x1="0" y1="500" x2="1200" y2="500"></line>
+                    <line className="gridline" x1="200" y1="0" x2="200" y2="600"></line>
+                    <line className="gridline" x1="400" y1="0" x2="400" y2="600"></line>
+                    <line className="gridline" x1="600" y1="0" x2="600" y2="600"></line>
+                    <line className="gridline" x1="800" y1="0" x2="800" y2="600"></line>
+                    <line className="gridline" x1="1000" y1="0" x2="1000" y2="600"></line>
+                    <path className="continent" d="M100 170 L180 120 L260 130 L315 100 L380 105 L442 162 L425 220 L356 250 L310 330 L238 345 L188 302 L135 300 L110 240 Z"></path>
+                    <path className="continent" d="M360 270 L420 285 L455 335 L425 430 L385 495 L355 430 L325 355 Z"></path>
+                    <path className="continent" d="M525 128 L598 90 L710 108 L815 122 L890 156 L960 170 L1015 210 L1065 258 L1050 320 L980 345 L930 320 L875 342 L815 300 L758 275 L700 282 L650 258 L610 246 L565 208 Z"></path>
+                    <path className="continent" d="M880 370 L925 355 L968 382 L1010 440 L998 495 L940 520 L898 494 L886 430 Z"></path>
+                  </svg>
+                  <div ref={routeRef} className="chart-lg"></div>
+                </div>
+              </div>
+
+              <div className="right-grid">
+                <div className="panel">
+                  <div className="panel-title"><span>目的地热度 Top 12</span><span>{((DATA.rankings && DATA.rankings.destination_cities) || []).length} 城市</span></div>
+                  <div ref={destinationRef} className="chart-md"></div>
+                </div>
+                <div className="panel">
+                  <div className="panel-title"><span>差旅事由分布</span><span>{((DATA.rankings && DATA.rankings.reasons) || []).length} 桶</span></div>
+                  <div ref={reasonRef} className="chart-md"></div>
+                </div>
+                <div className="panel">
+                  <div className="panel-title"><span>合规健康度雷达</span><span>{(DATA.compliance && DATA.compliance.alert_count) || 0} 条需人工复核</span></div>
+                  <div ref={radarRef} className="chart-md"></div>
+                  <div className="radar-summary">
+                    {radarItems.map(item => (
+                      <div className="radar-metric" key={item.name}>
+                        <div className="metric-name">{item.name}</div>
+                        <div className="metric-value">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="warning-grid">
+              <div className="panel">
+                <div className="panel-title"><span>违规与合规预警看板</span><span>{violationTotal ? `命中 ${violationTotal} 条违规预警` : '四类违规均未命中'}</span></div>
+                <div className={`violation-overview ${violationTotal ? 'alert' : 'safe'}`}>
+                  <div>
+                    <strong>{violationTotal ? `发现 ${violationTotal} 条违规预警` : '无违规记录'}</strong>
+                    <span>{violationTotal ? '按“晚订 / 未批先订 / 交通超标 / 酒店超标”单列展开，管理动作可直接定位到人和行程。' : '当前时间窗内四类违规场景全部为 0，已显眼标记为“无违规记录”。'}</span>
+                  </div>
+                  <div className={violationTotal ? 'badge badge-alert' : 'badge badge-good'}>{violationTotal ? '需立即复核' : '全部合规'}</div>
+                </div>
+                <div className="violation-board">
+                  {violationGroups.map(group => (
+                    <div className={`violation-column ${group.rows.length ? '' : 'safe'}`} key={group.key}>
+                      <div className="violation-head">
+                        <strong>{group.label}</strong>
+                        <span className="violation-count">{group.rows.length}</span>
+                      </div>
+                      {group.rows.length ? (
+                        <div className="violation-list">
+                          {group.rows.map((row, idx) => (
+                            <div className="violation-item" key={`${group.key}-${row.name || 'unknown'}-${idx}`}>
+                              <strong>{row.name || '--'} · {group.label}</strong>
+                              <div className="violation-route">{row.departure_city || '--'} → {row.destination_city || '--'}</div>
+                              <div className="violation-meta">{tripWindowLabel(row)}<br/>规则说明：{group.detail(row)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="violation-empty">没有命中 {group.label}<br/>当前数据保持合规</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="footer-grid">
+              <div className="panel">
+                <div className="panel-title"><span>差旅时间轴（Gantt）</span><span>{(DATA.people || []).length} 人｜红色呼吸点 = 首次差旅地</span></div>
+                <div ref={ganttRef} className="chart-sm"></div>
+              </div>
+              <div className="panel">
+                <div className="panel-title"><span>最新差旅行程明细</span><span>{rows.length} 条</span></div>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>姓名</th>
+                        <th>线路</th>
+                        <th>行程</th>
+                        <th>预订提前</th>
+                        <th>强提醒 / 合规</th>
+                        <th>事由</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length ? rows.map((row, idx) => (
+                        <tr key={`${row.name}-${idx}`}>
+                          <td>{row.name || '--'}</td>
+                          <td>{row.departure_city || '--'} → {row.destination_city || '--'}</td>
+                          <td>
+                            <div>{formatTime(row.departure_time)}</div>
+                            <div className="muted">至 {formatTime(row.return_time)}</div>
+                          </td>
+                          <td>{formatLeadDays(row.booking_lead_days)}</td>
+                          <td>
+                            <div className="badge-row">{renderBadges(row)}</div>
+                            {row.over_policy_reason ? <div className="muted" style={{ marginTop: '6px', fontSize: '11px', lineHeight: 1.4 }}>{row.over_policy_reason}</div> : null}
+                          </td>
+                          <td>{row.reason || '--'}</td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan="6"><div className="empty">暂无命中记录</div></td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<TravelApp />);
+  </script>
+</body>
+</html>

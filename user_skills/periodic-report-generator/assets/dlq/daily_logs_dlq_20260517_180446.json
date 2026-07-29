@@ -1,0 +1,22 @@
+{
+  "type": "Daily_Logs_ReadAfterWriteMismatch",
+  "timestamp": "2026-05-17T18:04:46.346094",
+  "sheet_url": "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+  "sheet_name": "Daily_Logs",
+  "row_index": 2,
+  "expected": [
+    "DL-20260517",
+    "2026-05-17",
+    "多会话控制台v1.0 MVP完成D2+D3冲刺：左侧五态卡片、右侧Trace终端、SSE实时接通、指数退避重连、日志筛选与异常高亮已打通，前端已上线；后端仍受平台链路超时阻塞待恢复。另完成heartbeat-inspector日常巡检。"
+  ],
+  "read_back": [
+    "DL-20260513",
+    "2026-05-13",
+    "1. 记忆图谱升维：构建本地双链+飞书 Bitable 双轨记忆网络。2. 情报高保真萃取：溯源并交付《姚顺宇 AI 思想研报》。3. 巡检引擎手术：重构 heartbeat-inspector 批量提取逻辑防超时。4. 纪律锁死：排查异动，阻断“盖楼”机制。"
+  ],
+  "snapshots": {
+    "pre": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_pre_20260517_180439.xlsx",
+    "post": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_post_20260517_180446.xlsx"
+  },
+  "note": "⚠️[数据断链_待自愈] 写后即读不一致，已熔断并落 DLQ。"
+}

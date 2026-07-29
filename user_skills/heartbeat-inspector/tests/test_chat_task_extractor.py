@@ -8,8 +8,8 @@ from scripts import chat_task_extractor as ext
 
 
 class TestChatTaskExtractor(unittest.TestCase):
-    def test_ensure_task_name_bracketed(self):
-        self.assertEqual(ext._ensure_task_name_bracketed("确认 A（周五）"), "【确认 A（周五）】")
+    def test_ensure_task_name_preserves_original_text(self):
+        self.assertEqual(ext._ensure_task_name_bracketed("确认 A（周五）"), "确认 A（周五）")
         self.assertEqual(ext._ensure_task_name_bracketed("【确认 A（周五）】"), "【确认 A（周五）】")
 
     def test_relative_time_anchoring_in_due_time(self):
@@ -53,7 +53,7 @@ class TestChatTaskExtractor(unittest.TestCase):
         ]
 
         out = ext._postprocess_task(task=task, source_messages_full=source_messages_full)
-        self.assertTrue(out["task_name"].startswith("【") and out["task_name"].endswith("】"))
+        self.assertEqual(out["task_name"], "确认是否纳入抖音商家及招募标准（今早11点前）")
         self.assertIn("负责人", out.get("suggestion_reply", ""))
         self.assertIn("DDL", out.get("suggestion_reply", ""))
         self.assertIn("【任务名称】", out.get("suggestion_reply", ""))
@@ -178,8 +178,8 @@ class TestChatTaskExtractor(unittest.TestCase):
 
     def test_extract_tasks_overrides_source_fields(self):
         messages = [
-            {"message_id": "m1", "create_time": "2026-05-01T10:00:00+08:00", "sender_name": "A", "content": "hello"},
-            {"message_id": "m2", "create_time": "2026-05-01T10:01:00+08:00", "sender_name": "B", "content": "line1\nline2"},
+            {"message_id": "m1", "create_time": "2026-05-01T10:00:00+08:00", "sender_name": "A", "chat_id": "oc_chat_1", "chat_name": "群聊A", "chat_link": "https://applink.larkoffice.com/client/chat/open?openChatId=oc_chat_1", "content": "hello"},
+            {"message_id": "m2", "create_time": "2026-05-01T10:01:00+08:00", "sender_name": "B", "chat_id": "oc_chat_1", "chat_name": "群聊A", "chat_link": "https://applink.larkoffice.com/client/chat/open?openChatId=oc_chat_1", "message_link": "https://example.com/message/m2", "jump_link": "https://example.com/message/m2", "content": "line1\nline2"},
         ]
         new_ids = ["m2"]
 
@@ -204,9 +204,45 @@ class TestChatTaskExtractor(unittest.TestCase):
         self.assertEqual(len(tasks), 1)
         t0 = tasks[0]
         self.assertEqual(t0["source_messages_full"][0]["message_id"], "m2")
+        self.assertEqual(t0["source_messages_full"][0]["chat_id"], "oc_chat_1")
+        self.assertEqual(t0["source_messages_full"][0]["chat_name"], "群聊A")
+        self.assertEqual(
+            t0["source_messages_full"][0]["chat_link"],
+            "https://applink.larkoffice.com/client/chat/open?openChatId=oc_chat_1",
+        )
+        self.assertEqual(t0["source_messages_full"][0]["message_link"], "https://example.com/message/m2")
+        self.assertEqual(t0["source_messages_full"][0]["jump_link"], "https://example.com/message/m2")
         self.assertEqual(t0["source_messages_full"][0]["text"], "line1\nline2")
         self.assertEqual(t0["source_text_full"], "line1\nline2")
-        self.assertTrue(t0["task_name"].startswith("【") and t0["task_name"].endswith("】"))
+        self.assertEqual(t0["task_name"], "确认事项（周五）")
+    def test_status_trigger_preserves_chat_links(self):
+        view_messages = [
+            {
+                "message_id": "m3",
+                "create_time": "2026-05-01T11:00:00+08:00",
+                "sender": "张三",
+                "chat_id": "oc_chat_1",
+                "chat_name": "群聊A",
+                "chat_link": "https://applink.larkoffice.com/client/chat/open?openChatId=oc_chat_1",
+                "message_link": "https://example.com/message/m3",
+                "jump_link": "https://example.com/message/m3",
+                "text": "【整理文档并定稿（下班前）】 /done",
+            }
+        ]
+
+        updates = ext.extract_status_updates_from_messages(
+            view_messages=view_messages,
+            known_task_names=["【整理文档并定稿（下班前）】"],
+        )
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0]["chat_id"], "oc_chat_1")
+        self.assertEqual(updates[0]["chat_name"], "群聊A")
+        self.assertEqual(
+            updates[0]["chat_link"],
+            "https://applink.larkoffice.com/client/chat/open?openChatId=oc_chat_1",
+        )
+        self.assertEqual(updates[0]["message_link"], "https://example.com/message/m3")
+        self.assertEqual(updates[0]["jump_link"], "https://example.com/message/m3")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+{
+  "dataset": {
+    "path": "outline_skeleton.json",
+    "primary_key": "index"
+  },
+  "contracts": [
+    { "column": "index",   "assertions": ["non_null", "unique", "integer"] },
+    { "column": "start",   "assertions": ["non_null"] },
+    { "column": "end",     "assertions": ["non_null"] },
+    { "column": "preview", "assertions": ["non_null"] }
+  ],
+  "_notes": [
+    "本 manifest 用于 zero-trust-qa-checker 对 build_outline.py 输出的骨架做 Phase 1 契约校验。",
+    "若骨架被 LLM 二次润色后已替换为最终 outline，请改用 transcript-coverage manifest（可基于 build_outline.py --output 生成）。",
+    "时间戳合法性、关键金句存在性这一类断言，建议在调用 zero-trust-qa-checker 时通过 physical_probe.match_rules 配置正则来覆盖。"
+  ]
+}

@@ -56,6 +56,22 @@ class TestRosterMapping(unittest.TestCase):
         self.assertEqual(bucket["owner"]["email"], "zhangsan@bytedance.com")
         self.assertEqual(bucket["owner"]["open_id"], "ou_123")
 
+    def test_roster_mapping_can_reverse_lookup_email_placeholder(self):
+        roster_rows = [
+            {
+                "__row_number": 2,
+                "中文名称": "张三",
+                "Open ID": "ou_123",
+                "邮箱": "zhangsan@bytedance.com",
+            }
+        ]
+        directory, _ = build_owner_directory_from_roster_rows(roster_rows)
+
+        key = _normalize_person_key("zhangsan@bytedance.com")
+        self.assertIn(key, directory)
+        self.assertEqual(directory[key].display_name, "张三")
+        self.assertEqual(directory[key].email, "zhangsan@bytedance.com")
+
     def test_roster_duplicate_name_is_reported(self):
         roster_rows = [
             {"__row_number": 2, "中文名称": "李四", "Open ID": "ou_1", "邮箱": "a@bytedance.com"},

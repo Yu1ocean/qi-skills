@@ -1,0 +1,40 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "📌 任务巡检提醒"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-05-18\n🔴 **已超期** 6 ｜ 🟡 **缺失 DDL** 10 ｜ 🟣 **格式异常** 2\n今日异常集中，请以下同学重点关注跟进改进：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at> <at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at> <at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>"
+        },
+        {
+          "tag": "img",
+          "img_key": "img_v3_0211q_314c6d1d-c82e-42cd-8f9a-08a99362522g",
+          "mode": "fit_horizontal"
+        },
+        {
+          "tag": "button",
+          "type": "primary",
+          "text": {
+            "tag": "plain_text",
+            "content": "前往任务工作站处理"
+          },
+          "behaviors": [
+            {
+              "type": "open_url",
+              "default_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

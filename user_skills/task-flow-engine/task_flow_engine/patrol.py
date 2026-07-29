@@ -6,6 +6,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from task_flow_engine.chat_registry import default_broadcast_chat_id
+
 
 # -----------------------------
 # 基础：单元格归一化 / DDL 解析
@@ -161,6 +163,20 @@ def is_done(status_text: Any) -> bool:
     return s in {"已完成", "完成", "done", "Done", "DONE", "✅"} or "已完成" in s or "/done" in s
 
 
+def is_started(status_text: Any) -> bool:
+    s = _normalize_text(status_text)
+    if not s:
+        return False
+    return s in {"进行中", "开启", "Started", "doing"} or "进行中" in s
+
+
+def is_paused(status_text: Any) -> bool:
+    s = _normalize_text(status_text)
+    if not s:
+        return False
+    return s in {"暂停", "挂起", "Paused", "paused", "stopped"} or "暂停" in s
+
+
 # -----------------------------
 # 核心数据结构
 # -----------------------------
@@ -211,14 +227,15 @@ def build_owner_directory_from_roster_rows(
     open_id_keys: Sequence[str] = ("Open ID", "open_id", "openId", "OpenID"),
     email_keys: Sequence[str] = ("邮箱", "email", "Email", "邮箱地址"),
 ) -> Tuple[Dict[str, OwnerIdentity], List[Dict[str, Any]]]:
-    """从【团队联系方式】Sheet 的行字典构建负责人映射。
+    """从【团队名单】Sheet 的行字典构建负责人映射。
 
     约定：
     - 用 `中文名称` 列来匹配【任务库】里的“负责人”（匹配时会做 `_normalize_person_key` 归一化）。
+    - 当负责人字段被误填成邮箱占位符时，也允许通过邮箱反查回中文名。
     - 产出 `OwnerIdentity.open_id` 与 `OwnerIdentity.email`，供后续告警路由使用（私聊优先 email）。
 
     返回：
-    - owner_directory: {normalized_name -> OwnerIdentity}
+    - owner_directory: {normalized_alias -> OwnerIdentity}
     - duplicates: 重名/重复 key 的行信息（仅做提示，不影响主流程）
     """
 
@@ -232,6 +249,12 @@ def build_owner_directory_from_roster_rows(
 
     out: Dict[str, OwnerIdentity] = {}
     dup: Dict[str, List[int]] = {}
+
+    def register_alias(alias: Optional[str], identity: OwnerIdentity) -> None:
+        normalized = _normalize_person_key(alias or "")
+        if not normalized:
+            return
+        out[normalized] = identity
 
     for r in roster_rows:
         raw_name = pick_first(r, name_keys)
@@ -248,13 +271,15 @@ def build_owner_directory_from_roster_rows(
         if key in out:
             dup.setdefault(key, []).append(int(r.get("__row_number") or -1))
 
-        out[key] = OwnerIdentity(
+        identity = OwnerIdentity(
             raw=raw_name,
             display_name=raw_name,
             open_id=open_id,
             email=email,
             source="sheet_roster",
         )
+        register_alias(raw_name, identity)
+        register_alias(email, identity)
 
     duplicates = [
         {"normalized_name": k, "row_numbers": v}
@@ -406,6 +431,351 @@ class PatrolStateStore:
 
 
 # -----------------------------
+# 群聊卡片瘦身：广播群锁定 / 去重聚合 / 增量展示
+# -----------------------------
+
+BROADCAST_CHAT_ID = default_broadcast_chat_id()
+DEFAULT_COMPACT_CARD_MAX_ITEMS_PER_GROUP = 3
+COMPACT_CARD_CATEGORY_ORDER: List[Tuple[str, str]] = [
+    ("已超期", "🔴"),
+    ("缺失 DDL", "🟡"),
+    ("格式异常", "🟣"),
+]
+COMPACT_CARD_CATEGORY_ICONS = {name: icon for name, icon in COMPACT_CARD_CATEGORY_ORDER}
+
+
+def default_broadcast_target_chat() -> Dict[str, Any]:
+    return {"chat_id": BROADCAST_CHAT_ID, "name": ""}
+
+
+class PatrolCardSnapshotStore:
+    """本地卡片快照缓存，用于“仅展示相对昨日新增/变化异常”。"""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.version = 1
+        self._snapshot: Dict[str, str] = {}
+
+    def load(self) -> None:
+        if not self.path.exists():
+            self._snapshot = {}
+            return
+
+        try:
+            obj = json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception:
+            self._snapshot = {}
+            return
+
+        snapshot = obj.get("snapshot") or {}
+        if not isinstance(snapshot, dict):
+            self._snapshot = {}
+            return
+        self._snapshot = {str(k): str(v) for k, v in snapshot.items()}
+
+    def snapshot(self) -> Dict[str, str]:
+        return dict(self._snapshot)
+
+    def save(self, snapshot: Dict[str, str], *, today: date) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        obj = {
+            "version": self.version,
+            "updated_at": today.isoformat(),
+            "snapshot": dict(sorted((str(k), str(v)) for k, v in (snapshot or {}).items())),
+        }
+        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
+        tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(self.path)
+        self._snapshot = obj["snapshot"]
+
+
+@dataclass(frozen=True)
+class CompactCardEntry:
+    category: str
+    title_key: str
+    title: str
+    raw_count: int
+    sample: PatrolFinding
+    owners: Tuple[OwnerIdentity, ...]
+
+    @property
+    def snapshot_key(self) -> str:
+        return f"{self.category}:{self.title_key}"
+
+    @property
+    def snapshot_signature(self) -> str:
+        payload = {
+            "title": self.title,
+            "raw_count": self.raw_count,
+            "issue_type": self.sample.issue_type,
+            "reason": self.sample.reason,
+            "ddl_parsed": self.sample.ddl_parsed,
+            "ddl_raw": _normalize_text(self.sample.ddl_raw),
+            "delta_days": self.sample.delta_days,
+            "overdue_days": self.sample.overdue_days,
+            "abnormal_days": self.sample.abnormal_days,
+            "owners": [o.email or o.open_id or o.display_name for o in self.owners],
+        }
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _card_task_title_key(task: str) -> str:
+    return re.sub(r"\s+", " ", (task or "").strip()).lower()
+
+
+def _card_owner_route_key(owner: OwnerIdentity) -> str:
+    return owner.email or owner.open_id or owner.display_name
+
+
+def _card_entry_sort_key(item: PatrolFinding) -> Tuple[int, int, int, str]:
+    row = item.row if item.row is not None else 10**9
+    task = item.task or ""
+    if item.alert_category == "已超期":
+        return (0, -(item.overdue_days or 0), row, task)
+    if item.alert_category == "缺失 DDL":
+        return (1, -(item.abnormal_days or 0), row, task)
+    if item.alert_category == "格式异常":
+        return (2, -(item.abnormal_days or 0), row, task)
+    if item.alert_category == "临近到期":
+        return (3, item.delta_days if item.delta_days is not None else 10**9, row, task)
+    return (9, 0, row, task)
+
+
+def _merge_card_owners(items: Sequence[PatrolFinding]) -> Tuple[OwnerIdentity, ...]:
+    seen: set[str] = set()
+    owners: List[OwnerIdentity] = []
+    for item in items:
+        for owner in item.owners:
+            route_key = _card_owner_route_key(owner)
+            if not route_key or route_key in seen:
+                continue
+            seen.add(route_key)
+            owners.append(owner)
+    return tuple(owners)
+
+
+def _build_compact_card_groups(items: Sequence[PatrolFinding]) -> "OrderedDict[str, List[CompactCardEntry]]":
+    grouped_items: "OrderedDict[str, List[PatrolFinding]]" = OrderedDict(
+        (name, []) for name, _ in COMPACT_CARD_CATEGORY_ORDER
+    )
+    for item in sorted(items, key=_card_entry_sort_key):
+        grouped_items.setdefault(item.alert_category, []).append(item)
+
+    compact_groups: "OrderedDict[str, List[CompactCardEntry]]" = OrderedDict()
+    for category in list(grouped_items.keys()):
+        dedup: "OrderedDict[str, List[PatrolFinding]]" = OrderedDict()
+        for item in grouped_items.get(category, []):
+            dedup.setdefault(_card_task_title_key(item.task), []).append(item)
+
+        compact_groups[category] = [
+            CompactCardEntry(
+                category=category,
+                title_key=title_key,
+                title=bucket[0].task,
+                raw_count=len(bucket),
+                sample=bucket[0],
+                owners=_merge_card_owners(bucket),
+            )
+            for title_key, bucket in dedup.items()
+        ]
+    return compact_groups
+
+
+def _build_compact_card_snapshot(items: Sequence[PatrolFinding]) -> Dict[str, str]:
+    snapshot: Dict[str, str] = {}
+    for entries in _build_compact_card_groups(items).values():
+        for entry in entries:
+            snapshot[entry.snapshot_key] = entry.snapshot_signature
+    return snapshot
+
+
+def _render_compact_owner_label(owner: Optional[OwnerIdentity]) -> str:
+    if owner is None:
+        return "**未分配**"
+    return _at_in_card(owner.open_id, owner.display_name)
+
+
+def _render_compact_task_label(entry: CompactCardEntry) -> str:
+    label = f"`{entry.title}`"
+    if entry.raw_count > 1:
+        label += f" x{entry.raw_count}"
+    return label
+
+
+def _build_compact_owner_buckets(entries: Sequence[CompactCardEntry]) -> List[Dict[str, Any]]:
+    category_names = [name for name, _ in COMPACT_CARD_CATEGORY_ORDER]
+    buckets: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+    for entry in sorted(entries, key=lambda item: _card_entry_sort_key(item.sample)):
+        owners: Sequence[Optional[OwnerIdentity]] = entry.owners or (None,)
+        for owner in owners:
+            owner_key = _card_owner_route_key(owner) if owner is not None else "__unassigned__"
+            bucket = buckets.setdefault(
+                owner_key,
+                {
+                    "owner": owner,
+                    "display_name": owner.display_name if owner is not None else "未分配",
+                    "total_raw_count": 0,
+                    "categories": OrderedDict((name, []) for name in category_names),
+                },
+            )
+            bucket["categories"].setdefault(entry.category, []).append(entry)
+            bucket["total_raw_count"] += entry.raw_count
+
+    return sorted(
+        buckets.values(),
+        key=lambda bucket: (-int(bucket["total_raw_count"]), str(bucket["display_name"])),
+    )
+
+
+def _render_compact_category_line(category: str, entries: Sequence[CompactCardEntry], *, max_tasks_per_category: int) -> str:
+    raw_count = sum(entry.raw_count for entry in entries)
+    shown_entries = list(entries[:max_tasks_per_category])
+    shown_raw_count = sum(entry.raw_count for entry in shown_entries)
+    task_labels = [_render_compact_task_label(entry) for entry in shown_entries]
+    hidden_raw_count = max(raw_count - shown_raw_count, 0)
+    if hidden_raw_count > 0:
+        task_labels.append(f"等 {hidden_raw_count} 项")
+
+    icon = COMPACT_CARD_CATEGORY_ICONS.get(category, "⚪️")
+    return f"- {icon} **{category}**：{raw_count} 项（{'、'.join(task_labels)}）"
+
+
+def _render_compact_owner_section(bucket: Dict[str, Any], *, max_tasks_per_category: int) -> Tuple[str, Dict[str, Any]]:
+    owner = bucket.get("owner")
+    total_raw_count = int(bucket.get("total_raw_count") or 0)
+    category_map: Dict[str, List[CompactCardEntry]] = dict(bucket.get("categories") or {})
+
+    lines = [f"👤 {_render_compact_owner_label(owner)}：共 {total_raw_count} 项异常"]
+    category_summaries: List[Dict[str, Any]] = []
+    extra_categories = [name for name in category_map.keys() if name not in COMPACT_CARD_CATEGORY_ICONS]
+    for category in [name for name, _ in COMPACT_CARD_CATEGORY_ORDER] + extra_categories:
+        entries = category_map.get(category, [])
+        if not entries:
+            continue
+        lines.append(_render_compact_category_line(category, entries, max_tasks_per_category=max_tasks_per_category))
+        category_summaries.append(
+            {
+                "category": category,
+                "raw_count": sum(entry.raw_count for entry in entries),
+                "shown_titles": [entry.title for entry in list(entries)[:max_tasks_per_category]],
+            }
+        )
+
+    return "\n".join(lines), {
+        "owner": bucket.get("display_name"),
+        "raw_count": total_raw_count,
+        "categories": category_summaries,
+    }
+
+
+def _render_compact_patrol_card_body(
+    items: Sequence[PatrolFinding],
+    *,
+    today: date,
+    summary_label: str,
+    max_items_per_group: int,
+    only_changed: bool,
+    previous_snapshot: Optional[Dict[str, str]] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    previous_snapshot = previous_snapshot or {}
+    compact_groups = _build_compact_card_groups(items)
+    current_snapshot: Dict[str, str] = {}
+
+    filtered_entries: List[CompactCardEntry] = []
+    extra_categories = [name for name in compact_groups.keys() if name not in COMPACT_CARD_CATEGORY_ICONS]
+    for category in [name for name, _ in COMPACT_CARD_CATEGORY_ORDER] + extra_categories:
+        entries = compact_groups.get(category, [])
+        for entry in entries:
+            current_snapshot[entry.snapshot_key] = entry.snapshot_signature
+        if only_changed:
+            entries = [entry for entry in entries if previous_snapshot.get(entry.snapshot_key) != entry.snapshot_signature]
+        filtered_entries.extend(entries)
+
+    visible_total = sum(entry.raw_count for entry in filtered_entries)
+    sections: List[str] = [
+        "\n".join(
+            [
+                f"**日期**：{today.isoformat()}",
+                f"**{summary_label}**：{visible_total}（全量 {len(items)}）" if only_changed else f"**{summary_label}**：{len(items)}",
+                (
+                    f"**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 {max_items_per_group} 项任务，"
+                    "同名去重，仅展示较昨日新增/变化异常"
+                )
+                if only_changed
+                else (
+                    f"**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 {max_items_per_group} 项任务，同名去重"
+                ),
+            ]
+        )
+    ]
+
+    owner_buckets = _build_compact_owner_buckets(filtered_entries)
+    owner_summaries: List[Dict[str, Any]] = []
+    for bucket in owner_buckets:
+        section_md, section_meta = _render_compact_owner_section(bucket, max_tasks_per_category=max_items_per_group)
+        sections.append(section_md)
+        owner_summaries.append(section_meta)
+
+    if only_changed and not owner_buckets:
+        sections.append("✅ 今日相对昨日无新增/变化异常，完整列表见工作站。")
+
+    meta = {
+        "summary_label": summary_label,
+        "max_items_per_group": max_items_per_group,
+        "only_changed": only_changed,
+        "snapshot": current_snapshot,
+        "visible_total": visible_total if only_changed else len(items),
+        "total_items": len(items),
+        "rendered_owners": owner_summaries,
+    }
+    return "\n\n".join(section for section in sections if section).strip(), meta
+
+
+def build_compact_patrol_card_a(
+    *,
+    items: Sequence[PatrolFinding],
+    today: date,
+    title: str,
+    template: str,
+    summary_label: str,
+    action_text: str,
+    action_url: str,
+    max_items_per_group: int = DEFAULT_COMPACT_CARD_MAX_ITEMS_PER_GROUP,
+    only_changed: bool = False,
+    previous_snapshot: Optional[Dict[str, str]] = None,
+) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+    if not items:
+        return None, {
+            "summary_label": summary_label,
+            "max_items_per_group": max_items_per_group,
+            "only_changed": only_changed,
+            "snapshot": {},
+            "visible_total": 0,
+            "total_items": 0,
+            "rendered_groups": [],
+        }
+
+    body_md, meta = _render_compact_patrol_card_body(
+        items,
+        today=today,
+        summary_label=summary_label,
+        max_items_per_group=max_items_per_group,
+        only_changed=only_changed,
+        previous_snapshot=previous_snapshot,
+    )
+    return (
+        build_patrol_card_a(
+            title=title,
+            template=template,
+            body_md=body_md,
+            action_text=action_text,
+            action_url=action_url,
+        ),
+        meta,
+    )
+
+
+# -----------------------------
 # 卡片模板（schema 2.0）
 # -----------------------------
 
@@ -453,7 +823,7 @@ def build_patrol_card(*, title: str, template: str, summary_md: str, detail_md: 
 # -----------------------------
 
 # 重要：这类“任务 DDL 巡检报警”的“工作站链接”必须指向【任务台账 / 个人工作站】。
-TASK_WORKSTATION_TOKEN = "TnNYsLq9phIJwutJGwBl730ygjd"
+TASK_WORKSTATION_TOKEN = "Yl6lwic1EiF2d3kHnzccZinsnLV"
 
 
 def default_task_workstation_url(token: str = TASK_WORKSTATION_TOKEN) -> str:
@@ -607,6 +977,7 @@ def _render_task_blocks(
     items: Sequence[PatrolFinding],
     *,
     include_owner: bool,
+    include_due_soon: bool = True,
 ) -> Tuple[str, List[str]]:
     """（旧版卡片渲染保留）渲染任务块，并按分类规则聚合，返回 (markdown, mentions_open_ids)。
 
@@ -621,6 +992,8 @@ def _render_task_blocks(
 
     # 按照定义的优先级顺序进行分类展示
     category_order = ["已超期", "缺失 DDL", "临近到期", "格式异常"]
+    if not include_due_soon:
+        category_order = [c for c in category_order if c != "临近到期"]
     
     # 稳定排序：优先行号，其次任务名
     ordered = sorted(items, key=lambda x: (x.row if x.row is not None else 10**9, x.task))
@@ -698,11 +1071,20 @@ class TaskPatrol:
         owner_resolver: Optional[Callable[[str], OwnerIdentity]] = None,
         private_overdue_max_days: int = 2,
         abnormal_private_max_days: int = 2,
+        group_card_max_items_per_group: int = DEFAULT_COMPACT_CARD_MAX_ITEMS_PER_GROUP,
+        group_card_only_changed: bool = False,
+        group_card_previous_snapshot: Optional[Dict[str, str]] = None,
     ):
+        if group_card_max_items_per_group <= 0:
+            raise ValueError("group_card_max_items_per_group 必须为正整数")
+
         self.due_soon_days = due_soon_days
         self.private_overdue_max_days = private_overdue_max_days
         self.abnormal_private_max_days = abnormal_private_max_days
         self.owner_resolver = owner_resolver or (lambda raw: OwnerIdentity(raw=raw, display_name=raw, source="sheet"))
+        self.group_card_max_items_per_group = group_card_max_items_per_group
+        self.group_card_only_changed = group_card_only_changed
+        self.group_card_previous_snapshot = dict(group_card_previous_snapshot or {})
 
     def _make_key(self, row_no: int, task: str) -> str:
         # 用户要求“基于行号或任务名防抖”：这里采用 row+task 的组合 key
@@ -833,6 +1215,7 @@ class TaskPatrol:
         *,
         today: date,
         target_chat: Optional[Dict[str, Any]] = None,
+        task_counts: Optional[Dict[str, int]] = None,
     ) -> Dict[str, Any]:
         grouped: "OrderedDict[str, List[PatrolFinding]]" = OrderedDict(
             (name, []) for name in self.DEFAULT_CATEGORY_ORDER
@@ -842,6 +1225,7 @@ class TaskPatrol:
 
         private_items = [x for x in findings if x.stage == "private"]
         group_items = [x for x in findings if x.stage == "group"]
+        fixed_target_chat = default_broadcast_target_chat()
 
         # --- p2p：按 owner 分包（覆盖全部 findings，用于 Bot 私聊分发） ---
         p2p_routes: Dict[str, Dict[str, Any]] = {}
@@ -971,57 +1355,55 @@ class TaskPatrol:
             )
 
         # --- group：合并一包，发群并 @ ---
-        group_detail_md, group_mentions = _render_task_blocks(group_items, include_owner=True)
-        group_body_md = _render_scheme3_message(group_items, route_owner=None)
+        _, group_mentions = _render_task_blocks(group_items, include_owner=True, include_due_soon=False)
+        group_body_md = _render_scheme3_message(group_items, route_owner=None, include_due_soon=False)
         group_message_header = f"📣 **任务巡检·公开提醒**（{today.isoformat()}，共 {len(group_items)} 条）"
+        group_card, group_card_meta = build_compact_patrol_card_a(
+            items=group_items,
+            today=today,
+            title="📌 任务巡检提醒",
+            template="red",
+            summary_label="需公开提醒条目",
+            action_text="前往任务工作站处理",
+            action_url=default_task_workstation_url(),
+            max_items_per_group=self.group_card_max_items_per_group,
+            only_changed=False,
+        )
         group_route = {
-            "target_chat": target_chat,
+            "target_chat": fixed_target_chat,
             "count": len(group_items),
             "items": [it.to_dict() for it in group_items],
             "mentions_open_ids": group_mentions,
             "message": (group_message_header + "\n\n" + group_body_md).strip() if group_items else "",
-            "card": (
-                build_patrol_card_a(
-                    title="📌 任务巡检提醒",
-                    template="red",
-                    body_md=(
-                        f"**日期**：{today.isoformat()}\n\n**需公开提醒条目**：{len(group_items)}"
-                        + "\n\n"
-                        + (group_detail_md or "（无）")
-                    ).strip(),
-                    action_text="前往任务工作站处理",
-                    action_url=default_task_workstation_url(),
-                )
-                if group_items
-                else None
-            ),
+            "card": group_card,
+            "card_meta": group_card_meta,
         }
 
-        # --- group_broadcast：全量 findings 合并一包，供“只发群聊、不做私聊”场景使用 ---
-        broadcast_detail_md, broadcast_mentions = _render_task_blocks(findings, include_owner=True)
-        broadcast_body_md = _render_scheme3_message(findings, route_owner=None)
-        broadcast_message_header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {len(findings)} 条）"
+        # --- group_broadcast：全量 findings 过滤掉“临近到期”后合并一包，供“只发群聊、不做私聊”场景使用 ---
+        broadcast_items = [it for it in findings if it.issue_type != "due_soon"]
+        _, broadcast_mentions = _render_task_blocks(broadcast_items, include_owner=True, include_due_soon=False)
+        broadcast_body_md = _render_scheme3_message(broadcast_items, route_owner=None, include_due_soon=False)
+        broadcast_message_header = f"📌 **任务巡检提醒**（{today.isoformat()}，共 {len(broadcast_items)} 条）"
+        broadcast_card, broadcast_card_meta = build_compact_patrol_card_a(
+            items=broadcast_items,
+            today=today,
+            title="📌 任务巡检提醒",
+            template="blue",
+            summary_label="异常任务",
+            action_text="前往任务工作站处理",
+            action_url=default_task_workstation_url(),
+            max_items_per_group=self.group_card_max_items_per_group,
+            only_changed=self.group_card_only_changed,
+            previous_snapshot=self.group_card_previous_snapshot,
+        )
         broadcast_route = {
-            "target_chat": target_chat,
-            "count": len(findings),
-            "items": [it.to_dict() for it in findings],
+            "target_chat": fixed_target_chat,
+            "count": len(broadcast_items),
+            "items": [it.to_dict() for it in findings],  # 原数据结构仍保留全量（含临近到期）
             "mentions_open_ids": broadcast_mentions,
-            "message": (broadcast_message_header + "\n\n" + broadcast_body_md).strip() if findings else "",
-            "card": (
-                build_patrol_card_a(
-                    title="📌 任务巡检提醒",
-                    template="blue",
-                    body_md=(
-                        f"**日期**：{today.isoformat()}\n\n**异常任务**：{len(findings)}"
-                        + "\n\n"
-                        + (broadcast_detail_md or "（无）")
-                    ).strip(),
-                    action_text="前往任务工作站处理",
-                    action_url=default_task_workstation_url(),
-                )
-                if findings
-                else None
-            ),
+            "message": (broadcast_message_header + "\n\n" + broadcast_body_md).strip() if broadcast_items else "",
+            "card": broadcast_card,
+            "card_meta": broadcast_card_meta,
         }
 
         # --- unmapped：无法按邮箱/open_id 形成私聊分包的兜底桶 ---
@@ -1048,10 +1430,17 @@ class TaskPatrol:
             "counts": {k: len(v) for k, v in grouped.items()},
             "private_count": len(private_items),
             "group_count": len(group_items),
+            "task_counts": task_counts or {"开启": 0, "完成": 0, "暂停": 0},
         }
 
         return {
             "summary": summary,
+            "card_state": {
+                "snapshot": broadcast_card_meta.get("snapshot", {}),
+                "only_changed": self.group_card_only_changed,
+                "max_items_per_group": self.group_card_max_items_per_group,
+                "target_chat": fixed_target_chat,
+            },
             "grouped_results": {k: [it.to_dict() for it in v] for k, v in grouped.items()},
             "routes": {
                 "p2p": p2p_routes,
@@ -1090,10 +1479,24 @@ class TaskPatrol:
         today = today or date.today()
 
         findings: List[PatrolFinding] = []
+        task_counts = {"开启": 0, "完成": 0, "暂停": 0}
+        
+        # 将 Iterable 转为 list 方便多次遍历，或在一次遍历中处理
+        # 考虑到性能和逻辑清晰度，我们在一次遍历中完成统计与巡检
         for r in rows:
+            # 统计全量任务状态
+            status = _normalize_text(r.get("完成情况") or r.get("status"))
+            if is_started(status):
+                task_counts["开启"] += 1
+            elif is_done(status):
+                task_counts["完成"] += 1
+            elif is_paused(status):
+                task_counts["暂停"] += 1
+
+            # 巡检逻辑
             item = self.classify(r, today=today)
             if item is None:
                 continue
             findings.append(self._apply_state_and_stage(item, today=today, state=state))
 
-        return self.build_output(findings, today=today, target_chat=target_chat)
+        return self.build_output(findings, today=today, target_chat=target_chat, task_counts=task_counts)

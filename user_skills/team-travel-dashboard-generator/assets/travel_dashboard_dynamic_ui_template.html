@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>团队全景差旅大屏 V3.0</title>
+  <script src="./echarts.min.js"></script>
+  <style>
+    .card-container {
+      width: 100%;
+      min-width: 300px;
+      padding: 0;
+      box-shadow: none !important;
+      color: var(--aime-color-text-base-1, #232938);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .travel-shell {
+      background:
+        radial-gradient(circle at top left, rgba(77,124,255,0.16), transparent 34%),
+        radial-gradient(circle at top right, rgba(79,214,255,0.13), transparent 26%),
+        linear-gradient(180deg, #06101d 0%, #07111f 52%, #040914 100%);
+      color: #ecf4ff;
+      padding: 18px;
+      border: 1px solid rgba(92, 137, 196, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+    .travel-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+    .header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(95, 150, 219, 0.18);
+    }
+    .title { font-size: 22px; font-weight: 800; letter-spacing: 0.8px; }
+    .subtitle { margin-top: 6px; color: #9ab2d7; font-size: 12px; }
+    .stamp { font-size: 12px; color: #79d8ff; text-align: right; line-height: 1.5; }
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      background: linear-gradient(180deg, rgba(13, 31, 55, 0.94), rgba(8, 17, 32, 0.94));
+      border: 1px solid rgba(92, 137, 196, 0.24);
+      padding: 12px 14px;
+      min-height: 96px;
+    }
+    .stat-label { font-size: 11px; color: #9ab2d7; text-transform: uppercase; letter-spacing: 0.8px; }
+    .stat-value { font-size: 28px; font-weight: 800; line-height: 1; margin-top: 6px; }
+    .stat-hint { font-size: 11px; color: #7fe7c8; margin-top: 8px; line-height: 1.4; }
+    .main-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 2.3fr) minmax(280px, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .right-grid { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; }
+    .panel {
+      background: linear-gradient(180deg, rgba(10, 23, 40, 0.96), rgba(7, 16, 30, 0.96));
+      border: 1px solid rgba(92, 137, 196, 0.22);
+      padding: 12px;
+      position: relative;
+    }
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #d8ebff;
+      font-size: 13px;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .panel-title span:last-child { color: #9ab2d7; font-size: 11px; text-align: right; }
+    .route-shell { position: relative; height: 360px; }
+    .route-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.42;
+      pointer-events: none;
+    }
+    .route-bg .continent { fill: rgba(40,97,160,0.25); stroke: rgba(108,178,255,0.12); stroke-width: 2; }
+    .route-bg .gridline { stroke: rgba(108,178,255,0.08); stroke-width: 1; stroke-dasharray: 4 8; }
+    .chart-lg { height: 360px; }
+    .chart-md { height: 170px; }
+    .radar-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .radar-metric {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(92, 137, 196, 0.16);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+    .metric-name { color: #9ab2d7; font-size: 10px; }
+    .metric-value { margin-top: 4px; color: #fff0b1; font-size: 16px; font-weight: 700; }
+    .footer-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 10px;
+    }
+    .chart-sm { height: 260px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid rgba(92,137,196,0.14); vertical-align: top; }
+    th { color: #9ab2d7; font-size: 11px; text-transform: uppercase; }
+    td { color: #dceaff; }
+    .table-wrap { max-height: 260px; overflow: auto; }
+    .empty { height: 160px; display: flex; align-items: center; justify-content: center; color: #9ab2d7; font-size: 12px; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-first {
+      color: #fff0f3;
+      background: rgba(255, 93, 115, 0.16);
+      border-color: rgba(255, 93, 115, 0.32);
+      animation: breathe 1.8s ease-in-out infinite;
+    }
+    .badge-alert { color: #ffe4ae; background: rgba(255, 183, 64, 0.14); border-color: rgba(255, 183, 64, 0.28); }
+    .badge-good { color: #baf6d8; background: rgba(63, 224, 184, 0.14); border-color: rgba(63, 224, 184, 0.26); }
+    .muted { color: #9ab2d7; }
+    .warning-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .violation-overview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(92, 137, 196, 0.18);
+      background: rgba(255,255,255,0.03);
+    }
+    .violation-overview.alert {
+      border-color: rgba(255, 93, 115, 0.34);
+      background: linear-gradient(90deg, rgba(255,93,115,0.16), rgba(255,183,64,0.08));
+    }
+    .violation-overview.safe {
+      border-color: rgba(63, 224, 184, 0.26);
+      background: linear-gradient(90deg, rgba(63,224,184,0.14), rgba(79,214,255,0.08));
+    }
+    .violation-overview strong { display: block; font-size: 15px; margin-bottom: 4px; color: #fff3c4; }
+    .violation-overview.safe strong { color: #baf6d8; }
+    .violation-overview span { color: #9ab2d7; font-size: 12px; line-height: 1.6; }
+    .violation-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .violation-column {
+      border: 1px solid rgba(92, 137, 196, 0.18);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+      min-height: 220px;
+    }
+    .violation-column.safe { border-color: rgba(63, 224, 184, 0.22); }
+    .violation-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(92, 137, 196, 0.12);
+    }
+    .violation-head strong { font-size: 13px; color: #eaf5ff; }
+    .violation-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffe4ae;
+      background: rgba(255, 183, 64, 0.14);
+      border: 1px solid rgba(255, 183, 64, 0.22);
+    }
+    .violation-column.safe .violation-count {
+      color: #baf6d8;
+      background: rgba(63, 224, 184, 0.14);
+      border-color: rgba(63, 224, 184, 0.22);
+    }
+    .violation-list { display: flex; flex-direction: column; gap: 8px; }
+    .violation-item {
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(92, 137, 196, 0.14);
+    }
+    .violation-item strong { display: block; margin-bottom: 6px; color: #fff2bf; font-size: 13px; }
+    .violation-route { color: #dceaff; font-size: 12px; line-height: 1.5; }
+    .violation-meta { margin-top: 6px; color: #9ab2d7; font-size: 11px; line-height: 1.6; }
+    .violation-empty {
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 10px;
+      border: 1px dashed rgba(63, 224, 184, 0.28);
+      color: #baf6d8;
+      background: rgba(63,224,184,0.08);
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 12px;
+    }
+    .daily-alert-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .daily-alert-item { border-radius: 10px; padding: 10px; background: rgba(255,183,64,0.08); border: 1px solid rgba(255,183,64,0.22); }
+    .daily-alert-item.is-new { background: linear-gradient(135deg, rgba(255,183,64,0.22), rgba(255,93,115,0.12)); border-color: rgba(255,183,64,0.62); box-shadow: 0 0 22px rgba(255,183,64,0.18); }
+    .new-alert-badge { display: inline-flex; align-items: center; margin-right: 6px; padding: 2px 7px; border-radius: 999px; background: rgba(255,93,115,0.22); border: 1px solid rgba(255,183,64,0.62); color: #ffe7a8; font-size: 10px; font-weight: 900; letter-spacing: 0.6px; }
+    .daily-alert-item strong { display: block; margin-bottom: 6px; color: #fff2bf; font-size: 13px; }
+    .daily-alert-item div { color: #dceaff; font-size: 12px; line-height: 1.6; }
+    @keyframes breathe {
+      0%, 100% { box-shadow: 0 0 6px rgba(255,93,115,0.18); transform: scale(1); }
+      50% { box-shadow: 0 0 20px rgba(255,93,115,0.45); transform: scale(1.03); }
+    }
+    @media (max-width: 1200px) {
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .main-grid, .footer-grid { grid-template-columns: 1fr; }
+      .right-grid { grid-template-rows: auto; }
+      .violation-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 960px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .radar-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .violation-board { grid-template-columns: 1fr; }
+      .violation-overview { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const DATA = __TRAVEL_DASHBOARD_DATA__;
+
+    function equirectangular(coord) {
+      if (!coord || typeof coord.lon !== 'number' || typeof coord.lat !== 'number') return null;
+      const lon = Math.max(-180, Math.min(180, coord.lon));
+      const lat = Math.max(-58, Math.min(82, coord.lat));
+      if (lon >= 70 && lon <= 145 && lat >= 15 && lat <= 55) {
+        const x = 55 + ((lon - 70) / (145 - 70)) * 31;
+        const y = 17 + ((55 - lat) / (55 - 15)) * 20;
+        return [Number(x.toFixed(4)), Number(y.toFixed(4))];
+      }
+      if (lon >= 20 && lon <= 180 && lat >= -10 && lat <= 60) {
+        const x = 45 + ((lon - 20) / (180 - 20)) * 45;
+        const y = 12 + ((60 - lat) / (60 - (-10))) * 28;
+        return [Number(x.toFixed(4)), Number(y.toFixed(4))];
+      }
+      const xMin = 5;
+      const xMax = 95;
+      const yMin = 6;
+      const yMax = 54;
+      const x = xMin + ((lon + 180) / 360) * (xMax - xMin);
+      const y = yMin + ((82 - lat) / (82 - (-58))) * (yMax - yMin);
+      return [Number(x.toFixed(4)), Number(y.toFixed(4))];
+    }
+
+    function formatTime(text) {
+      return text || '--';
+    }
+
+    function formatLeadDays(value) {
+      if (value === null || value === undefined || value === '') return '--';
+      return `${Number(value).toFixed(1)} 天`;
+    }
+
+    function tripWindowLabel(row) {
+      return `${formatTime(row.departure_time)} → ${formatTime(row.return_time)}`;
+    }
+
+    function displayReason(reason) {
+      if (!reason) return '--';
+      return reason === 'BOOKING_NOTICE_UNDISCLOSED' ? '预订通知未披露' : reason;
+    }
+
+    function TravelApp() {
+      const routeRef = React.useRef(null);
+      const destinationRef = React.useRef(null);
+      const radarRef = React.useRef(null);
+      const ganttRef = React.useRef(null);
+
+      React.useEffect(() => {
+        const charts = [];
+        const trips = (DATA.trips || []).filter(t => t.departure_coord && t.destination_coord);
+
+        if (routeRef.current) {
+          const chart = echarts.init(routeRef.current);
+          const departureSeen = new Map();
+          const regularDestinations = new Map();
+          const firstDestinations = new Map();
+          const regularLineData = [];
+          const firstLineData = [];
+          trips.forEach(item => {
+            const from = equirectangular(item.departure_coord);
+            const to = equirectangular(item.destination_coord);
+            if (!from || !to) return;
+            departureSeen.set(item.departure_city, from);
+            const line = { coords: [from, to], value: `${item.name}｜${item.departure_city} → ${item.destination_city}`, firstTime: !!item.is_first_time_destination };
+            if (item.is_first_time_destination) {
+              firstDestinations.set(`${item.name}-${item.destination_city}`, { name: item.destination_city, city: item.destination_city, traveler: item.name, value: to });
+              firstLineData.push(line);
+            } else {
+              regularDestinations.set(item.destination_city, to);
+              regularLineData.push(line);
+            }
+          });
+          chart.setOption({
+            grid: { left: 0, right: 0, top: 0, bottom: 0 },
+            xAxis: { type: 'value', min: 0, max: 100, show: false },
+            yAxis: { type: 'value', min: 0, max: 60, inverse: true, show: false },
+            tooltip: {
+              backgroundColor: 'rgba(6,18,34,0.92)',
+              borderColor: 'rgba(79,214,255,0.25)',
+              textStyle: { color: '#eaf5ff' },
+              formatter(params) {
+                if (params.seriesName === '常规线路' || params.seriesName === '首次线路') return `${params.data.value}${params.data.firstTime ? '<br/>⚠️ 首次差旅地' : ''}`;
+                if (params.seriesName === '首次差旅地') return `⚠️ ${params.data.traveler} 首次到达 ${params.data.city}`;
+                return params.data.name || '';
+              }
+            },
+            series: [
+              {
+                name: '常规线路',
+                type: 'lines',
+                coordinateSystem: 'cartesian2d',
+                effect: { show: true, constantSpeed: 32, trailLength: 0.16, symbolSize: 5, color: '#4fd6ff' },
+                lineStyle: { width: 1.5, color: 'rgba(79,214,255,0.34)', curveness: 0.26, opacity: 0.7 },
+                data: regularLineData
+              },
+              {
+                name: '首次线路',
+                type: 'lines',
+                coordinateSystem: 'cartesian2d',
+                effect: { show: true, constantSpeed: 40, trailLength: 0.24, symbolSize: 7, color: '#ff5d73' },
+                lineStyle: { width: 2.4, color: 'rgba(255,93,115,0.78)', curveness: 0.34, opacity: 0.95 },
+                data: firstLineData
+              },
+              {
+                name: '出发城市',
+                type: 'scatter',
+                coordinateSystem: 'cartesian2d',
+                symbolSize: 8,
+                itemStyle: { color: '#3fe0b8', shadowBlur: 10, shadowColor: 'rgba(63,224,184,0.6)' },
+                label: { show: false },
+                data: Array.from(departureSeen.entries()).map(([name, value]) => ({ name, value }))
+              },
+              {
+                name: '常规目的地',
+                type: 'effectScatter',
+                coordinateSystem: 'cartesian2d',
+                rippleEffect: { scale: 3, brushType: 'stroke' },
+                symbolSize: 10,
+                itemStyle: { color: '#ffb15c' },
+                label: { show: false },
+                data: Array.from(regularDestinations.entries()).map(([name, value]) => ({ name, value }))
+              },
+              {
+                name: '首次差旅地',
+                type: 'effectScatter',
+                coordinateSystem: 'cartesian2d',
+                rippleEffect: { scale: 5, brushType: 'stroke' },
+                symbolSize: 14,
+                itemStyle: { color: '#ff5d73', shadowBlur: 18, shadowColor: 'rgba(255,93,115,0.56)' },
+                label: { show: false },
+                data: Array.from(firstDestinations.values())
+              }
+            ]
+          });
+          charts.push(chart);
+        }
+
+        if (destinationRef.current) {
+          const chart = echarts.init(destinationRef.current);
+          const rows = (DATA.rankings && DATA.rankings.destination_cities) || [];
+          chart.setOption({
+            grid: { left: 70, right: 16, top: 8, bottom: 20, containLabel: true },
+            xAxis: { type: 'value', axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+            yAxis: { type: 'category', inverse: true, data: rows.map(r => r.name), axisLabel: { color: '#dceaff', width: 84, overflow: 'truncate' }, axisLine: { show: false }, axisTick: { show: false } },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter(params) { const item = rows[params[0].dataIndex] || {}; return `${item.name}<br/>总行程：${item.value || 0}<br/>首次差旅地：${item.first_time_count || 0}`; } },
+            series: [{ type: 'bar', data: rows.map(r => ({ value: r.value, itemStyle: { borderRadius: [0, 8, 8, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, r.first_time_count > 0 ? [{ offset: 0, color: '#ff7d8f' }, { offset: 1, color: '#ffd76a' }] : [{ offset: 0, color: '#4d7cff' }, { offset: 1, color: '#4fd6ff' }]) } })), barWidth: 10, label: { show: true, position: 'right', color: '#dceaff' } }]
+          });
+          charts.push(chart);
+        }
+
+        if (radarRef.current) {
+          const chart = echarts.init(radarRef.current);
+          const radarRows = (DATA.compliance && DATA.compliance.radar) || [];
+          chart.setOption({
+            radar: {
+              radius: '58%',
+              splitNumber: 5,
+              axisName: { color: '#dceaff', fontSize: 10 },
+              splitArea: { areaStyle: { color: ['rgba(77,124,255,0.04)', 'rgba(77,124,255,0.08)'] } },
+              splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+              axisLine: { lineStyle: { color: 'rgba(255,255,255,0.12)' } },
+              indicator: radarRows.map(item => ({ name: item.name, max: 100 }))
+            },
+            series: [{ type: 'radar', symbol: 'circle', symbolSize: 6, lineStyle: { width: 2, color: '#79d8ff' }, areaStyle: { color: 'rgba(79,214,255,0.22)' }, itemStyle: { color: '#ffcf6d' }, data: [{ value: radarRows.map(item => item.value || 0), name: '合规健康度' }] }]
+          });
+          charts.push(chart);
+        }
+
+        if (ganttRef.current) {
+          const chart = echarts.init(ganttRef.current);
+          const trips = (DATA.trips || []).slice().sort((a, b) => (a.departure_time || '').localeCompare(b.departure_time || ''));
+          if (!trips.length) {
+            chart.setOption({ title: { text: '暂无行程数据', left: 'center', top: 'middle', textStyle: { color: '#9ab2d7', fontSize: 12 } } });
+          } else {
+            const toTimestamp = (value) => {
+              if (!value) return NaN;
+              const normalized = String(value).trim().replace(' ', 'T');
+              const ts = Date.parse(normalized);
+              return Number.isFinite(ts) ? ts : NaN;
+            };
+            const formatTs = (value) => {
+              if (!Number.isFinite(value)) return '--';
+              return new Date(value).toLocaleString();
+            };
+            const categories = Array.from(new Set(trips.map(item => item.name)));
+            const starts = trips.map(item => toTimestamp(item.departure_time)).filter(Number.isFinite);
+            const ends = trips.map(item => toTimestamp(item.return_time)).filter(Number.isFinite);
+            if (trips.length <= 3) {
+              chart.dispose();
+              ganttRef.current.innerHTML = trips.map(item => `
+                <div style="padding:10px 12px; margin-bottom:10px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid ${item.is_first_time_destination ? 'rgba(255,93,115,0.45)' : 'rgba(79,214,255,0.18)'}; box-shadow:${item.is_first_time_destination ? '0 0 18px rgba(255,93,115,0.18)' : 'none'};">
+                  <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:6px;">
+                    <strong style="color:#dceaff; font-size:13px;">${item.name}</strong>
+                    <span style="color:${item.is_first_time_destination ? '#ff9dad' : '#9ab2d7'}; font-size:11px;">${item.is_first_time_destination ? '首次差旅地' : '常规行程'}</span>
+                  </div>
+                  <div style="height:10px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:8px;">
+                    <div style="width:100%; height:100%; background:${item.is_first_time_destination ? 'linear-gradient(90deg,#ff7d8f,#ffb36b)' : 'linear-gradient(90deg,#4fd6ff,#4d7cff)'};"></div>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px 14px; color:#9ab2d7; font-size:11px; line-height:1.6;">
+                    <span>目的地：${item.destination_city || '--'}</span>
+                    <span>出发：${item.departure_time || '--'}</span>
+                    <span>返程：${item.return_time || '--'}</span>
+                  </div>
+                </div>
+              `).join('');
+            } else if (!starts.length || !ends.length) {
+              chart.setOption({ title: { text: '时间轴缺少可用时间字段', left: 'center', top: 'middle', textStyle: { color: '#9ab2d7', fontSize: 12 } } });
+            } else {
+              const colors = ['#4fd6ff', '#4d7cff', '#3fe0b8', '#ffb15c', '#e67dff', '#79f0ff', '#6be6a8', '#ffd36b', '#83a8ff'];
+              chart.setOption({
+                grid: { left: 96, right: 20, top: 16, bottom: 26, containLabel: true },
+                xAxis: { type: 'time', min: Math.min.apply(null, starts), max: Math.max.apply(null, ends), axisLabel: { color: '#9ab2d7' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+                yAxis: { type: 'category', data: categories, axisLabel: { color: '#dceaff' }, axisTick: { show: false }, axisLine: { show: false } },
+                tooltip: { formatter(params) { if (params.seriesType === 'effectScatter') return `⚠️ ${params.data.name}<br/>首次差旅地：${params.data.destination}`; const v = params.data.value; return `${params.data.name}<br/>${v[3]}<br/>${formatTs(v[1])} ~ ${formatTs(v[2])}${v[5] ? '<br/>⚠️ 首次差旅地' : ''}`; } },
+                series: [{
+                  type: 'custom',
+                  renderItem(params, api) {
+                    const categoryIndex = api.value(0);
+                    const start = api.coord([api.value(1), categoryIndex]);
+                    const end = api.coord([api.value(2), categoryIndex]);
+                    const bandHeight = api.size([0, 1])[1];
+                    const height = Math.max(12, Math.min(26, bandHeight * 0.56));
+                    const isFirst = !!api.value(5);
+                    const rectShape = echarts.graphic.clipRectByRect({ x: start[0], y: start[1] - height / 2, width: Math.max(2, end[0] - start[0]), height }, { x: params.coordSys.x, y: params.coordSys.y, width: params.coordSys.width, height: params.coordSys.height });
+                    if (!rectShape) return null;
+                    return { type: 'rect', shape: rectShape, style: api.style({ fill: api.visual('color'), shadowBlur: isFirst ? 16 : 10, shadowColor: isFirst ? 'rgba(255,93,115,0.56)' : api.visual('color'), stroke: isFirst ? '#ff5d73' : 'rgba(255,255,255,0.06)', lineWidth: isFirst ? 2 : 1, opacity: 0.94 }) };
+                  },
+                  encode: { x: [1, 2], y: 0 },
+                  data: trips.map((item, idx) => ({ name: item.name, value: [categories.indexOf(item.name), toTimestamp(item.departure_time), toTimestamp(item.return_time), item.destination_city, item.is_first_time_destination ? 1 : 0], itemStyle: { color: item.is_first_time_destination ? '#ff7d8f' : colors[idx % colors.length] } })).filter(item => Number.isFinite(item.value[1]) && Number.isFinite(item.value[2]))
+                }, {
+                  type: 'effectScatter',
+                  coordinateSystem: 'cartesian2d',
+                  rippleEffect: { scale: 4, brushType: 'stroke' },
+                  symbolSize: 0,
+                  itemStyle: { color: '#ff5d73', shadowBlur: 16, shadowColor: 'rgba(255,93,115,0.56)' },
+                  data: trips.filter(item => item.is_first_time_destination).map(item => ({ name: item.name, destination: item.destination_city, value: [toTimestamp(item.departure_time), categories.indexOf(item.name)] })).filter(item => Number.isFinite(item.value[0]))
+                }]
+              });
+            }
+          }
+          charts.push(chart);
+        }
+
+        const onResize = () => charts.forEach(chart => chart.resize());
+        window.addEventListener('resize', onResize);
+        return () => {
+          window.removeEventListener('resize', onResize);
+          charts.forEach(chart => chart.dispose());
+        };
+      }, []);
+
+        const summary = DATA.summary || {};
+        const filters = DATA.filters || {};
+        const metrics = (DATA.compliance && DATA.compliance.metrics) || {};
+        const periodLabel = (() => {
+          const start = filters.window_start ? Date.parse(String(filters.window_start).replace(' ', 'T')) : NaN;
+          const end = filters.window_end ? Date.parse(String(filters.window_end).replace(' ', 'T')) : NaN;
+          if (!Number.isFinite(start) || !Number.isFinite(end)) return '统计周期';
+          const diffDays = Math.max(1, Math.round((end - start) / 86400000));
+          return diffDays <= 10 ? '周统计周期' : '月统计周期';
+        })();
+        const stats = [
+          { label: 'ACTIVE TRAVELERS', value: summary.active_people || 0, hint: `${periodLabel} · 出差人数` },
+          { label: 'BOOKING RECORDS', value: summary.total_trips || 0, hint: `${periodLabel} · 预定次数` },
+          { label: 'COMPLIANCE ALERTS', value: summary.compliance_alerts || 0, hint: `${periodLabel} · 合规预警` }
+        ];
+      const radarItems = [
+        { name: '先订后批', value: (metrics.is_booked_before_approval && metrics.is_booked_before_approval.violation_count) || 0 },
+        { name: '舱位超标', value: (metrics.is_over_cabin_policy && metrics.is_over_cabin_policy.violation_count) || 0 },
+        { name: '酒店超标', value: (metrics.is_hotel_over_policy && metrics.is_hotel_over_policy.violation_count) || 0 },
+        { name: '重复预订', value: (metrics.duplicate_booking_flag && metrics.duplicate_booking_flag.violation_count) || 0 },
+        { name: '周末差旅', value: (metrics.contains_weekend && metrics.contains_weekend.violation_count) || 0 },
+        { name: '首次差旅地', value: (metrics.is_first_time_destination && metrics.is_first_time_destination.first_time_count) || 0 },
+      ];
+      const rows = (DATA.trips || []).slice().sort((a, b) => (b.departure_time || '').localeCompare(a.departure_time || ''));
+      const violationGroups = [
+        {
+          key: 'weekend',
+          label: '周末差旅',
+          rows: rows.filter(row => row.contains_weekend === true),
+          detail: row => `行程区间 ${row.timeline_start || row.departure_time || '--'} 至 ${row.timeline_end || row.return_time || row.departure_time || '--'} 包含周六/周日`
+        },
+        {
+          key: 'approval',
+          label: '未批先订',
+          rows: rows.filter(row => row.is_booked_before_approval === true),
+          detail: () => '命中先订后批规则'
+        },
+        {
+          key: 'transport',
+          label: '交通超标',
+          rows: rows.filter(row => row.is_over_cabin_policy === true),
+          detail: row => row.over_policy_reason || '命中交通舱位超标规则'
+        },
+        {
+          key: 'hotel',
+          label: '酒店超标',
+          rows: rows.filter(row => row.is_hotel_over_policy === true),
+          detail: row => row.over_policy_reason || '命中酒店差标超标规则'
+        }
+      ];
+      const violationTotal = violationGroups.reduce((sum, group) => sum + group.rows.length, 0);
+      const dailyNewAlerts = ((DATA.compliance || {}).daily_new_alerts) || { status: 'no_baseline', message: '首次运行，暂无历史对比 📊', alerts: [] };
+      const dailyNewAlertRows = Array.isArray(dailyNewAlerts.alerts) ? dailyNewAlerts.alerts : [];
+      const routeTrips = (DATA.trips || []).filter(t => t.departure_coord && t.destination_coord).length;
+
+      const renderBadges = row => {
+        const items = [];
+        if (row.is_first_time_destination) items.push(<span className="badge badge-first" key="first">首次差旅地</span>);
+        if (row.contains_weekend) items.push(<span className="badge badge-alert" key="weekend">周末差旅</span>);
+        if (row.is_booked_before_approval === true || row.is_over_cabin_policy === true || row.is_hotel_over_policy === true || row.duplicate_booking_flag || row.contains_weekend) {
+          items.push(<span className="badge badge-alert" key="alert">合规预警</span>);
+        }
+        if (!items.length) items.push(<span className="badge badge-good" key="ok">常规行程</span>);
+        return items;
+      };
+
+      return (
+        <div className="card-container w-full min-w-[300px]" data-markable="1">
+          <div className="travel-shell">
+            <div className="header">
+              <div>
+                <div className="title">TEAM TRAVEL OPS SCREEN V3.0</div>
+                <div className="subtitle">UK / EU / JP POP BD 团队全景差旅大屏 · 合规字段升级 + 首次差旅地强提醒</div>
+              </div>
+              <div className="stamp">Generated at {DATA.generated_at || '--'}<br/>Version {DATA.version || '3.0'}</div>
+            </div>
+
+            <div className="stats">
+              {stats.map(card => (
+                <div className="stat" key={card.label}>
+                  <div className="stat-label">{card.label}</div>
+                  <div className="stat-value">{card.value}</div>
+                  <div className="stat-hint">{card.hint}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="main-grid">
+              <div className="panel">
+                <div className="panel-title"><span>出差目的地图</span><span>{routeTrips} 条有效航线｜首次差旅地 {(summary.first_time_destinations || 0)} 个</span></div>
+                <div className="route-shell">
+                  <svg className="route-bg" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true">
+                    <line className="gridline" x1="0" y1="100" x2="1200" y2="100"></line>
+                    <line className="gridline" x1="0" y1="200" x2="1200" y2="200"></line>
+                    <line className="gridline" x1="0" y1="300" x2="1200" y2="300"></line>
+                    <line className="gridline" x1="0" y1="400" x2="1200" y2="400"></line>
+                    <line className="gridline" x1="0" y1="500" x2="1200" y2="500"></line>
+                    <line className="gridline" x1="200" y1="0" x2="200" y2="600"></line>
+                    <line className="gridline" x1="400" y1="0" x2="400" y2="600"></line>
+                    <line className="gridline" x1="600" y1="0" x2="600" y2="600"></line>
+                    <line className="gridline" x1="800" y1="0" x2="800" y2="600"></line>
+                    <line className="gridline" x1="1000" y1="0" x2="1000" y2="600"></line>
+                    <path className="continent" d="M100 170 L180 120 L260 130 L315 100 L380 105 L442 162 L425 220 L356 250 L310 330 L238 345 L188 302 L135 300 L110 240 Z"></path>
+                    <path className="continent" d="M360 270 L420 285 L455 335 L425 430 L385 495 L355 430 L325 355 Z"></path>
+                    <path className="continent" d="M525 128 L598 90 L710 108 L815 122 L890 156 L960 170 L1015 210 L1065 258 L1050 320 L980 345 L930 320 L875 342 L815 300 L758 275 L700 282 L650 258 L610 246 L565 208 Z"></path>
+                    <path className="continent" d="M880 370 L925 355 L968 382 L1010 440 L998 495 L940 520 L898 494 L886 430 Z"></path>
+                  </svg>
+                  <div ref={routeRef} className="chart-lg"></div>
+                </div>
+              </div>
+
+              <div className="right-grid">
+                <div className="panel">
+                  <div className="panel-title"><span>目的地热度 Top 12</span><span>{((DATA.rankings && DATA.rankings.destination_cities) || []).length} 城市</span></div>
+                  <div ref={destinationRef} className="chart-md"></div>
+                </div>
+                <div className="panel">
+                  <div className="panel-title"><span>合规健康度雷达</span><span>{(DATA.compliance && DATA.compliance.alert_count) || 0} 条需人工复核</span></div>
+                  <div ref={radarRef} className="chart-md"></div>
+                  <div className="radar-summary">
+                    {radarItems.map(item => (
+                      <div className="radar-metric" key={item.name}>
+                        <div className="metric-name">{item.name}</div>
+                        <div className="metric-value">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="warning-grid">
+              <div className="panel">
+                <div className="panel-title"><span>今日新增预警</span><span>{dailyNewAlerts.status === 'no_baseline' ? '无历史基线' : `${dailyNewAlertRows.length} 条新增`}</span></div>
+                {dailyNewAlertRows.length ? (
+                  <>
+                    <div className="violation-overview alert">
+                      <div>
+                        <strong>今日新增 {dailyNewAlertRows.length} 条预警</strong>
+                        <span>基于“人员姓名 + 预警类型 + 日期区间”三元组做集合差，仅展示新增，不混入持续项或已消除项。</span>
+                      </div>
+                      <div className="badge badge-alert">🆕 NEW</div>
+                    </div>
+                    <div className="daily-alert-list">
+                      {dailyNewAlertRows.map((item, idx) => (
+                        <div className={`daily-alert-item ${item.is_new === false ? '' : 'is-new'}`} key={`${item.alert_id || 'alert'}-${idx}`}>
+                          <strong><span className="new-alert-badge">🆕 NEW</span>{item.person || '--'} · {item.rule_type || '--'}</strong>
+                          <div>{item.route || '--'}</div>
+                          <div className="muted">行程日期：{item.date_range || item.date || '--'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="violation-overview safe">
+                    <div>
+                      <strong>{dailyNewAlerts.message || (dailyNewAlerts.status === 'no_baseline' ? '首次运行，暂无历史对比 📊' : '今日无新增预警 ✅')}</strong>
+                      <span>{dailyNewAlerts.status === 'no_baseline' ? '已完成今日快照落盘，下一次运行将自动做集合差。' : '今日快照与昨日基线比对后，没有出现新的合规预警 ID。'}</span>
+                    </div>
+                    <div className="badge badge-good">{dailyNewAlerts.status === 'no_baseline' ? '已建基线' : '0 新增'}</div>
+                  </div>
+                )}
+              </div>
+              <div className="panel">
+                <div className="panel-title"><span>违规与合规预警看板</span><span>{violationTotal ? `命中 ${violationTotal} 条合规预警` : '当前未命中合规预警'}</span></div>
+                <div className={`violation-overview ${violationTotal ? 'alert' : 'safe'}`}>
+                  <div>
+                    <strong>{violationTotal ? `发现 ${violationTotal} 条合规预警` : '当前无合规预警'}</strong>
+                    <span>{violationTotal ? '已统一收口为“合规预警”，覆盖周末差旅、未批先订、超标需审批或自付、重复预订等风险信号。' : '本统计周期内未命中周末差旅、审批顺序、超标或重复预订风险。'}</span>
+                  </div>
+                  <div className={violationTotal ? 'badge badge-alert' : 'badge badge-good'}>{violationTotal ? '需立即复核' : '全部合规'}</div>
+                </div>
+                <div className="violation-board">
+                  {violationGroups.map(group => (
+                    <div className={`violation-column ${group.rows.length ? '' : 'safe'}`} key={group.key}>
+                      <div className="violation-head">
+                        <strong>{group.label}</strong>
+                        <span className="violation-count">{group.rows.length}</span>
+                      </div>
+                      {group.rows.length ? (
+                        <div className="violation-list">
+                          {group.rows.map((row, idx) => (
+                            <div className="violation-item" key={`${group.key}-${row.name || 'unknown'}-${idx}`}>
+                              <strong>{row.name || '--'} · {group.label}</strong>
+                              <div className="violation-route">{row.departure_city || '--'} → {row.destination_city || '--'}</div>
+                              <div className="violation-meta">{tripWindowLabel(row)}<br/>规则说明：{group.detail(row)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="violation-empty">没有命中 {group.label}<br/>当前数据保持合规</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="footer-grid">
+              <div className="panel">
+                <div className="panel-title"><span>差旅时间轴（Gantt）</span><span>{(DATA.people || []).length} 人｜红色呼吸点 = 首次差旅地</span></div>
+                <div ref={ganttRef} className="chart-sm"></div>
+              </div>
+              <div className="panel">
+                <div className="panel-title"><span>最新差旅行程明细</span><span>{rows.length} 条</span></div>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>姓名</th>
+                        <th>线路</th>
+                        <th>行程</th>
+                        <th>预订提前</th>
+                        <th>强提醒 / 合规</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length ? rows.map((row, idx) => (
+                        <tr key={`${row.name}-${idx}`}>
+                          <td>{row.name || '--'}</td>
+                          <td>{row.departure_city || '--'} → {row.destination_city || '--'}</td>
+                          <td>
+                            <div>{formatTime(row.departure_time)}</div>
+                            <div className="muted">至 {formatTime(row.return_time)}</div>
+                          </td>
+                          <td>{formatLeadDays(row.booking_lead_days)}</td>
+                          <td>
+                            <div className="badge-row">{renderBadges(row)}</div>
+                            {row.over_policy_reason ? <div className="muted" style={{ marginTop: '6px', fontSize: '11px', lineHeight: 1.4 }}>{row.over_policy_reason}</div> : null}
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan="5"><div className="empty">暂无命中记录</div></td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<TravelApp />);
+  </script>
+</body>
+</html>

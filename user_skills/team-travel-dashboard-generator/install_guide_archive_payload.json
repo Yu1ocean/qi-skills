@@ -1,0 +1,9 @@
+{
+  "asset_type": "generic_asset",
+  "target_route_key": "library_registry",
+  "global_id": "DOC-2606-003",
+  "title": "团队差旅大屏技能一键安装指南",
+  "doc_url": "https://bytedance.larkoffice.com/docx/QCEEddnatoil1MxnJ7fcYTSUn9d",
+  "description": "V3.3 版本一键安装文档，覆盖技能简介、版本状态、前置条件、安装命令、collect-mails / build / render-html / build_mail_ledger 快速上手示例，以及对齐 SKILL.md 的完整验收清单。",
+  "idempotency_key": "team-travel-dashboard-generator-install-guide-v3-3"
+}

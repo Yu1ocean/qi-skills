@@ -1,0 +1,38 @@
+{
+  "name": "AimeCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "📌 任务巡检提醒"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "**日期**：2026-05-08\n\n**异常任务**：19\n\n📌 **【任务名】**：Leads管理表\n👤 **负责人**：<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>\n⏰ **DDL**：无（连续 6 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：商家工具包\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>\n⏰ **DDL**：无（连续 6 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【可用Leads】梳理\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 6 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：新增HIPO商家类型\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 6 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：商家入驻卡点收集\n👤 **负责人**：未分配\n⏰ **DDL**：无（连续 6 天异常：负责人为空）\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：UK招商专项\n👤 **负责人**：未分配\n⏰ **DDL**：无（连续 2 天异常：负责人为空）\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：市场建设\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：本季度20场（连续 6 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：BD重点专项（5月）\n👤 **负责人**：未分配\n⏰ **DDL**：无（连续 6 天异常：负责人为空）\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：商家入驻one-pager\n👤 **负责人**：<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>\n⏰ **DDL**：2026-05-10（距离 2 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：靶向100个商家\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>、<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>、<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>、<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：2026-04-30（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：其他(关店挽回GMV)\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-05-10（距离 2 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：2026-05-09（距离 1 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：US头商沟通入驻\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n👤 **负责人**：<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>、<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>、<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-05-07（已超期 1 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：大商认证/打标流程提效\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "button",
+          "type": "primary",
+          "text": {
+            "tag": "plain_text",
+            "content": "前往任务工作站处理"
+          },
+          "behaviors": [
+            {
+              "type": "open_url",
+              "default_url": "https://bytedance.larkoffice.com/sheets/TnNYsLq9phIJwutJGwBl730ygjd"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

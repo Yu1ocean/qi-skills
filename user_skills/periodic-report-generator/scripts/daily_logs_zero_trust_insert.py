@@ -2,16 +2,20 @@
 # -*- coding: utf-8 -*-
 """Daily_Logs 零信任安全插入（一键脚本）
 
-目标：把“写日报→归档到 Daily_Logs 台账”的流程固化为可执行脚本，避免脏写/错列。
+目标：把"写日报→归档到 Daily_Logs 台账"的流程固化为可执行脚本，避免脏写/错列。
+
+写入模式：
+- **底部追加（Append）**。MCP 当前不支持"插入空行"，故统一采用 +append 直接写入表尾。
+- 写后即读校验改为"按主键回捞最末一条匹配行"，不再依赖固定 row_index=2。
 
 强约束：
 - 必须先通过 MCP 下载台账，读取表头 Schema（第 1 行）
 - 当存在【编号】列时必须自动生成主键（DL-YYYYMMDD / DL-YYYYMMDD-02 ...）
-- 严格写入三列：[[编号, 日期, 日报内容]]
-- 写后即读（RAW 原子锁）：写入后等待 >=2s，再次下载并读回刚写区域逐字段核对
+- 【治本封堵】必须写满 3 列：[[编号, 日期, 日报内容]]，任一字段为空即熔断。
+- 写后即读（RAW 原子锁）：写入后等待 >=2s，再次下载并按主键定位刚写行做逐字段核对
 
 注意：
-- 本脚本依赖 feishu-doc-writing-guide 的 safe_insert_sheet_row.py 负责“安全写入/插行”。
+- 本脚本依赖 feishu-doc-writing-guide 的 safe_insert_sheet_row.py 负责"安全写入/插行"。
 - 本脚本不负责 bytedcli 登录；请在 Aime 执行时先挂载 bytedcli-auth 并 include_secrets=true。
 """
 
@@ -22,6 +26,7 @@ import ast
 import datetime as dt
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -30,19 +35,30 @@ from pathlib import Path
 
 import openpyxl
 
-try:
-    from byted_aime_sdk import call_aime_tool
-except Exception as e:  # pragma: no cover
-    raise RuntimeError(
-        "未找到 byted_aime_sdk（无法调用 MCP）。请在 Aime 环境中执行此脚本。"
-    ) from e
-
-
 DEFAULT_SHEET_URL = "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
 DEFAULT_SHEET_NAME = "Daily_Logs"
-DEFAULT_ROW_INDEX = 2  # 飞书表格行号（1-based）：第 1 行是表头；默认插入第 2 行
+# 写入模式约定：底部追加（Append）。MCP 不支持“插入空行”，故采用 +append 直接追加到表尾。
+# row_index 仅作为兼容入参传给 safe_insert_sheet_row.py，底层会忽略它并改走 +append。
+DEFAULT_ROW_INDEX = 0  # 0 = ignored by safe_insert（append-only）
 
 REQUIRED_HEADERS = ["编号", "日期", "日报内容"]
+DEFAULT_TASK_STATS_WIKI_URL = "https://bytedance.larkoffice.com/sheets/TnNYsLq9phIJwutJGwBl730ygjd"
+DEFAULT_TASK_STATS_SHEET_NAME = "任务库"
+TASK_STATUS_COLUMN = "完成情况"
+TASK_OPENED_STATUSES = {"进行中", "准备中", "已开启", "开启中"}
+TASK_COMPLETED_STATUSES = {"已完成", "完成"}
+TASK_PAUSED_STATUSES = {"暂停", "已暂停", "暂停中", "搁置"}
+UNRESOLVED_SENTINEL = "⚠️[数据断链_待自愈]"
+TASK_STATS_PLACEHOLDERS = {
+    "{{TASK_STATS_TODAY_OPENED}}": "opened",
+    "{{TASK_STATS_TODAY_COMPLETED}}": "completed",
+    "{{TASK_STATS_TODAY_PAUSED}}": "paused",
+    "{{TODAY_OPENED_TASKS}}": "opened",
+    "{{TODAY_COMPLETED_TASKS}}": "completed",
+    "{{TODAY_PAUSED_TASKS}}": "paused",
+    "{{TASK_STATS_SUMMARY}}": "summary",
+    "{{TASK_STATS_TABLE}}": "table",
+}
 
 
 def _ensure_dir(p: Path) -> None:
@@ -86,20 +102,65 @@ def _parse_mcp_result_to_obj(res_text: str):
 
 
 def mcp_download_lark_sheet(document_url: str) -> list[str]:
-    res = call_aime_tool(
-        toolset="lark",
-        tool_name="mcp:lark_lark_download",
-        parameters={"document_url": document_url},
-        response_format="text",
+    """通过当前可用的 lark-sheets CLI/MCP 导出 xlsx。
+
+    历史实现依赖 `mcp:lark_lark_download`，当前环境该工具缺失；这里改为
+    lark-sheets 原生导出能力（等价 MCP 簇能力）读取在线表格，避免 18:00 归档链路
+    再被缺失工具卡死。
+    """
+    import subprocess
+    import tempfile
+
+    out_dir = Path.cwd().resolve() / ".tmp" / "aime_daily_logs_exports"
+    _ensure_dir(out_dir)
+    out_name = f"lark_sheet_export_{dt.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.xlsx"
+    out_path = out_dir / out_name
+    rel_out_path = str(out_path.relative_to(Path.cwd().resolve()))
+    cmd = [
+        _lark_sheets_cli_path(),
+        "sheets",
+        "+export",
+        "--url",
+        document_url,
+        "--file-extension",
+        "xlsx",
+        "--output-path",
+        rel_out_path,
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(
+            "lark-sheets +export 执行失败，无法读取在线表格："
+            f"\ncmd={' '.join(cmd)}\nstderr={res.stderr}\nstdout={res.stdout}"
+        )
+
+    exported_paths: list[str] = []
+    try:
+        obj = json.loads(res.stdout)
+        data = obj.get("data", {}) if isinstance(obj, dict) else {}
+        for key in ("file_path", "path", "output_path"):
+            if isinstance(data, dict) and data.get(key):
+                exported_paths.append(str(data[key]))
+        if isinstance(data, dict) and isinstance(data.get("file_paths"), list):
+            exported_paths.extend(str(p) for p in data["file_paths"])
+    except Exception:
+        pass
+
+    exported_paths.append(str(out_path))
+    existing = [p for p in exported_paths if Path(p).exists()]
+    if existing:
+        return existing
+
+    # 兼容 CLI 输出里只打印路径文本的情况
+    matches = re.findall(r'(/[^"]+\.xlsx)', res.stdout + "\n" + res.stderr)
+    existing = [p for p in matches if Path(p).exists()]
+    if existing:
+        return existing
+
+    raise RuntimeError(
+        "lark-sheets +export 未产生可用 xlsx 文件："
+        f"\nexpected={out_path}\nstdout={res.stdout}\nstderr={res.stderr}"
     )
-    obj = _parse_mcp_result_to_obj(res)
-
-    if isinstance(obj, dict) and "file_paths" in obj and isinstance(obj["file_paths"], list):
-        return obj["file_paths"]
-    if isinstance(obj, list) and all(isinstance(x, str) for x in obj):
-        return obj
-
-    raise RuntimeError(f"MCP 下载返回格式异常，无法解析：{res}")
 
 
 def pick_xlsx(paths: list[str]) -> str:
@@ -111,21 +172,149 @@ def pick_xlsx(paths: list[str]) -> str:
 
 def read_sheet_headers(xlsx_path: str, sheet_name: str) -> list[str]:
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    print(f"[Debug] Sheet names: {wb.sheetnames}")
     if sheet_name not in wb.sheetnames:
         raise RuntimeError(
             f"xlsx 中未找到工作表 {sheet_name}。可用工作表：{wb.sheetnames}"
         )
     ws = wb[sheet_name]
     headers: list[str] = []
-    for cell in ws[1]:
-        v = cell.value
-        if v is None:
-            break
-        v_str = str(v).strip()
-        if not v_str:
-            break
-        headers.append(v_str)
+    for col in range(1, 4):
+        v = ws.cell(row=1, column=col).value
+        headers.append(str(v).strip() if v is not None else "")
+    print(f"[Debug] Explicit headers: {headers}")
     return headers
+
+
+def _normalize_cell(value) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _read_header_row(ws, max_scan: int = 32) -> list[str]:
+    headers = [_normalize_cell(ws.cell(row=1, column=col).value) for col in range(1, max_scan + 1)]
+    while headers and headers[-1] == "":
+        headers.pop()
+    return headers
+
+
+def _iter_sheet_rows(ws, header_count: int, start_row: int = 2, max_scan_rows: int = 5000, blank_streak_limit: int = 50):
+    blank_streak = 0
+    for row_idx in range(start_row, max_scan_rows + 1):
+        row_values = [
+            _normalize_cell(ws.cell(row=row_idx, column=col).value)
+            for col in range(1, header_count + 1)
+        ]
+        if any(row_values):
+            blank_streak = 0
+            yield row_idx, row_values
+            continue
+        blank_streak += 1
+        if blank_streak >= blank_streak_limit:
+            break
+
+
+def compute_task_status_stats(xlsx_path: str, sheet_name: str) -> dict[str, int | str]:
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    if sheet_name not in wb.sheetnames:
+        raise RuntimeError(
+            f"任务库 xlsx 中未找到工作表 {sheet_name}。可用工作表：{wb.sheetnames}"
+        )
+    ws = wb[sheet_name]
+
+    headers = _read_header_row(ws)
+    if TASK_STATUS_COLUMN not in headers:
+        raise RuntimeError(
+            f"任务库缺少状态列 {TASK_STATUS_COLUMN}。实际表头：{headers}"
+        )
+
+    status_idx = headers.index(TASK_STATUS_COLUMN)
+    opened = 0
+    completed = 0
+    paused = 0
+    recognized = 0
+    unknown_statuses: dict[str, int] = {}
+
+    for _row_idx, row_values in _iter_sheet_rows(ws, header_count=len(headers)):
+        status = row_values[status_idx] if status_idx < len(row_values) else ""
+        if not status:
+            continue
+        if status in TASK_OPENED_STATUSES:
+            opened += 1
+            recognized += 1
+        elif status in TASK_COMPLETED_STATUSES:
+            completed += 1
+            recognized += 1
+        elif status in TASK_PAUSED_STATUSES:
+            paused += 1
+            recognized += 1
+        else:
+            unknown_statuses[status] = unknown_statuses.get(status, 0) + 1
+
+    summary = f"开启 {opened} 个，完成 {completed} 个，暂停 {paused} 个"
+    table = (
+        "| 状态 | 数量 |\n"
+        "| --- | ---: |\n"
+        f"| 开启 | {opened} |\n"
+        f"| 完成 | {completed} |\n"
+        f"| 暂停 | {paused} |"
+    )
+    return {
+        "opened": opened,
+        "completed": completed,
+        "paused": paused,
+        "recognized": recognized,
+        "unknown_statuses": json.dumps(unknown_statuses, ensure_ascii=False),
+        "summary": summary,
+        "table": table,
+    }
+
+
+def replace_task_stats_placeholders(content: str, task_stats: dict[str, int | str]) -> str:
+    resolved = content
+    for placeholder, key in TASK_STATS_PLACEHOLDERS.items():
+        if placeholder in resolved:
+            resolved = resolved.replace(placeholder, str(task_stats[key]))
+
+    patterns = {
+        "opened": [r"(今日?开启\s*[：:：]\s*)⚠️\[数据断链_待自愈\]", r"(开启\s*[：:：]\s*)⚠️\[数据断链_待自愈\]"],
+        "completed": [r"(今日?完成\s*[：:：]\s*)⚠️\[数据断链_待自愈\]", r"(完成\s*[：:：]\s*)⚠️\[数据断链_待自愈\]"],
+        "paused": [r"(今日?暂停\s*[：:：]\s*)⚠️\[数据断链_待自愈\]", r"(暂停\s*[：:：]\s*)⚠️\[数据断链_待自愈\]"],
+    }
+    for key, regex_list in patterns.items():
+        for pattern in regex_list:
+            resolved = re.sub(pattern, lambda m: f"{m.group(1)}{task_stats[key]}", resolved)
+
+    if UNRESOLVED_SENTINEL in resolved:
+        if "任务状态汇总表" in resolved:
+            resolved = resolved.replace(UNRESOLVED_SENTINEL, str(task_stats["table"]), 1)
+        elif "任务状态汇总" in resolved:
+            resolved = resolved.replace(UNRESOLVED_SENTINEL, str(task_stats["summary"]), 1)
+
+    if "任务状态汇总" not in resolved and "| 状态 | 数量 |" not in resolved:
+        resolved = f"任务状态汇总：{task_stats['summary']}\n\n{resolved}"
+
+    return resolved
+
+
+def resolve_task_stats_content(
+    content: str,
+    task_stats_wiki_url: str,
+    task_stats_sheet_name: str,
+    workspace_root: Path,
+) -> tuple[str, dict[str, int | str], str]:
+    file_paths = mcp_download_lark_sheet(task_stats_wiki_url)
+    xlsx_path = pick_xlsx(file_paths)
+    if not os.path.isabs(xlsx_path):
+        xlsx_path = str((workspace_root / xlsx_path).resolve())
+    task_stats = compute_task_status_stats(xlsx_path, task_stats_sheet_name)
+    resolved_content = replace_task_stats_placeholders(content, task_stats)
+    if UNRESOLVED_SENTINEL in resolved_content:
+        raise RuntimeError(
+            f"任务库统计已拉取，但日报内容仍残留未替换占位符 {UNRESOLVED_SENTINEL}。"
+        )
+    return resolved_content, task_stats, xlsx_path
 
 
 def list_existing_ids(xlsx_path: str, sheet_name: str) -> set[str]:
@@ -141,6 +330,112 @@ def list_existing_ids(xlsx_path: str, sheet_name: str) -> set[str]:
         if s:
             ids.add(s)
     return ids
+
+
+# ---- lark-sheets CLI 直读：避免 MCP 下载缓存 ----
+
+def _lark_sheets_cli_path() -> str:
+    return str(
+        _workspace_root() / "inner_skills" / "lark-sheets" / "bin" / "lark-sheets-cli"
+    )
+
+
+def _run_lark_sheets(args: list[str]) -> dict | None:
+    import subprocess
+
+    cmd = [_lark_sheets_cli_path()] + args
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        print(f"[CliError] {res.stderr}")
+        return None
+    try:
+        return json.loads(res.stdout)
+    except Exception:
+        print(f"[CliParseError] stdout: {res.stdout[:400]}")
+        return None
+
+
+def _resolve_sheet_id(sheet_url: str, sheet_name: str) -> str | None:
+    info = _run_lark_sheets(["sheets", "+info", "--url", sheet_url])
+    if not info or not info.get("ok"):
+        return None
+    for s in info["data"]["sheets"]["sheets"]:
+        if s.get("title") == sheet_name:
+            return s.get("sheet_id")
+    return None
+
+
+def _get_row_count(sheet_url: str, sheet_name: str) -> int | None:
+    info = _run_lark_sheets(["sheets", "+info", "--url", sheet_url])
+    if not info or not info.get("ok"):
+        return None
+    for s in info["data"]["sheets"]["sheets"]:
+        if s.get("title") == sheet_name:
+            return s.get("grid_properties", {}).get("row_count")
+    return None
+
+
+def list_existing_ids_via_cli(sheet_url: str, sheet_name: str) -> set[str] | None:
+    """通过 lark-sheets CLI 直读首列所有【编号】。
+
+    避免 MCP 下载缓存导致的"刚写完读不到"问题。
+    """
+    sheet_id = _resolve_sheet_id(sheet_url, sheet_name)
+    if not sheet_id:
+        return None
+    row_count = _get_row_count(sheet_url, sheet_name) or 200
+    rng = f"{sheet_id}!A2:A{max(2, row_count)}"
+    res = _run_lark_sheets(
+        ["sheets", "+read", "--url", sheet_url, "--sheet-id", sheet_id, "--range", rng]
+    )
+    if not res or not res.get("ok"):
+        return None
+    rows = res.get("data", {}).get("valueRange", {}).get("values", []) or []
+    ids: set[str] = set()
+    for row in rows:
+        v = row[0] if isinstance(row, list) and row else None
+        if v is None:
+            continue
+        s = str(v).strip()
+        if s:
+            ids.add(s)
+    return ids
+
+
+def find_row_by_primary_key_via_cli(
+    sheet_url: str, sheet_name: str, primary_key: str, col_count: int = 3
+) -> tuple[int, list[str | None]] | None:
+    """通过 lark-sheets CLI 直读，按主键回捞最末一条匹配行（绕开下载缓存）。"""
+    sheet_id = _resolve_sheet_id(sheet_url, sheet_name)
+    if not sheet_id:
+        return None
+    row_count = _get_row_count(sheet_url, sheet_name) or 200
+
+    end_col_letter = chr(ord("A") + col_count - 1)
+    rng = f"{sheet_id}!A1:{end_col_letter}{max(1, row_count)}"
+    res = _run_lark_sheets(
+        ["sheets", "+read", "--url", sheet_url, "--sheet-id", sheet_id, "--range", rng]
+    )
+    if not res or not res.get("ok"):
+        return None
+    rows = res.get("data", {}).get("valueRange", {}).get("values", []) or []
+
+    last_idx: int | None = None
+    last_row: list[str | None] | None = None
+    # 第 1 行是表头；从第 2 行开始扫
+    for idx, row in enumerate(rows[1:], start=2):
+        first = row[0] if isinstance(row, list) and row else None
+        if first is None:
+            continue
+        if str(first).strip() == primary_key:
+            # 补齐到 col_count 长度
+            full = list(row) + [None] * (col_count - len(row))
+            last_idx = idx
+            last_row = [None if v is None else str(v) for v in full[:col_count]]
+
+    if last_idx is None or last_row is None:
+        return None
+    return last_idx, last_row
 
 
 def gen_daily_log_id(date_str: str, existing: set[str]) -> str:
@@ -166,6 +461,36 @@ def read_row_values(xlsx_path: str, sheet_name: str, row_index: int, col_count: 
         row.append(ws.cell(row=row_index, column=col).value)
     # 统一转 str 便于比对
     return [None if v is None else str(v) for v in row]
+
+
+def find_row_by_primary_key(
+    xlsx_path: str, sheet_name: str, primary_key: str, col_count: int = 3
+) -> tuple[int, list[str | None]] | None:
+    """按主键（第 1 列：编号）回捞最后一条匹配行。
+
+    底部追加模式下，新写入的行位于表尾，因此需要从下往上扫描，命中即返回。
+    返回 (row_index, row_values)；未命中返回 None。
+    """
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    ws = wb[sheet_name]
+
+    # 收集所有非空首列的行（read_only 模式不支持随机访问，整体迭代一次）
+    last_match_idx: int | None = None
+    last_match_row: list[str | None] | None = None
+
+    for idx, row in enumerate(
+        ws.iter_rows(min_row=2, max_col=col_count, values_only=True), start=2
+    ):
+        first = row[0]
+        if first is None:
+            continue
+        if str(first).strip() == primary_key:
+            last_match_idx = idx
+            last_match_row = [None if v is None else str(v) for v in row]
+
+    if last_match_idx is None or last_match_row is None:
+        return None
+    return last_match_idx, last_match_row
 
 
 def write_dlq(skill_root: Path, payload: dict) -> Path:
@@ -194,13 +519,39 @@ def main() -> int:
     parser.add_argument("--sheet-name", default=DEFAULT_SHEET_NAME, help="工作表名称")
     parser.add_argument("--date", default=dt.date.today().strftime("%Y-%m-%d"), help="日期 YYYY-MM-DD")
     parser.add_argument("--content", required=True, help="日报内容（建议约 100 字）")
-    parser.add_argument("--row-index", type=int, default=DEFAULT_ROW_INDEX, help="插入行号（1-based），默认 2")
+    parser.add_argument(
+        "--task-stats-wiki-url",
+        default=DEFAULT_TASK_STATS_WIKI_URL,
+        help="任务库 Wiki 链接，用于前置拉取任务状态统计",
+    )
+    parser.add_argument(
+        "--task-stats-sheet-name",
+        default=DEFAULT_TASK_STATS_SHEET_NAME,
+        help="任务库工作表名称",
+    )
+    parser.add_argument(
+        "--row-index",
+        type=int,
+        default=DEFAULT_ROW_INDEX,
+        help="（已废弃）兼容入参；底层强制走 +append 底部追加模式，此参数不再生效",
+    )
     parser.add_argument("--dry-run", action="store_true", help="只做 Schema 回捞与主键生成，不实际写入")
 
     args = parser.parse_args()
 
     skill_root = _skill_root()
     workspace_root = _workspace_root()
+
+    resolved_content, task_stats, task_stats_xlsx = resolve_task_stats_content(
+        content=args.content,
+        task_stats_wiki_url=args.task_stats_wiki_url,
+        task_stats_sheet_name=args.task_stats_sheet_name,
+        workspace_root=workspace_root,
+    )
+    print("[TaskStats] source:")
+    print(task_stats_xlsx)
+    print("[TaskStats] values:")
+    print(json.dumps(task_stats, ensure_ascii=False))
 
     # 1) MCP 下载（读 Schema）
     file_paths = mcp_download_lark_sheet(args.sheet_url)
@@ -223,7 +574,10 @@ def main() -> int:
                 "actual_headers": headers,
                 "payload": {
                     "date": args.date,
-                    "content": args.content,
+                    "content": resolved_content,
+                    "task_stats": task_stats,
+                    "task_stats_wiki_url": args.task_stats_wiki_url,
+                    "task_stats_sheet_name": args.task_stats_sheet_name,
                 },
                 "note": "⚠️[数据断链_待自愈] Schema 不匹配，已熔断写入。",
             },
@@ -235,15 +589,32 @@ def main() -> int:
             f"\n- DLQ：{dlq_file}"
         )
 
-    existing_ids = list_existing_ids(xlsx_path, args.sheet_name)
+    # 主键生成：优先通过 lark-sheets CLI 直读（避免 MCP 下载缓存），失败时回退 xlsx
+    cli_existing = list_existing_ids_via_cli(args.sheet_url, args.sheet_name)
+    if cli_existing is not None:
+        print(f"[Schema] existing_ids via CLI: {len(cli_existing)} rows scanned")
+        existing_ids = cli_existing
+    else:
+        print("[Schema] CLI 直读失败，回退使用 xlsx 缓存读取 existing_ids")
+        existing_ids = list_existing_ids(xlsx_path, args.sheet_name)
     row_id = gen_daily_log_id(args.date, existing_ids)
+    
+    row_data = [[row_id, args.date, resolved_content]]
 
-    row_data = [[row_id, args.date, args.content]]
-
+    # 【治本封堵】强契约校验：必须写满 3 列 [ID, Date, Content] 且均不能为空
+    if not isinstance(row_data, list) or len(row_data) != 1 or len(row_data[0]) != 3:
+        raise ValueError(f"CRITICAL [治本封堵]: row_data 必须为 1x3 数组，当前为: {row_data}")
+    
+    rid, rdate, rcont = row_data[0]
+    if not str(rid).strip() or not str(rdate).strip() or not str(rcont).strip():
+        raise ValueError(f"CRITICAL [治本封堵]: [ID, Date, Content] 均不能为空，当前行: {row_data[0]}")
+    
     print("[Schema] headers:")
     print(json.dumps(headers, ensure_ascii=False))
     print("[Insert] row_data:")
     print(json.dumps(row_data, ensure_ascii=False))
+    print("[Insert] resolved_content:")
+    print(resolved_content)
     print(f"[Snapshot] pre: {pre_snap}")
 
     if args.dry_run:
@@ -304,24 +675,57 @@ def main() -> int:
     print("[Write] ok. stdout:")
     print(proc.stdout)
 
-    # 3) 写后即读（RAW 原子锁）
+    # 3) 写后即读（RAW 原子锁）— 底部追加模式：通过 lark-sheets CLI 直读，按主键回捞最末一条匹配行
     time.sleep(2)
 
-    file_paths_after = mcp_download_lark_sheet(args.sheet_url)
-    xlsx_after = pick_xlsx(file_paths_after)
-    if not os.path.isabs(xlsx_after):
-        xlsx_after = str((workspace_root / xlsx_after).resolve())
-
-    post_snap = snapshot(skill_root, xlsx_after, stage="post")
-
-    read_back = read_row_values(xlsx_after, args.sheet_name, args.row_index, col_count=3)
-
-    expected = [row_id, args.date, args.content]
+    expected = [row_id, args.date, resolved_content]
     expected_str = [str(x) for x in expected]
 
-    print("[Snapshot] post:")
-    print(str(post_snap))
+    # 优先 CLI 直读（绕开 MCP 下载缓存）
+    found = find_row_by_primary_key_via_cli(args.sheet_url, args.sheet_name, row_id, col_count=3)
 
+    # 同时仍保留 MCP 下载快照作为审计存证（可选；失败不阻塞主流程）
+    post_snap_path: str | None = None
+    try:
+        file_paths_after = mcp_download_lark_sheet(args.sheet_url)
+        xlsx_after = pick_xlsx(file_paths_after)
+        if not os.path.isabs(xlsx_after):
+            xlsx_after = str((workspace_root / xlsx_after).resolve())
+        post_snap = snapshot(skill_root, xlsx_after, stage="post")
+        post_snap_path = str(post_snap)
+        print("[Snapshot] post:")
+        print(post_snap_path)
+    except Exception as snap_err:  # 快照失败不影响主流程
+        print(f"[Snapshot] post 快照失败（不阻塞主流程）：{snap_err}")
+
+    if found is None:
+        dlq_file = write_dlq(
+            skill_root,
+            {
+                "type": "Daily_Logs_ReadAfterWriteMissing",
+                "timestamp": dt.datetime.now().isoformat(),
+                "sheet_url": args.sheet_url,
+                "sheet_name": args.sheet_name,
+                "mode": "append",
+                "expected": expected_str,
+                "primary_key": row_id,
+                "snapshots": {
+                    "pre": str(pre_snap),
+                    "post": post_snap_path,
+                },
+                "note": "⚠️[数据断链_待自愈] 写入后未在表中找到对应主键行，已熔断并落 DLQ。",
+            },
+        )
+        raise RuntimeError(
+            "写后即读 RAW 校验失败（主键未命中），已熔断并落 DLQ："
+            f"\n- expected：{expected_str}"
+            f"\n- primary_key：{row_id}"
+            f"\n- DLQ：{dlq_file}"
+        )
+
+    found_idx, read_back = found
+
+    print(f"[ReadAfterWrite] mode: append, located by primary_key='{row_id}' at row {found_idx}")
     print("[ReadAfterWrite] read_back (raw array):")
     print(json.dumps([read_back], ensure_ascii=False))
 
@@ -333,24 +737,27 @@ def main() -> int:
                 "timestamp": dt.datetime.now().isoformat(),
                 "sheet_url": args.sheet_url,
                 "sheet_name": args.sheet_name,
-                "row_index": args.row_index,
+                "mode": "append",
+                "located_row_index": found_idx,
+                "primary_key": row_id,
                 "expected": expected_str,
                 "read_back": read_back,
                 "snapshots": {
                     "pre": str(pre_snap),
-                    "post": str(post_snap),
+                    "post": post_snap_path,
                 },
                 "note": "⚠️[数据断链_待自愈] 写后即读不一致，已熔断并落 DLQ。",
             },
         )
         raise RuntimeError(
             "写后即读 RAW 校验失败（不一致），已熔断并落 DLQ："
+            f"\n- located_row_index：{found_idx}"
             f"\n- expected：{expected_str}"
             f"\n- read_back：{read_back}"
             f"\n- DLQ：{dlq_file}"
         )
 
-    print("[OK] 写入并核对一致。")
+    print("[OK] 写入并核对一致（底部追加 + 按主键定位 + RAW 原子锁）。")
     return 0
 
 

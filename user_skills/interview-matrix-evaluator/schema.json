@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "interview-matrix-evaluator-output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "decision_anchor",
+    "candidate_summaries",
+    "radar_overlay",
+    "gap_comparison",
+    "zero_trust_matrix",
+    "ranking_result",
+    "final_recommendation",
+    "followup_interview",
+    "interviewer_feedback"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_name", "version", "analysis_language", "candidate_count"],
+      "properties": {
+        "skill_name": { "const": "interview-matrix-evaluator" },
+        "version": { "type": "string" },
+        "analysis_language": { "type": "string", "enum": ["zh-CN"] },
+        "candidate_count": { "type": "integer", "minimum": 2 }
+      }
+    },
+    "decision_anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_family", "sub_type", "role_jd", "north_star_metric", "must_have_competencies", "weighting_rules", "risk_tolerance", "calibration_risks"],
+      "properties": {
+        "job_family": { "type": "string", "enum": ["BD", "MKT"] },
+        "sub_type": { "type": ["string", "null"], "enum": ["MKT_LD", null] },
+        "role_jd": { "type": ["string", "null"] },
+        "north_star_metric": { "type": ["string", "null"] },
+        "must_have_competencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "weighting_rules": {
+          "type": ["string", "null"]
+        },
+        "risk_tolerance": {
+          "type": ["string", "null"]
+        },
+        "calibration_risks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "candidate_summaries": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "candidate_name",
+          "input_validity",
+          "business_ability",
+          "byte_style_total_score",
+          "top_strengths",
+          "top_gaps",
+          "comparative_edge",
+          "confidence_status"
+        ],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "candidate_name": { "type": "string" },
+          "input_validity": {
+            "type": "string",
+            "enum": ["valid", "invalid_input"]
+          },
+          "invalid_reason": { "type": ["string", "null"] },
+          "business_ability": {
+            "type": ["string", "null"],
+            "enum": ["不推荐", "中性", "强推荐", "不可错过", null]
+          },
+          "byte_style_total_score": { "type": ["number", "null"], "minimum": 0, "maximum": 30 },
+          "top_strengths": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "top_gaps": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "comparative_edge": { "type": ["string", "null"] },
+          "confidence_status": {
+            "type": "string",
+            "enum": ["已证实", "高概率", "待验证"]
+          }
+        }
+      }
+    },
+    "radar_overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["radar_profile", "dimensions", "overlay_summary"],
+      "properties": {
+        "radar_profile": {
+          "type": "string",
+          "enum": ["default", "MKT_LD"]
+        },
+        "dimensions": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dimension_name", "candidate_scores", "leader", "laggard", "commentary"],
+            "properties": {
+              "dimension_name": { "type": "string" },
+              "candidate_scores": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["candidate_id", "candidate_name", "score", "reason"],
+                  "properties": {
+                    "candidate_id": { "type": "string" },
+                    "candidate_name": { "type": "string" },
+                    "score": { "type": ["number", "null"], "minimum": 0, "maximum": 5 },
+                    "reason": { "type": ["string", "null"] }
+                  }
+                }
+              },
+              "leader": { "type": ["string", "null"] },
+              "laggard": { "type": ["string", "null"] },
+              "commentary": { "type": "string" }
+            }
+          }
+        },
+        "overlay_summary": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "radar_profile": { "const": "default" }
+            }
+          },
+          "then": {
+            "properties": {
+              "dimensions": {
+                "minItems": 6
+              }
+            }
+          }
+        }
+      ]
+    },
+    "gap_comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_longboards", "candidate_shortboards", "cross_candidate_observations"],
+      "properties": {
+        "candidate_longboards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["candidate_id", "items"],
+            "properties": {
+              "candidate_id": { "type": "string" },
+              "items": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "candidate_shortboards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["candidate_id", "items"],
+            "properties": {
+              "candidate_id": { "type": "string" },
+              "items": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "cross_candidate_observations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "zero_trust_matrix": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "candidate_name",
+          "risk_title",
+          "risk_type",
+          "severity",
+          "uncertainty",
+          "business_impact",
+          "evidence_note",
+          "mitigation_question"
+        ],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "candidate_name": { "type": "string" },
+          "risk_title": { "type": "string" },
+          "risk_type": {
+            "type": "string",
+            "enum": ["证据稀薄区", "逻辑盲区", "基准漂移", "决策风险"]
+          },
+          "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+          "uncertainty": { "type": "string", "enum": ["high", "medium", "low"] },
+          "business_impact": { "type": "string", "enum": ["critical", "notable", "limited"] },
+          "evidence_note": { "type": "string" },
+          "mitigation_question": { "type": "string" }
+        }
+      }
+    },
+    "ranking_result": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ranking",
+          "candidate_id",
+          "candidate_name",
+          "hire_recommendation",
+          "ranking_reason",
+          "core_tradeoff_reason",
+          "if_priority_changes"
+        ],
+        "properties": {
+          "ranking": { "type": "integer", "minimum": 1 },
+          "candidate_id": { "type": "string" },
+          "candidate_name": { "type": "string" },
+          "hire_recommendation": {
+            "type": "string",
+            "enum": ["建议录用", "推进补面（指定补面问题）", "可保留观望", "暂缓", "不建议录用"]
+          },
+          "ranking_reason": { "type": "string" },
+          "core_tradeoff_reason": { "type": "string" },
+          "if_priority_changes": { "type": "string" }
+        }
+      }
+    },
+    "final_recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_pick_candidate_id", "top_pick_candidate_name", "top_pick_reason", "runner_up_reason", "overall_decision_note", "follow_up_actions"],
+      "properties": {
+        "top_pick_candidate_id": { "type": ["string", "null"] },
+        "top_pick_candidate_name": { "type": ["string", "null"] },
+        "top_pick_reason": { "type": "string" },
+        "runner_up_reason": { "type": "string" },
+        "overall_decision_note": { "type": "string" },
+        "follow_up_actions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "followup_interview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "priority", "focus_questions", "target_dimensions"],
+      "properties": {
+        "candidate_id": { "type": ["string", "null"] },
+        "priority": { "type": ["string", "null"], "enum": ["high", "medium", "low", null] },
+        "focus_questions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "target_dimensions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "interviewer_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["interviewer_name", "suggestions"],
+        "properties": {
+          "interviewer_name": { "type": "string" },
+          "suggestions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

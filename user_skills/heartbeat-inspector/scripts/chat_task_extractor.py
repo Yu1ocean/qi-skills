@@ -228,15 +228,13 @@ def _guess_chat_name(msg: Dict[str, Any]) -> str:
 
 
 def _ensure_task_name_bracketed(name: str) -> str:
-    name = (name or "").strip()
-    if not name:
-        return ""
-    if name.startswith("【") and name.endswith("】"):
-        return name
-    # tolerate accidental square brackets; keep other punctuation unchanged.
-    if name.startswith("[") and name.endswith("]") and len(name) >= 2:
-        name = name[1:-1].strip()
-    return f"【{name}】"
+    """Preserve task name as original text without auto-adding 【】.
+
+    历史上这里会强制把任务名包装成【...】。
+    现在恢复为“原样写入”：仅做首尾空白清理，不再补括号、也不改写原文。
+    """
+
+    return (name or "").strip()
 
 
 _BRACKET_TASK_RE = re.compile(r"【[^【】]+】")
@@ -505,7 +503,7 @@ def _postprocess_task(
         task["evidence"] = ev
 
     else:
-        # Enforce task name format & brackets (fallback summarization)
+        # Preserve extractor output as original text; no auto-bracketing rewrite.
         summary = _to_str(task.get("summary") or "")
         task_name = _to_str(task.get("task_name") or summary)
         task["task_name"] = _ensure_task_name_bracketed(task_name)
@@ -695,7 +693,11 @@ def extract_tasks_from_chat_messages(
                 "message_id": mid,
                 "create_time": m.get("create_time"),
                 "sender": _guess_sender_name(m),
+                "chat_id": m.get("chat_id"),
                 "chat_name": _guess_chat_name(m),
+                "chat_link": m.get("chat_link"),
+                "message_link": m.get("message_link"),
+                "jump_link": m.get("jump_link"),
                 "text": _extract_message_text_full(m),
                 "is_new": mid in new_id_set,
                 "raw": m,
@@ -742,7 +744,11 @@ def extract_tasks_from_chat_messages(
                     {
                         "message_id": mv.get("message_id"),
                         "sender": mv.get("sender"),
+                        "chat_id": mv.get("chat_id"),
                         "chat_name": mv.get("chat_name"),
+                        "chat_link": mv.get("chat_link"),
+                        "message_link": mv.get("message_link"),
+                        "jump_link": mv.get("jump_link"),
                         "create_time": mv.get("create_time"),
                         "text": mv.get("text"),
                     }
@@ -801,7 +807,11 @@ def extract_tasks_from_chat_messages(
                 {
                     "message_id": mv.get("message_id"),
                     "sender": mv.get("sender"),
+                    "chat_id": mv.get("chat_id"),
                     "chat_name": mv.get("chat_name"),
+                    "chat_link": mv.get("chat_link"),
+                    "message_link": mv.get("message_link"),
+                    "jump_link": mv.get("jump_link"),
                     "create_time": mv.get("create_time"),
                     "text": mv.get("text"),
                 }
@@ -872,6 +882,11 @@ def extract_status_updates_from_messages(
                 "postponed_to_time": None,
                 "message_id": m.get("message_id"),
                 "sender": m.get("sender"),
+                "chat_id": m.get("chat_id"),
+                "chat_name": m.get("chat_name"),
+                "chat_link": m.get("chat_link"),
+                "message_link": m.get("message_link"),
+                "jump_link": m.get("jump_link"),
                 "create_time": m.get("create_time"),
                 "source_text_full": text,
             }

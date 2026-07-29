@@ -1,0 +1,42 @@
+{
+  "name": "TravelDashboardLiveCard",
+  "dsl": {
+    "schema": "2.0",
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "周六差旅大屏快照"
+      },
+      "template": "blue"
+    },
+    "body": {
+      "elements": [
+        {
+          "tag": "markdown",
+          "content": "#### 周六自动推送\n已刷新最新差旅大屏，可直接点开查看。"
+        },
+        {
+          "tag": "div",
+          "text": {
+            "tag": "plain_text",
+            "content": "时间窗：2026-06-19T02:00:00+08:00 ~ 2026-06-20T08:08:00+08:00"
+          }
+        },
+        {
+          "tag": "button",
+          "text": {
+            "tag": "plain_text",
+            "content": "打开固定大屏链接"
+          },
+          "type": "primary",
+          "behaviors": [
+            {
+              "type": "open_url",
+              "default_url": "https://216a3e1709fd.aime-app.bytedance.net"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

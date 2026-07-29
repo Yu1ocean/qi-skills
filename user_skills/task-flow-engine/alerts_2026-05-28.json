@@ -1,0 +1,3288 @@
+{
+  "summary": {
+    "today": "2026-05-28",
+    "total_findings": 23,
+    "counts": {
+      "临近到期": 2,
+      "已超期": 11,
+      "缺失 DDL": 9,
+      "格式异常": 1
+    },
+    "private_count": 3,
+    "group_count": 20,
+    "task_counts": {
+      "开启": 13,
+      "完成": 3,
+      "暂停": 0
+    }
+  },
+  "card_state": {
+    "snapshot": {
+      "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -21, \"issue_type\": \"overdue\", \"overdue_days\": 21, \"owners\": [\"jiazheng.jiang@bytedance.com\", \"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+      "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -19, \"issue_type\": \"overdue\", \"overdue_days\": 19, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+      "已超期:商家入驻one-pager": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-10\", \"ddl_raw\": \"46152\", \"delta_days\": -18, \"issue_type\": \"overdue\", \"overdue_days\": 18, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"商家入驻one-pager\"}",
+      "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+      "已超期:新开国商家储备": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\", \"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"新开国商家储备\"}",
+      "已超期:【组织准备下周会】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【组织准备下周会】\"}",
+      "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+      "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+      "已超期:其他(关店挽回gmv)": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"其他(关店挽回GMV)\"}",
+      "已超期:针对sps大于4分的美区卖家 透过bd pitch成功到欧洲了，是否算业绩": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"针对sps大于4分的美区卖家\\n透过BD pitch成功到欧洲了，是否算业绩\"}",
+      "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-27\", \"ddl_raw\": \"46169.770833333336\", \"delta_days\": -1, \"issue_type\": \"overdue\", \"overdue_days\": 1, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
+      "缺失 DDL:leads管理表": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"jiazheng.jiang@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理表\"}",
+      "缺失 DDL:商家工具包": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"商家工具包\"}",
+      "缺失 DDL:【可用leads】梳理": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【可用Leads】梳理\"}",
+      "缺失 DDL:新增hipo商家类型": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"新增HIPO商家类型\"}",
+      "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
+      "缺失 DDL:cnob协同": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
+      "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
+      "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
+      "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lijingda.666@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
+      "格式异常:市场建设": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": \"本季度20场\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"市场建设\"}"
+    },
+    "only_changed": false,
+    "max_items_per_group": 3,
+    "target_chat": {
+      "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
+      "name": "UK/EU/JP POP BD",
+      "registry_usage": "task_patrol_broadcast",
+      "expected_name_keywords": [
+        "UK/EU/JP POP BD"
+      ],
+      "lookup_query": "UK/EU/JP POP BD"
+    },
+    "path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.patrol_card_snapshot.json"
+  },
+  "grouped_results": {
+    "临近到期": [
+      {
+        "key": "r15:ai工具使用复盘",
+        "row": 15,
+        "task": "ai工具使用复盘",
+        "status": "准备中",
+        "owners": [
+          {
+            "raw": "李京达",
+            "display_name": "李京达",
+            "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+            "email": "lijingda.666@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46170,
+        "ddl_parsed": "2026-05-28",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r17:飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+        "row": 17,
+        "task": "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46171,
+        "ddl_parsed": "2026-05-29",
+        "delta_days": 1,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天1天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      }
+    ],
+    "已超期": [
+      {
+        "key": "r7:UK招商专项",
+        "row": 7,
+        "task": "UK招商专项",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46163,
+        "ddl_parsed": "2026-05-21",
+        "delta_days": -7,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 7,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r9:商家入驻one-pager",
+        "row": 9,
+        "task": "商家入驻one-pager",
+        "status": null,
+        "owners": [
+          {
+            "raw": "黄忆卓",
+            "display_name": "黄忆卓",
+            "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+            "email": "huangyizhuo.1992@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46152,
+        "ddl_parsed": "2026-05-10",
+        "delta_days": -18,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 18,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r11:合作伙伴网络 & 市场影响力",
+        "row": 11,
+        "task": "合作伙伴网络 & 市场影响力",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46162,
+        "ddl_parsed": "2026-05-20",
+        "delta_days": -8,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 8,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r12:新开国商家储备",
+        "row": 12,
+        "task": "新开国商家储备",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          },
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+            "email": "lize.mark@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46162,
+        "ddl_parsed": "2026-05-20",
+        "delta_days": -8,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 8,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r14:其他(关店挽回GMV)",
+        "row": 14,
+        "task": "其他(关店挽回GMV)",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46163,
+        "ddl_parsed": "2026-05-21",
+        "delta_days": -7,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 7,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r16:针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+        "row": 16,
+        "task": "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46163,
+        "ddl_parsed": "2026-05-21",
+        "delta_days": -7,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 7,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r18:服务商/商家关于激励侧调研",
+        "row": 18,
+        "task": "服务商/商家关于激励侧调研",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "赵月晨",
+            "display_name": "赵月晨",
+            "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+            "email": "zhaoyuechen@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46151,
+        "ddl_parsed": "2026-05-09",
+        "delta_days": -19,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 19,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r21:【招商活动】设定目标并进行5分钟复盘",
+        "row": 21,
+        "task": "【招商活动】设定目标并进行5分钟复盘",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "江家徵",
+            "display_name": "江家徵",
+            "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+            "email": "jiazheng.jiang@bytedance.com",
+            "source": "sheet_roster"
+          },
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46149.7708333333,
+        "ddl_parsed": "2026-05-07",
+        "delta_days": -21,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 21,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r24:SKM&HIPO新商家免佣周期的延长政策",
+        "row": 24,
+        "task": "SKM&HIPO新商家免佣周期的延长政策",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "于奇楠",
+            "display_name": "于奇楠",
+            "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+            "email": "yuqinan@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46169.770833333336,
+        "ddl_parsed": "2026-05-27",
+        "delta_days": -1,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 1,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r25:【组织准备下周会】",
+        "row": 25,
+        "task": "【组织准备下周会】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "黄忆卓",
+            "display_name": "黄忆卓",
+            "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+            "email": "huangyizhuo.1992@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46162.75,
+        "ddl_parsed": "2026-05-20",
+        "delta_days": -8,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 8,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r27:BCCU周度分析",
+        "row": 27,
+        "task": "BCCU周度分析",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+            "email": "lize.mark@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": 46162.75,
+        "ddl_parsed": "2026-05-20",
+        "delta_days": -8,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 8,
+        "abnormal_days": null,
+        "stage": "group"
+      }
+    ],
+    "缺失 DDL": [
+      {
+        "key": "r3:Leads管理表",
+        "row": 3,
+        "task": "Leads管理表",
+        "status": null,
+        "owners": [
+          {
+            "raw": "江家徵",
+            "display_name": "江家徵",
+            "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+            "email": "jiazheng.jiang@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r4:商家工具包",
+        "row": 4,
+        "task": "商家工具包",
+        "status": null,
+        "owners": [
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+            "email": "lize.mark@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r5:【可用Leads】梳理",
+        "row": 5,
+        "task": "【可用Leads】梳理",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r6:新增HIPO商家类型",
+        "row": 6,
+        "task": "新增HIPO商家类型",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r19:US头商沟通入驻",
+        "row": 19,
+        "task": "US头商沟通入驻",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "赵月晨",
+            "display_name": "赵月晨",
+            "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+            "email": "zhaoyuechen@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r20:CNOB协同",
+        "row": 20,
+        "task": "CNOB协同",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "赵月晨",
+            "display_name": "赵月晨",
+            "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+            "email": "zhaoyuechen@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r22:大商认证/打标流程提效",
+        "row": 22,
+        "task": "大商认证/打标流程提效",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r23:6.23新市场上线商家大会",
+        "row": 23,
+        "task": "6.23新市场上线商家大会",
+        "status": "准备中",
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": null,
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      },
+      {
+        "key": "r26:chinamaxxing可以研究下",
+        "row": 26,
+        "task": "chinamaxxing可以研究下",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "李京达",
+            "display_name": "李京达",
+            "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+            "email": "lijingda.666@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": "",
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "缺失 DDL",
+        "reason": "DDL为空",
+        "issue_type": "missing_ddl",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      }
+    ],
+    "格式异常": [
+      {
+        "key": "r8:市场建设",
+        "row": 8,
+        "task": "市场建设",
+        "status": null,
+        "owners": [
+          {
+            "raw": "夏春雨",
+            "display_name": "夏春雨",
+            "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+            "email": "xiachunyu.123@bytedance.com",
+            "source": "sheet_roster"
+          }
+        ],
+        "ddl_raw": "本季度20场",
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "DDL无法解析（unrecognized）",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 3,
+        "stage": "group"
+      }
+    ]
+  },
+  "routes": {
+    "p2p": {
+      "jiazheng.jiang@bytedance.com": {
+        "owner": {
+          "raw": "江家徵",
+          "display_name": "江家徵",
+          "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+          "email": "jiazheng.jiang@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 2,
+        "items": [
+          {
+            "key": "r3:Leads管理表",
+            "row": 3,
+            "task": "Leads管理表",
+            "status": null,
+            "owners": [
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+                "email": "jiazheng.jiang@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r21:【招商活动】设定目标并进行5分钟复盘",
+            "row": 21,
+            "task": "【招商活动】设定目标并进行5分钟复盘",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+                "email": "jiazheng.jiang@bytedance.com",
+                "source": "sheet_roster"
+              },
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46149.7708333333,
+            "ddl_parsed": "2026-05-07",
+            "delta_days": -21,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 21,
+            "abnormal_days": null,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【招商活动】设定目标并进行5分钟复盘` (超期21天) ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `Leads管理表` ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：2"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 21 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：Leads管理表\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "lize.mark@bytedance.com": {
+        "owner": {
+          "raw": "李泽",
+          "display_name": "李泽",
+          "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+          "email": "lize.mark@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 3,
+        "items": [
+          {
+            "key": "r4:商家工具包",
+            "row": 4,
+            "task": "商家工具包",
+            "status": null,
+            "owners": [
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+                "email": "lize.mark@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r12:新开国商家储备",
+            "row": 12,
+            "task": "新开国商家储备",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+                "email": "lize.mark@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46162,
+            "ddl_parsed": "2026-05-20",
+            "delta_days": -8,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 8,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r27:BCCU周度分析",
+            "row": 27,
+            "task": "BCCU周度分析",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+                "email": "lize.mark@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46162.75,
+            "ddl_parsed": "2026-05-20",
+            "delta_days": -8,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 8,
+            "abnormal_days": null,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `新开国商家储备` (超期8天) ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n- `BCCU周度分析` (超期8天) ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `商家工具包` ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：3"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：新开国商家储备\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BCCU周度分析\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：商家工具包\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "xiachunyu.123@bytedance.com": {
+        "owner": {
+          "raw": "夏春雨",
+          "display_name": "夏春雨",
+          "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+          "email": "xiachunyu.123@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 8,
+        "items": [
+          {
+            "key": "r5:【可用Leads】梳理",
+            "row": 5,
+            "task": "【可用Leads】梳理",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r6:新增HIPO商家类型",
+            "row": 6,
+            "task": "新增HIPO商家类型",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r8:市场建设",
+            "row": 8,
+            "task": "市场建设",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": "本季度20场",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r11:合作伙伴网络 & 市场影响力",
+            "row": 11,
+            "task": "合作伙伴网络 & 市场影响力",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46162,
+            "ddl_parsed": "2026-05-20",
+            "delta_days": -8,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 8,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r12:新开国商家储备",
+            "row": 12,
+            "task": "新开国商家储备",
+            "status": null,
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+                "email": "lize.mark@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46162,
+            "ddl_parsed": "2026-05-20",
+            "delta_days": -8,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 8,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r21:【招商活动】设定目标并进行5分钟复盘",
+            "row": 21,
+            "task": "【招商活动】设定目标并进行5分钟复盘",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+                "email": "jiazheng.jiang@bytedance.com",
+                "source": "sheet_roster"
+              },
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46149.7708333333,
+            "ddl_parsed": "2026-05-07",
+            "delta_days": -21,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 21,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r22:大商认证/打标流程提效",
+            "row": 22,
+            "task": "大商认证/打标流程提效",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r23:6.23新市场上线商家大会",
+            "row": 23,
+            "task": "6.23新市场上线商家大会",
+            "status": "准备中",
+            "owners": [
+              {
+                "raw": "夏春雨",
+                "display_name": "夏春雨",
+                "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+                "email": "xiachunyu.123@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 8 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `合作伙伴网络 & 市场影响力` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新开国商家储备` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `【招商活动】设定目标并进行5分钟复盘` (超期21天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【可用Leads】梳理` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新增HIPO商家类型` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `大商认证/打标流程提效` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `6.23新市场上线商家大会` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `市场建设` (DDL无法解析（unrecognized）)",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：8"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：新开国商家储备\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 21 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【可用Leads】梳理\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：新增HIPO商家类型\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：大商认证/打标流程提效\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n🟣 **【格式异常】**\n\n📌 **【任务名】**：市场建设\n⏰ **DDL**：本季度20场（连续 3 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "yuqinan@bytedance.com": {
+        "owner": {
+          "raw": "于奇楠",
+          "display_name": "于奇楠",
+          "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+          "email": "yuqinan@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 5,
+        "items": [
+          {
+            "key": "r7:UK招商专项",
+            "row": 7,
+            "task": "UK招商专项",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46163,
+            "ddl_parsed": "2026-05-21",
+            "delta_days": -7,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 7,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r14:其他(关店挽回GMV)",
+            "row": 14,
+            "task": "其他(关店挽回GMV)",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46163,
+            "ddl_parsed": "2026-05-21",
+            "delta_days": -7,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 7,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r16:针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+            "row": 16,
+            "task": "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46163,
+            "ddl_parsed": "2026-05-21",
+            "delta_days": -7,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 7,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r17:飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+            "row": 17,
+            "task": "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46171,
+            "ddl_parsed": "2026-05-29",
+            "delta_days": 1,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天1天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r24:SKM&HIPO新商家免佣周期的延长政策",
+            "row": 24,
+            "task": "SKM&HIPO新商家免佣周期的延长政策",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46169.770833333336,
+            "ddl_parsed": "2026-05-27",
+            "delta_days": -1,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 1,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 5 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `其他(关店挽回GMV)` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `SKM&HIPO新商家免佣周期的延长政策` (超期1天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (还有1天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：5"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：其他(关店挽回GMV)\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n⏰ **DDL**：2026-05-27（已超期 1 天）\n🧭 **分类**：已超期\n\n🟠 **【临近到期】**\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n⏰ **DDL**：2026-05-29（距离 1 天）\n🧭 **分类**：临近到期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "huangyizhuo.1992@bytedance.com": {
+        "owner": {
+          "raw": "黄忆卓",
+          "display_name": "黄忆卓",
+          "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+          "email": "huangyizhuo.1992@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 2,
+        "items": [
+          {
+            "key": "r9:商家入驻one-pager",
+            "row": 9,
+            "task": "商家入驻one-pager",
+            "status": null,
+            "owners": [
+              {
+                "raw": "黄忆卓",
+                "display_name": "黄忆卓",
+                "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+                "email": "huangyizhuo.1992@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46152,
+            "ddl_parsed": "2026-05-10",
+            "delta_days": -18,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 18,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r25:【组织准备下周会】",
+            "row": 25,
+            "task": "【组织准备下周会】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "黄忆卓",
+                "display_name": "黄忆卓",
+                "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+                "email": "huangyizhuo.1992@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46162.75,
+            "ddl_parsed": "2026-05-20",
+            "delta_days": -8,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 8,
+            "abnormal_days": null,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `商家入驻one-pager` (超期18天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>\n- `【组织准备下周会】` (超期8天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：2"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：商家入驻one-pager\n⏰ **DDL**：2026-05-10（已超期 18 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【组织准备下周会】\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "lijingda.666@bytedance.com": {
+        "owner": {
+          "raw": "李京达",
+          "display_name": "李京达",
+          "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+          "email": "lijingda.666@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 2,
+        "items": [
+          {
+            "key": "r15:ai工具使用复盘",
+            "row": 15,
+            "task": "ai工具使用复盘",
+            "status": "准备中",
+            "owners": [
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+                "email": "lijingda.666@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46170,
+            "ddl_parsed": "2026-05-28",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r26:chinamaxxing可以研究下",
+            "row": 26,
+            "task": "chinamaxxing可以研究下",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+                "email": "lijingda.666@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": "",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `chinamaxxing可以研究下` ➡️ <at user_id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\">李京达</at>\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `ai工具使用复盘` (今天到期) ➡️ <at user_id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\">李京达</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：2"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：chinamaxxing可以研究下\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n🟠 **【临近到期】**\n\n📌 **【任务名】**：ai工具使用复盘\n⏰ **DDL**：2026-05-28（距离 0 天）\n🧭 **分类**：临近到期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "zhaoyuechen@bytedance.com": {
+        "owner": {
+          "raw": "赵月晨",
+          "display_name": "赵月晨",
+          "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+          "email": "zhaoyuechen@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 3,
+        "items": [
+          {
+            "key": "r18:服务商/商家关于激励侧调研",
+            "row": 18,
+            "task": "服务商/商家关于激励侧调研",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "赵月晨",
+                "display_name": "赵月晨",
+                "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+                "email": "zhaoyuechen@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46151,
+            "ddl_parsed": "2026-05-09",
+            "delta_days": -19,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 19,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r19:US头商沟通入驻",
+            "row": 19,
+            "task": "US头商沟通入驻",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "赵月晨",
+                "display_name": "赵月晨",
+                "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+                "email": "zhaoyuechen@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          },
+          {
+            "key": "r20:CNOB协同",
+            "row": 20,
+            "task": "CNOB协同",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "赵月晨",
+                "display_name": "赵月晨",
+                "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+                "email": "zhaoyuechen@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": null,
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "缺失 DDL",
+            "reason": "DDL为空",
+            "issue_type": "missing_ddl",
+            "overdue_days": null,
+            "abnormal_days": 3,
+            "stage": "group"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `服务商/商家关于激励侧调研` (超期19天) ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `CNOB协同` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：3"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n⏰ **DDL**：2026-05-09（已超期 19 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      }
+    },
+    "private": {
+      "lijingda.666@bytedance.com": {
+        "owner": {
+          "raw": "李京达",
+          "display_name": "李京达",
+          "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+          "email": "lijingda.666@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r15:ai工具使用复盘",
+            "row": 15,
+            "task": "ai工具使用复盘",
+            "status": "准备中",
+            "owners": [
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+                "email": "lijingda.666@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46170,
+            "ddl_parsed": "2026-05-28",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 1 条）\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `ai工具使用复盘` (今天到期) ➡️ <at user_id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\">李京达</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🟠 **【临近到期】**\n\n📌 **【任务名】**：ai工具使用复盘\n⏰ **DDL**：2026-05-28（距离 0 天）\n🧭 **分类**：临近到期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "yuqinan@bytedance.com": {
+        "owner": {
+          "raw": "于奇楠",
+          "display_name": "于奇楠",
+          "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+          "email": "yuqinan@bytedance.com",
+          "source": "sheet_roster"
+        },
+        "count": 2,
+        "items": [
+          {
+            "key": "r17:飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+            "row": 17,
+            "task": "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46171,
+            "ddl_parsed": "2026-05-29",
+            "delta_days": 1,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天1天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r24:SKM&HIPO新商家免佣周期的延长政策",
+            "row": 24,
+            "task": "SKM&HIPO新商家免佣周期的延长政策",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "于奇楠",
+                "display_name": "于奇楠",
+                "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+                "email": "yuqinan@bytedance.com",
+                "source": "sheet_roster"
+              }
+            ],
+            "ddl_raw": 46169.770833333336,
+            "ddl_parsed": "2026-05-27",
+            "delta_days": -1,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 1,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-05-28，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `SKM&HIPO新商家免佣周期的延长政策` (超期1天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (还有1天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-05-28\n\n**需关注条目**：2"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n⏰ **DDL**：2026-05-27（已超期 1 天）\n🧭 **分类**：已超期\n\n🟠 **【临近到期】**\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n⏰ **DDL**：2026-05-29（距离 1 天）\n🧭 **分类**：临近到期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      }
+    },
+    "group_broadcast": {
+      "target_chat": {
+        "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
+        "name": ""
+      },
+      "count": 21,
+      "items": [
+        {
+          "key": "r3:Leads管理表",
+          "row": 3,
+          "task": "Leads管理表",
+          "status": null,
+          "owners": [
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+              "email": "jiazheng.jiang@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r4:商家工具包",
+          "row": 4,
+          "task": "商家工具包",
+          "status": null,
+          "owners": [
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r5:【可用Leads】梳理",
+          "row": 5,
+          "task": "【可用Leads】梳理",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r6:新增HIPO商家类型",
+          "row": 6,
+          "task": "新增HIPO商家类型",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r7:UK招商专项",
+          "row": 7,
+          "task": "UK招商专项",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r8:市场建设",
+          "row": 8,
+          "task": "市场建设",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": "本季度20场",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r9:商家入驻one-pager",
+          "row": 9,
+          "task": "商家入驻one-pager",
+          "status": null,
+          "owners": [
+            {
+              "raw": "黄忆卓",
+              "display_name": "黄忆卓",
+              "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+              "email": "huangyizhuo.1992@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46152,
+          "ddl_parsed": "2026-05-10",
+          "delta_days": -18,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 18,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r11:合作伙伴网络 & 市场影响力",
+          "row": 11,
+          "task": "合作伙伴网络 & 市场影响力",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r12:新开国商家储备",
+          "row": 12,
+          "task": "新开国商家储备",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r14:其他(关店挽回GMV)",
+          "row": 14,
+          "task": "其他(关店挽回GMV)",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r15:ai工具使用复盘",
+          "row": 15,
+          "task": "ai工具使用复盘",
+          "status": "准备中",
+          "owners": [
+            {
+              "raw": "李京达",
+              "display_name": "李京达",
+              "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+              "email": "lijingda.666@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46170,
+          "ddl_parsed": "2026-05-28",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r16:针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+          "row": 16,
+          "task": "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r17:飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+          "row": 17,
+          "task": "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46171,
+          "ddl_parsed": "2026-05-29",
+          "delta_days": 1,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天1天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r18:服务商/商家关于激励侧调研",
+          "row": 18,
+          "task": "服务商/商家关于激励侧调研",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46151,
+          "ddl_parsed": "2026-05-09",
+          "delta_days": -19,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 19,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r19:US头商沟通入驻",
+          "row": 19,
+          "task": "US头商沟通入驻",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r20:CNOB协同",
+          "row": 20,
+          "task": "CNOB协同",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r21:【招商活动】设定目标并进行5分钟复盘",
+          "row": 21,
+          "task": "【招商活动】设定目标并进行5分钟复盘",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+              "email": "jiazheng.jiang@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46149.7708333333,
+          "ddl_parsed": "2026-05-07",
+          "delta_days": -21,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 21,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r22:大商认证/打标流程提效",
+          "row": 22,
+          "task": "大商认证/打标流程提效",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r23:6.23新市场上线商家大会",
+          "row": 23,
+          "task": "6.23新市场上线商家大会",
+          "status": "准备中",
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r24:SKM&HIPO新商家免佣周期的延长政策",
+          "row": 24,
+          "task": "SKM&HIPO新商家免佣周期的延长政策",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46169.770833333336,
+          "ddl_parsed": "2026-05-27",
+          "delta_days": -1,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 1,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r25:【组织准备下周会】",
+          "row": 25,
+          "task": "【组织准备下周会】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "黄忆卓",
+              "display_name": "黄忆卓",
+              "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+              "email": "huangyizhuo.1992@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162.75,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r26:chinamaxxing可以研究下",
+          "row": 26,
+          "task": "chinamaxxing可以研究下",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "李京达",
+              "display_name": "李京达",
+              "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+              "email": "lijingda.666@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": "",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r27:BCCU周度分析",
+          "row": 27,
+          "task": "BCCU周度分析",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162.75,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        }
+      ],
+      "mentions_open_ids": [
+        "ou_900ddd9ff611254a74ac32adafc016b4",
+        "ou_4ad4ccbd30c3f911f3ef48f851323269",
+        "ou_6c70ae770e15cbea5f29d590de12b26d",
+        "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+        "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+        "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+        "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35"
+      ],
+      "message": "📌 **任务巡检提醒**（2026-05-28，共 21 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `商家入驻one-pager` (超期18天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>\n- `合作伙伴网络 & 市场影响力` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新开国商家储备` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>、<at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n- `其他(关店挽回GMV)` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `服务商/商家关于激励侧调研` (超期19天) ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `【招商活动】设定目标并进行5分钟复盘` (超期21天) ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>、<at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `SKM&HIPO新商家免佣周期的延长政策` (超期1天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `【组织准备下周会】` (超期8天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>\n- `BCCU周度分析` (超期8天) ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `Leads管理表` ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>\n- `商家工具包` ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n- `【可用Leads】梳理` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新增HIPO商家类型` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `US头商沟通入驻` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `CNOB协同` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `大商认证/打标流程提效` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `6.23新市场上线商家大会` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `chinamaxxing可以研究下` ➡️ <at user_id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\">李京达</at>\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `市场建设` (DDL无法解析（unrecognized）)",
+      "card": {
+        "name": "AimeCard",
+        "dsl": {
+          "schema": "2.0",
+          "header": {
+            "title": {
+              "tag": "plain_text",
+              "content": "📌 任务巡检提醒"
+            },
+            "template": "blue"
+          },
+          "body": {
+            "elements": [
+              {
+                "tag": "markdown",
+                "content": "**日期**：2026-05-28\n**异常任务**：21\n**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 3 项任务，同名去重\n\n👤 <at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>：共 8 项异常\n- 🔴 **已超期**：3 项（`【招商活动】设定目标并进行5分钟复盘`、`合作伙伴网络 & 市场影响力`、`新开国商家储备`）\n- 🟡 **缺失 DDL**：4 项（`【可用Leads】梳理`、`新增HIPO商家类型`、`大商认证/打标流程提效`、等 1 项）\n- 🟣 **格式异常**：1 项（`市场建设`）\n\n👤 <at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>：共 4 项异常\n- 🔴 **已超期**：4 项（`UK招商专项`、`其他(关店挽回GMV)`、`针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩`、等 1 项）\n\n👤 <at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>：共 3 项异常\n- 🔴 **已超期**：2 项（`新开国商家储备`、`BCCU周度分析`）\n- 🟡 **缺失 DDL**：1 项（`商家工具包`）\n\n👤 <at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>：共 3 项异常\n- 🔴 **已超期**：1 项（`服务商/商家关于激励侧调研`）\n- 🟡 **缺失 DDL**：2 项（`US头商沟通入驻`、`CNOB协同`）\n\n👤 <at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>：共 2 项异常\n- 🔴 **已超期**：1 项（`【招商活动】设定目标并进行5分钟复盘`）\n- 🟡 **缺失 DDL**：1 项（`Leads管理表`）\n\n👤 <at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>：共 2 项异常\n- 🔴 **已超期**：2 项（`商家入驻one-pager`、`【组织准备下周会】`）\n\n👤 <at id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\"></at>：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`chinamaxxing可以研究下`）"
+              },
+              {
+                "tag": "hr"
+              },
+              {
+                "tag": "button",
+                "type": "primary",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "前往任务工作站处理"
+                },
+                "behaviors": [
+                  {
+                    "type": "open_url",
+                    "default_url": "https://bytedance.larkoffice.com/wiki/Yl6lwic1EiF2d3kHnzccZinsnLV?sheet=KmlJhs"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "card_meta": {
+        "summary_label": "异常任务",
+        "max_items_per_group": 3,
+        "only_changed": false,
+        "snapshot": {
+          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -21, \"issue_type\": \"overdue\", \"overdue_days\": 21, \"owners\": [\"jiazheng.jiang@bytedance.com\", \"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -19, \"issue_type\": \"overdue\", \"overdue_days\": 19, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+          "已超期:商家入驻one-pager": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-10\", \"ddl_raw\": \"46152\", \"delta_days\": -18, \"issue_type\": \"overdue\", \"overdue_days\": 18, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"商家入驻one-pager\"}",
+          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+          "已超期:新开国商家储备": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\", \"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"新开国商家储备\"}",
+          "已超期:【组织准备下周会】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【组织准备下周会】\"}",
+          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+          "已超期:其他(关店挽回gmv)": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"其他(关店挽回GMV)\"}",
+          "已超期:针对sps大于4分的美区卖家 透过bd pitch成功到欧洲了，是否算业绩": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"针对sps大于4分的美区卖家\\n透过BD pitch成功到欧洲了，是否算业绩\"}",
+          "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-27\", \"ddl_raw\": \"46169.770833333336\", \"delta_days\": -1, \"issue_type\": \"overdue\", \"overdue_days\": 1, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
+          "缺失 DDL:leads管理表": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"jiazheng.jiang@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理表\"}",
+          "缺失 DDL:商家工具包": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"商家工具包\"}",
+          "缺失 DDL:【可用leads】梳理": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【可用Leads】梳理\"}",
+          "缺失 DDL:新增hipo商家类型": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"新增HIPO商家类型\"}",
+          "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
+          "缺失 DDL:cnob协同": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
+          "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
+          "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
+          "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lijingda.666@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
+          "格式异常:市场建设": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": \"本季度20场\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"市场建设\"}"
+        },
+        "visible_total": 21,
+        "total_items": 21,
+        "rendered_owners": [
+          {
+            "owner": "夏春雨",
+            "raw_count": 8,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 3,
+                "shown_titles": [
+                  "【招商活动】设定目标并进行5分钟复盘",
+                  "合作伙伴网络 & 市场影响力",
+                  "新开国商家储备"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 4,
+                "shown_titles": [
+                  "【可用Leads】梳理",
+                  "新增HIPO商家类型",
+                  "大商认证/打标流程提效"
+                ]
+              },
+              {
+                "category": "格式异常",
+                "raw_count": 1,
+                "shown_titles": [
+                  "市场建设"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "于奇楠",
+            "raw_count": 4,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 4,
+                "shown_titles": [
+                  "UK招商专项",
+                  "其他(关店挽回GMV)",
+                  "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "李泽",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 2,
+                "shown_titles": [
+                  "新开国商家储备",
+                  "BCCU周度分析"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "商家工具包"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "赵月晨",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "服务商/商家关于激励侧调研"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 2,
+                "shown_titles": [
+                  "US头商沟通入驻",
+                  "CNOB协同"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "江家徵",
+            "raw_count": 2,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "【招商活动】设定目标并进行5分钟复盘"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "Leads管理表"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "黄忆卓",
+            "raw_count": 2,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 2,
+                "shown_titles": [
+                  "商家入驻one-pager",
+                  "【组织准备下周会】"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "李京达",
+            "raw_count": 1,
+            "categories": [
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "chinamaxxing可以研究下"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "group": {
+      "target_chat": {
+        "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
+        "name": ""
+      },
+      "count": 20,
+      "items": [
+        {
+          "key": "r3:Leads管理表",
+          "row": 3,
+          "task": "Leads管理表",
+          "status": null,
+          "owners": [
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+              "email": "jiazheng.jiang@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r4:商家工具包",
+          "row": 4,
+          "task": "商家工具包",
+          "status": null,
+          "owners": [
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r5:【可用Leads】梳理",
+          "row": 5,
+          "task": "【可用Leads】梳理",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r6:新增HIPO商家类型",
+          "row": 6,
+          "task": "新增HIPO商家类型",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r7:UK招商专项",
+          "row": 7,
+          "task": "UK招商专项",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r8:市场建设",
+          "row": 8,
+          "task": "市场建设",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": "本季度20场",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r9:商家入驻one-pager",
+          "row": 9,
+          "task": "商家入驻one-pager",
+          "status": null,
+          "owners": [
+            {
+              "raw": "黄忆卓",
+              "display_name": "黄忆卓",
+              "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+              "email": "huangyizhuo.1992@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46152,
+          "ddl_parsed": "2026-05-10",
+          "delta_days": -18,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 18,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r11:合作伙伴网络 & 市场影响力",
+          "row": 11,
+          "task": "合作伙伴网络 & 市场影响力",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r12:新开国商家储备",
+          "row": 12,
+          "task": "新开国商家储备",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r14:其他(关店挽回GMV)",
+          "row": 14,
+          "task": "其他(关店挽回GMV)",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r16:针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+          "row": 16,
+          "task": "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "于奇楠",
+              "display_name": "于奇楠",
+              "open_id": "ou_900ddd9ff611254a74ac32adafc016b4",
+              "email": "yuqinan@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46163,
+          "ddl_parsed": "2026-05-21",
+          "delta_days": -7,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 7,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r18:服务商/商家关于激励侧调研",
+          "row": 18,
+          "task": "服务商/商家关于激励侧调研",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46151,
+          "ddl_parsed": "2026-05-09",
+          "delta_days": -19,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 19,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r19:US头商沟通入驻",
+          "row": 19,
+          "task": "US头商沟通入驻",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r20:CNOB协同",
+          "row": 20,
+          "task": "CNOB协同",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "赵月晨",
+              "display_name": "赵月晨",
+              "open_id": "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+              "email": "zhaoyuechen@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r21:【招商活动】设定目标并进行5分钟复盘",
+          "row": 21,
+          "task": "【招商活动】设定目标并进行5分钟复盘",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+              "email": "jiazheng.jiang@bytedance.com",
+              "source": "sheet_roster"
+            },
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46149.7708333333,
+          "ddl_parsed": "2026-05-07",
+          "delta_days": -21,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 21,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r22:大商认证/打标流程提效",
+          "row": 22,
+          "task": "大商认证/打标流程提效",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r23:6.23新市场上线商家大会",
+          "row": 23,
+          "task": "6.23新市场上线商家大会",
+          "status": "准备中",
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": null,
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r25:【组织准备下周会】",
+          "row": 25,
+          "task": "【组织准备下周会】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "黄忆卓",
+              "display_name": "黄忆卓",
+              "open_id": "ou_4ad4ccbd30c3f911f3ef48f851323269",
+              "email": "huangyizhuo.1992@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162.75,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r26:chinamaxxing可以研究下",
+          "row": 26,
+          "task": "chinamaxxing可以研究下",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "李京达",
+              "display_name": "李京达",
+              "open_id": "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35",
+              "email": "lijingda.666@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": "",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "缺失 DDL",
+          "reason": "DDL为空",
+          "issue_type": "missing_ddl",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        },
+        {
+          "key": "r27:BCCU周度分析",
+          "row": 27,
+          "task": "BCCU周度分析",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+              "email": "lize.mark@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": 46162.75,
+          "ddl_parsed": "2026-05-20",
+          "delta_days": -8,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 8,
+          "abnormal_days": null,
+          "stage": "group"
+        }
+      ],
+      "mentions_open_ids": [
+        "ou_900ddd9ff611254a74ac32adafc016b4",
+        "ou_4ad4ccbd30c3f911f3ef48f851323269",
+        "ou_6c70ae770e15cbea5f29d590de12b26d",
+        "ou_8ab4cba1aeb565edc3a10f6b2b1cd209",
+        "ou_6cf0a23eaf26cd8c095ae816f79d552c",
+        "ou_aacf87be9468a16dc08c8a1d6bbd5498",
+        "ou_1cd9fa1cf98b5a228ff5067d5e3e4a35"
+      ],
+      "message": "📣 **任务巡检·公开提醒**（2026-05-28，共 20 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `商家入驻one-pager` (超期18天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>\n- `合作伙伴网络 & 市场影响力` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新开国商家储备` (超期8天) ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>、<at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n- `其他(关店挽回GMV)` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩` (超期7天) ➡️ <at user_id=\"ou_900ddd9ff611254a74ac32adafc016b4\">于奇楠</at>\n- `服务商/商家关于激励侧调研` (超期19天) ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `【招商活动】设定目标并进行5分钟复盘` (超期21天) ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>、<at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `【组织准备下周会】` (超期8天) ➡️ <at user_id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\">黄忆卓</at>\n- `BCCU周度分析` (超期8天) ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `Leads管理表` ➡️ <at user_id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\">江家徵</at>\n- `商家工具包` ➡️ <at user_id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\">李泽</at>\n- `【可用Leads】梳理` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `新增HIPO商家类型` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `US头商沟通入驻` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `CNOB协同` ➡️ <at user_id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\">赵月晨</at>\n- `大商认证/打标流程提效` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `6.23新市场上线商家大会` ➡️ <at user_id=\"ou_6c70ae770e15cbea5f29d590de12b26d\">夏春雨</at>\n- `chinamaxxing可以研究下` ➡️ <at user_id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\">李京达</at>\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `市场建设` (DDL无法解析（unrecognized）)",
+      "card": {
+        "name": "AimeCard",
+        "dsl": {
+          "schema": "2.0",
+          "header": {
+            "title": {
+              "tag": "plain_text",
+              "content": "任务巡检提醒（群聊）"
+            },
+            "template": "red"
+          },
+          "body": {
+            "elements": [
+              {
+                "tag": "markdown",
+                "content": "**日期**：2026-05-28\n\n**需公开提醒条目**：20"
+              },
+              {
+                "tag": "hr"
+              },
+              {
+                "tag": "markdown",
+                "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：商家入驻one-pager\n👤 **负责人**：<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>\n⏰ **DDL**：2026-05-10（已超期 18 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：新开国商家储备\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>、<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：其他(关店挽回GMV)\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩\n👤 **负责人**：<at id=\"ou_900ddd9ff611254a74ac32adafc016b4\"></at>\n⏰ **DDL**：2026-05-21（已超期 7 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：2026-05-09（已超期 19 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n👤 **负责人**：<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>、<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：2026-05-07（已超期 21 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【组织准备下周会】\n👤 **负责人**：<at id=\"ou_4ad4ccbd30c3f911f3ef48f851323269\"></at>\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BCCU周度分析\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>\n⏰ **DDL**：2026-05-20（已超期 8 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：Leads管理表\n👤 **负责人**：<at id=\"ou_aacf87be9468a16dc08c8a1d6bbd5498\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：商家工具包\n👤 **负责人**：<at id=\"ou_8ab4cba1aeb565edc3a10f6b2b1cd209\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【可用Leads】梳理\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：新增HIPO商家类型\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：US头商沟通入驻\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n👤 **负责人**：<at id=\"ou_6cf0a23eaf26cd8c095ae816f79d552c\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：大商认证/打标流程提效\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：chinamaxxing可以研究下\n👤 **负责人**：<at id=\"ou_1cd9fa1cf98b5a228ff5067d5e3e4a35\"></at>\n⏰ **DDL**：无（连续 3 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n🟣 **【格式异常】**\n\n📌 **【任务名】**：市场建设\n👤 **负责人**：<at id=\"ou_6c70ae770e15cbea5f29d590de12b26d\"></at>\n⏰ **DDL**：本季度20场（连续 3 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常"
+              }
+            ]
+          }
+        }
+      },
+      "card_meta": {
+        "summary_label": "需公开提醒条目",
+        "max_items_per_group": 3,
+        "only_changed": false,
+        "snapshot": {
+          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -21, \"issue_type\": \"overdue\", \"overdue_days\": 21, \"owners\": [\"jiazheng.jiang@bytedance.com\", \"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -19, \"issue_type\": \"overdue\", \"overdue_days\": 19, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+          "已超期:商家入驻one-pager": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-10\", \"ddl_raw\": \"46152\", \"delta_days\": -18, \"issue_type\": \"overdue\", \"overdue_days\": 18, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"商家入驻one-pager\"}",
+          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+          "已超期:新开国商家储备": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"xiachunyu.123@bytedance.com\", \"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"新开国商家储备\"}",
+          "已超期:【组织准备下周会】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"huangyizhuo.1992@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【组织准备下周会】\"}",
+          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -8, \"issue_type\": \"overdue\", \"overdue_days\": 8, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+          "已超期:其他(关店挽回gmv)": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"其他(关店挽回GMV)\"}",
+          "已超期:针对sps大于4分的美区卖家 透过bd pitch成功到欧洲了，是否算业绩": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-21\", \"ddl_raw\": \"46163\", \"delta_days\": -7, \"issue_type\": \"overdue\", \"overdue_days\": 7, \"owners\": [\"yuqinan@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"针对sps大于4分的美区卖家\\n透过BD pitch成功到欧洲了，是否算业绩\"}",
+          "缺失 DDL:leads管理表": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"jiazheng.jiang@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理表\"}",
+          "缺失 DDL:商家工具包": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lize.mark@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"商家工具包\"}",
+          "缺失 DDL:【可用leads】梳理": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【可用Leads】梳理\"}",
+          "缺失 DDL:新增hipo商家类型": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"新增HIPO商家类型\"}",
+          "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
+          "缺失 DDL:cnob协同": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"zhaoyuechen@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
+          "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
+          "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
+          "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"lijingda.666@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
+          "格式异常:市场建设": "{\"abnormal_days\": 3, \"ddl_parsed\": null, \"ddl_raw\": \"本季度20场\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"xiachunyu.123@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"市场建设\"}"
+        },
+        "visible_total": 20,
+        "total_items": 20,
+        "rendered_owners": [
+          {
+            "owner": "夏春雨",
+            "raw_count": 8,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 3,
+                "shown_titles": [
+                  "【招商活动】设定目标并进行5分钟复盘",
+                  "合作伙伴网络 & 市场影响力",
+                  "新开国商家储备"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 4,
+                "shown_titles": [
+                  "【可用Leads】梳理",
+                  "新增HIPO商家类型",
+                  "大商认证/打标流程提效"
+                ]
+              },
+              {
+                "category": "格式异常",
+                "raw_count": 1,
+                "shown_titles": [
+                  "市场建设"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "于奇楠",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 3,
+                "shown_titles": [
+                  "UK招商专项",
+                  "其他(关店挽回GMV)",
+                  "针对sps大于4分的美区卖家\n透过BD pitch成功到欧洲了，是否算业绩"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "李泽",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 2,
+                "shown_titles": [
+                  "新开国商家储备",
+                  "BCCU周度分析"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "商家工具包"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "赵月晨",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "服务商/商家关于激励侧调研"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 2,
+                "shown_titles": [
+                  "US头商沟通入驻",
+                  "CNOB协同"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "江家徵",
+            "raw_count": 2,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "【招商活动】设定目标并进行5分钟复盘"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "Leads管理表"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "黄忆卓",
+            "raw_count": 2,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 2,
+                "shown_titles": [
+                  "商家入驻one-pager",
+                  "【组织准备下周会】"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "李京达",
+            "raw_count": 1,
+            "categories": [
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "chinamaxxing可以研究下"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "unmapped": {
+      "count": 0,
+      "items": [],
+      "message": ""
+    },
+    "admin": {
+      "count": 1,
+      "items": [
+        {
+          "key": "r8:市场建设",
+          "row": 8,
+          "task": "市场建设",
+          "status": null,
+          "owners": [
+            {
+              "raw": "夏春雨",
+              "display_name": "夏春雨",
+              "open_id": "ou_6c70ae770e15cbea5f29d590de12b26d",
+              "email": "xiachunyu.123@bytedance.com",
+              "source": "sheet_roster"
+            }
+          ],
+          "ddl_raw": "本季度20场",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 3,
+          "stage": "group"
+        }
+      ],
+      "message": "🛠️ **任务巡检·管理员兜底**（2026-05-28，共 1 条）\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `市场建设` (DDL无法解析（unrecognized）)"
+    }
+  },
+  "vacation": {
+    "date": "2026-05-28",
+    "is_holiday": false,
+    "personal_checker_enabled": true,
+    "skipped": {
+      "p2p_route_keys": [],
+      "private_route_keys": [],
+      "group_item_keys": []
+    }
+  },
+  "state": {
+    "path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.patrol_state.json",
+    "enabled": true
+  },
+  "source": {
+    "spreadsheet_token": "TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_sheet": {
+      "title": "任务库",
+      "sheet_id": "KmlJhs",
+      "total_rows_read": 26
+    },
+    "roster_sheet": {
+      "title": "团队名单",
+      "sheet_id": "L5xh7h",
+      "total_rows_read": 8
+    }
+  },
+  "directory": {
+    "target_chat": {
+      "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
+      "name": "UK/EU/JP POP BD",
+      "registry_usage": "task_patrol_broadcast",
+      "expected_name_keywords": [
+        "UK/EU/JP POP BD"
+      ],
+      "lookup_query": "UK/EU/JP POP BD"
+    },
+    "mapped_members": 8,
+    "roster_duplicates": []
+  }
+}

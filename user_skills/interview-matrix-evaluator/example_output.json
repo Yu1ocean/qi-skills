@@ -1,0 +1,289 @@
+{
+  "meta": {
+    "skill_name": "interview-matrix-evaluator",
+    "version": "1.4",
+    "analysis_language": "zh-CN",
+    "candidate_count": 3
+  },
+  "decision_anchor": {
+    "job_family": "BD",
+    "sub_type": null,
+    "role_jd": "UK POP 运营经理，负责跨境商家增长、经营策略与跨团队协同推进",
+    "north_star_metric": "可售商家数",
+    "must_have_competencies": [
+      "商家增长拆解能力",
+      "数据驱动判断",
+      "跨团队推进",
+      "UK 市场适配意识"
+    ],
+    "weighting_rules": "业务匹配度 40%，STAR 证据密度 25%，关键风险暴露 20%，ByteStyle 10%，成长弹性 5%",
+    "risk_tolerance": "优先要低试错成本与高落地确定性，可接受局部成长空间但不接受关键岗位基准漂移",
+    "calibration_risks": [
+      "候选人 A 与 B 的面试轮次不同，证据密度存在天然不对称。",
+      "候选人 C 的 UK 本地化案例较少，区域口径判断仍有待补。"
+    ]
+  },
+  "candidate_summaries": [
+    {
+      "candidate_id": "CAND_001",
+      "candidate_name": "候选人A",
+      "input_validity": "valid",
+      "invalid_reason": null,
+      "business_ability": "强推荐",
+      "byte_style_total_score": 24.2,
+      "top_strengths": [
+        "增长目标拆解清晰",
+        "能用数字闭环证明动作有效",
+        "资源聚焦能力强"
+      ],
+      "top_gaps": [
+        "复杂协同冲突案例偏少",
+        "UK 本地化细节有待补强"
+      ],
+      "comparative_edge": "在商家分层与北极星拆解上，证据最完整、最接近岗位即战力。",
+      "confidence_status": "已证实"
+    },
+    {
+      "candidate_id": "CAND_002",
+      "candidate_name": "候选人B",
+      "input_validity": "valid",
+      "invalid_reason": null,
+      "business_ability": "强推荐",
+      "byte_style_total_score": 25.6,
+      "top_strengths": [
+        "跨团队协同说服力强",
+        "能处理复杂项目推进阻力",
+        "ByteStyle 维度更均衡"
+      ],
+      "top_gaps": [
+        "对核心北极星拆解不如 A 硬",
+        "数据闭环案例略少"
+      ],
+      "comparative_edge": "在复杂组织协同与影响力上最强，适合需要高横向推动的环境。",
+      "confidence_status": "高概率"
+    },
+    {
+      "candidate_id": "CAND_003",
+      "candidate_name": "候选人C",
+      "input_validity": "valid",
+      "invalid_reason": null,
+      "business_ability": "中性",
+      "byte_style_total_score": 21.1,
+      "top_strengths": [
+        "学习迭代意识较强",
+        "表达流畅"
+      ],
+      "top_gaps": [
+        "硬结果证据偏少",
+        "对岗位北极星贴合度不足",
+        "UK 市场经验不充分"
+      ],
+      "comparative_edge": "成长弹性较好，适合非立即上手型岗位。",
+      "confidence_status": "待验证"
+    }
+  ],
+  "radar_overlay": {
+    "radar_profile": "default",
+    "dimensions": [
+      {
+        "dimension_name": "业务理解",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 4.5, "reason": "能紧扣可售商家数拆增长路径。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 4.1, "reason": "业务判断较稳，但北极星映射略弱。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 3.4, "reason": "能讲逻辑，但岗位贴合度一般。"}
+        ],
+        "leader": "CAND_001",
+        "laggard": "CAND_003",
+        "commentary": "A 在岗位直连度上领先；C 需要更多与目标岗位直接相关的案例。"
+      },
+      {
+        "dimension_name": "结构化拆解",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 4.4, "reason": "案例拆解完整且优先级清楚。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 4.0, "reason": "框架感不错，但颗粒度稍粗。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 3.7, "reason": "结构存在，但证据支撑较薄。"}
+        ],
+        "leader": "CAND_001",
+        "laggard": "CAND_003",
+        "commentary": "A 的拆题最利于直接落岗，B 稍偏管理表达，C 偏概念化。"
+      },
+      {
+        "dimension_name": "数据敏感度",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 4.3, "reason": "量化指标与结果链条最完整。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 3.8, "reason": "有关键数字，但实验和验证细节少。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 3.1, "reason": "多数结论停留在定性层。"}
+        ],
+        "leader": "CAND_001",
+        "laggard": "CAND_003",
+        "commentary": "A 的数据闭环最强，是排序领先的重要原因。"
+      },
+      {
+        "dimension_name": "推动力",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 4.1, "reason": "主动重构打法并推进资源聚焦。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 4.4, "reason": "复杂项目推动与对齐阻力处理更强。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 3.5, "reason": "有推动意愿，但抓手偏弱。"}
+        ],
+        "leader": "CAND_002",
+        "laggard": "CAND_003",
+        "commentary": "如果团队更缺跨部门推进者，B 会得到更高加权。"
+      },
+      {
+        "dimension_name": "协同影响力",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 3.6, "reason": "协同有提及，但冲突管理证据一般。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 4.5, "reason": "能讲清多方博弈与影响路径。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 3.2, "reason": "协同案例比较浅。"}
+        ],
+        "leader": "CAND_002",
+        "laggard": "CAND_003",
+        "commentary": "B 的组织穿透力最强，但岗位当前更优先北极星直连能力。"
+      },
+      {
+        "dimension_name": "学习迭代力",
+        "candidate_scores": [
+          {"candidate_id": "CAND_001", "candidate_name": "候选人A", "score": 3.5, "reason": "复盘案例有，但深度一般。"},
+          {"candidate_id": "CAND_002", "candidate_name": "候选人B", "score": 3.9, "reason": "能讲清策略纠偏过程。"},
+          {"candidate_id": "CAND_003", "candidate_name": "候选人C", "score": 4.0, "reason": "学习姿态与迭代意识较强。"}
+        ],
+        "leader": "CAND_003",
+        "laggard": "CAND_001",
+        "commentary": "C 的成长弹性最好，但当前岗位更需要即战力而非培养空间。"
+      }
+    ],
+    "overlay_summary": "A 在业务理解、结构化拆解、数据敏感度三项形成稳健领先；B 在推动力与协同影响力最强；C 更像潜力股，但和当前岗位的即战力要求有距离。"
+  },
+  "gap_comparison": {
+    "candidate_longboards": [
+      {"candidate_id": "CAND_001", "items": ["北极星映射直接", "数字证据密度高", "增长打法拆解清晰"]},
+      {"candidate_id": "CAND_002", "items": ["复杂协同强", "组织影响力高", "ByteStyle 更均衡"]},
+      {"candidate_id": "CAND_003", "items": ["学习迭代快", "开放度高"]}
+    ],
+    "candidate_shortboards": [
+      {"candidate_id": "CAND_001", "items": ["复杂冲突协同案例不足", "区域本地化细节待补"]},
+      {"candidate_id": "CAND_002", "items": ["北极星与结果数字映射略弱", "局部案例证据密度不足"]},
+      {"candidate_id": "CAND_003", "items": ["业务即战力不足", "结果硬证据偏少", "岗位贴合度偏弱"]}
+    ],
+    "cross_candidate_observations": [
+      "A 是最像当前岗位即插即用的人选。",
+      "B 是组织穿透力最强的人选，但岗位短期优先级未必把这一项放到第一。",
+      "C 更适合储备型或培养型坑位，不宜排在当前岗位前两位。"
+    ]
+  },
+  "zero_trust_matrix": [
+    {
+      "candidate_id": "CAND_001",
+      "candidate_name": "候选人A",
+      "risk_title": "UK 本地化复杂度证据偏少",
+      "risk_type": "证据稀薄区",
+      "severity": "medium",
+      "uncertainty": "medium",
+      "business_impact": "notable",
+      "evidence_note": "现有案例更偏通用增长逻辑，对 UK 合规与本地化适配展开不足。",
+      "mitigation_question": "如果 UK 市场商家供给和履约能力同时受限，会如何拆 90 天动作？"
+    },
+    {
+      "candidate_id": "CAND_002",
+      "candidate_name": "候选人B",
+      "risk_title": "结果闭环数字不够硬",
+      "risk_type": "逻辑盲区",
+      "severity": "medium",
+      "uncertainty": "high",
+      "business_impact": "notable",
+      "evidence_note": "更多强调项目推进故事，对北极星结果增量的定量锚点偏少。",
+      "mitigation_question": "请给一个你亲自拉动可售商家数改善的完整量化案例。"
+    },
+    {
+      "candidate_id": "CAND_003",
+      "candidate_name": "候选人C",
+      "risk_title": "岗位匹配度不足",
+      "risk_type": "基准漂移",
+      "severity": "high",
+      "uncertainty": "medium",
+      "business_impact": "critical",
+      "evidence_note": "候选人优势更偏学习敏捷，但目标岗位当前需要成熟增长操盘手。",
+      "mitigation_question": "如果必须证明你能在 60 天内拉动可售商家数，你的证据是什么？"
+    },
+    {
+      "candidate_id": "CAND_002",
+      "candidate_name": "候选人B",
+      "risk_title": "排序受岗位权重变化影响较大",
+      "risk_type": "决策风险",
+      "severity": "low",
+      "uncertainty": "medium",
+      "business_impact": "limited",
+      "evidence_note": "若团队转而优先复杂协同而非业务直连度，B 可能升至第 1。",
+      "mitigation_question": "当前岗位到底是先要经营操盘，还是先要组织推动？"
+    }
+  ],
+  "ranking_result": [
+    {
+      "ranking": 1,
+      "candidate_id": "CAND_001",
+      "candidate_name": "候选人A",
+      "hire_recommendation": "建议录用",
+      "ranking_reason": "与岗位 JD 和北极星指标的直接匹配度最高，且 STAR 证据密度最强。",
+      "core_tradeoff_reason": "选择 A，等于优先保住短期可落地与结果确定性；代价是组织协同上不如 B 那么有压强。",
+      "if_priority_changes": "若岗位目标改为复杂组织整合优先，A 可能被 B 反超。"
+    },
+    {
+      "ranking": 2,
+      "candidate_id": "CAND_002",
+      "candidate_name": "候选人B",
+      "hire_recommendation": "推进补面（指定补面问题）",
+      "ranking_reason": "协同影响力与推动力最强，但北极星结果闭环证据不如 A 硬，仍值得补一轮量化追问。",
+      "core_tradeoff_reason": "B 不是第 1，因为当前岗位更优先可直接打结果的经营能力，而不是组织驱动能力；但若补面证明结果闭环足够硬，顺位有上修空间。",
+      "if_priority_changes": "若团队当下最大卡点是跨团队拉齐，而非增长模型搭建，B 可以升到第 1。"
+    },
+    {
+      "ranking": 3,
+      "candidate_id": "CAND_003",
+      "candidate_name": "候选人C",
+      "hire_recommendation": "暂缓",
+      "ranking_reason": "成长性不错，但即战力、硬结果和岗位贴合度不足，无法支撑当前顺位前置。",
+      "core_tradeoff_reason": "把 C 放在第 3，是因为当前岗位容不得过长培养周期。",
+      "if_priority_changes": "若改为培养型岗位或更看重学习弹性，C 的顺位可以上移。"
+    }
+  ],
+  "final_recommendation": {
+    "top_pick_candidate_id": "CAND_001",
+    "top_pick_candidate_name": "候选人A",
+    "top_pick_reason": "在统一 JD / 北极星口径下，A 提供了最强的结果闭环、最高的业务贴合度和最稳的短期落地确定性。",
+    "runner_up_reason": "B 是非常强的备选，尤其适合需要高协同压强的团队，但当前岗位权重下仍略逊于 A，建议通过补面确认量化结果闭环。",
+    "overall_decision_note": "当前建议优先推进 A；同时对 B 安排一轮补面验证经营结果硬证据。C 建议进入储备池或转更适配的成长型岗位。",
+    "follow_up_actions": [
+      "对 A 增补一轮 UK 本地化复杂场景追问。",
+      "对 B 安排一轮北极星结果闭环量化补面。",
+      "对 C 若保留，需重新匹配更适合的成长型岗位。"
+    ]
+  },
+  "followup_interview": {
+    "candidate_id": "CAND_002",
+    "priority": "high",
+    "focus_questions": [
+      "请给出一个你亲自负责、且最终直接拉动可售商家数提升的完整量化案例，明确起点、动作、结果和复盘。",
+      "当项目资源不足且多团队目标冲突时，你如何做优先级取舍，并确保最终北极星结果不失焦？"
+    ],
+    "target_dimensions": [
+      "数据敏感度",
+      "业务理解",
+      "推动力"
+    ]
+  },
+  "interviewer_feedback": [
+    {
+      "interviewer_name": "面试官 X",
+      "suggestions": [
+        "在考察‘商家增长拆解能力’时，建议增加对‘异常波动处理’的压力追问，以更好区分候选人的逻辑深度。",
+        "时间把控上，建议缩短候选人自我介绍时间，留出更多空间给跨团队协同的冲突细节挖掘。"
+      ]
+    },
+    {
+      "interviewer_name": "面试官 Y",
+      "suggestions": [
+        "追问力度足够，但在‘UK 市场适配意识’模块，建议多采用开放式问题，避免诱导性提问（如：你是否认为 UK 市场更看重合规？）。"
+      ]
+    }
+  ]
+}

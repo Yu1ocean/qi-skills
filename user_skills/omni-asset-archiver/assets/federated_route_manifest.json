@@ -1,0 +1,41 @@
+{
+  "version": "5.0",
+  "main_registry": {
+    "spreadsheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+    "spreadsheet_token": "ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
+  },
+  "allowed_route_keys": [
+    "aeolus_links",
+    "skill_inventory",
+    "library_registry"
+  ],
+  "allowed_target_tokens": [
+    "ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
+  ],
+  "federated_routes": {
+    "aeolus_links": {
+      "spreadsheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+      "sheet_name": "常用风神链接",
+      "schema": "aeolus_link"
+    },
+    "skill_inventory": {
+      "spreadsheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+      "sheet_name": "专属技能清单",
+      "schema": "skill_inventory"
+    },
+    "library_registry": {
+      "spreadsheet_url": "https://bytedance.sg.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+      "sheet_name": "图书馆",
+      "schema": "generic_asset"
+    }
+  },
+  "dlq": {
+    "route_key": "dlq_unclassified",
+    "wiki_node_token": "",
+    "wiki_title_hint": "Aime 空间 / 暂存区",
+    "spreadsheet_url": "",
+    "sheet_name": "",
+    "tag": "⚠️[未分类_待分诊]",
+    "local_jsonl": "assets/dlq/omni_asset_archiver_dlq.jsonl"
+  }
+}

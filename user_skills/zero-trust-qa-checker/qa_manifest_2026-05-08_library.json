@@ -1,0 +1,50 @@
+{
+  "dataset": {
+    "path": "../../daily_qa_2026-05-08_library.csv",
+    "primary_key": "【文档编号】"
+  },
+  "contracts": [
+    {
+      "column": "【文档编号】",
+      "assertions": ["non_null", "unique"]
+    },
+    {
+      "column": "【日期】",
+      "assertions": ["non_null", "positive", "integer"]
+    },
+    {
+      "column": "【项目名】",
+      "assertions": ["non_null"]
+    },
+    {
+      "column": "【文档链接】",
+      "assertions": ["non_null"]
+    }
+  ],
+  "dual_engine": {
+    "metric_column": "【日期】",
+    "groupby_column": "【项目名】",
+    "threshold": 0.0005
+  },
+  "physical_probe": {
+    "target": "ECQ0sDwmbhDex9tcUSjlkU7Bgdh/图书馆",
+    "match_rules": [
+      {
+        "regex": "(【文档编号】,【日期】,【项目名】,【文档链接】)",
+        "expected_value": "【文档编号】,【日期】,【项目名】,【文档链接】"
+      },
+      {
+        "regex": "DOC-260507-0001,46149,([^,]+),",
+        "expected_value": "Daily Logs 列位漂移修复复盘"
+      },
+      {
+        "regex": "WK-2605-01,46144,([^,]+),",
+        "expected_value": "于奇楠的结构化周报 (2026-04-26 ~ 2026-05-02)"
+      },
+      {
+        "regex": "SYS-2604-010,46124,([^,]+),",
+        "expected_value": "merchant-tier-analyzer V2.0 升级复盘"
+      }
+    ]
+  }
+}

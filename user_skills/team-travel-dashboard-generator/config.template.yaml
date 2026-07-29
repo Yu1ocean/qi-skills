@@ -1,0 +1,55 @@
+skill:
+  name: team-travel-dashboard-generator
+  version: "3.3"
+  source_dir: user_skills/team-travel-dashboard-generator
+  zip_output: /tmp/team-travel-dashboard-generator.zip
+
+runtime:
+  python_bin: python3
+  mailbox: me
+  months: 1
+  max_messages: 0
+  collection_mode: auto
+  start_time: ""
+  end_time: ""
+  mail_folders:
+    - INBOX
+  required_mail_scopes:
+    - mail:user_mailbox:readonly
+
+policy:
+  fixed_dashboard_url: https://216a3e1709fd.aime-app.bytedance.net/
+  hotel_policy_table: https://bytedance.larkoffice.com/sheets/KF9Wsp1WZhviWZtrndXcqD0tnmp
+  hotel_policy_detail_sheet_url: https://bytedance.larkoffice.com/sheets/KF9Wsp1WZhviWZtrndXcqD0tnmp?sheet=eI7OnF
+  hotel_policy_detail_sheet_id: eI7OnF
+  hotel_policy_detail_sheet_name: 城市差标明细
+  hotel_policy_config_sheet_url: https://bytedance.larkoffice.com/sheets/KF9Wsp1WZhviWZtrndXcqD0tnmp?sheet=0IsAjU
+  hotel_policy_config_sheet_id: 0IsAjU
+  hotel_policy_config_sheet_name: 差标全局配置表
+  booking_window_rules:
+    domestic: "3-7"
+    cross_border: "7-15"
+  hotel_hard_guardrail: 当地差标2倍以上必须记为高优先级合规预警
+
+outputs:
+  main_json: output/travel_dashboard.json
+  main_html: output/travel_dashboard.html
+  dynamic_ui_html: output/travel_dashboard.dynamic.html
+  geo_cache: output/geo_cache.json
+  city_alias_cache: output/city_alias_cache.json
+  footprint_library: output/travel_footprint_library.json
+  mail_ledger_json: output/mail_ledger.json
+  mail_ledger_smoke_json: output/mail_ledger.smoke.json
+
+install_record:
+  generated_for: Aime self-guided install
+  generated_by: Aime
+  owner_display_name: 于奇楠
+  owner_account: yuqinan
+  owner_email: yuqinan@bytedance.com
+
+optional_env_overrides:
+  target_space_id: TODO_BY_ENV
+  team_member_registry_token: TODO_BY_ENV
+  team_distribution_email: TODO_BY_ENV
+  notes: 如宿主环境已有统一配置中心，可将 TODO_BY_ENV 字段在安装时自动回填；若无法确认，允许保留占位，不阻塞安装与最小验收。

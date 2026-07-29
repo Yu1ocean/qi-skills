@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "interview-hologram-scanner-output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "input_alignment",
+    "speaker_separation",
+    "star_evidence",
+    "zero_trust_checks",
+    "radar",
+    "swot",
+    "day_30_60_90",
+    "final_conclusion"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_name", "version", "analysis_language"],
+      "properties": {
+        "skill_name": { "const": "interview-hologram-scanner" },
+        "version": { "type": "string" },
+        "analysis_language": { "type": "string", "enum": ["zh-CN"] }
+      }
+    },
+    "input_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transcript_source", "job_family", "north_star_metric", "role_jd", "confidence_note"],
+      "properties": {
+        "transcript_source": { "type": "string" },
+        "job_family": { "type": "string", "enum": ["BD", "MKT"] },
+        "north_star_metric": { "type": ["string", "null"] },
+        "role_jd": { "type": ["string", "null"] },
+        "confidence_note": { "type": "string" }
+      }
+    },
+    "speaker_separation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["timestamp", "speaker", "snippet", "confidence"],
+        "properties": {
+          "timestamp": { "type": "string" },
+          "speaker": { "type": "string", "enum": ["interviewer", "candidate", "unknown"] },
+          "snippet": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+        }
+      }
+    },
+    "star_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["timestamp", "theme", "situation", "task", "action", "result", "evidence_strength"],
+        "properties": {
+          "timestamp": { "type": "string" },
+          "theme": { "type": "string" },
+          "situation": { "type": ["string", "null"] },
+          "task": { "type": ["string", "null"] },
+          "action": { "type": ["string", "null"] },
+          "result": { "type": ["string", "null"] },
+          "numbers_mentioned": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "evidence_strength": { "type": "string", "enum": ["strong", "medium", "weak"] }
+        }
+      }
+    },
+    "zero_trust_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logic_blindspots", "baseline_drift", "evidence_gaps", "follow_up_questions"],
+      "properties": {
+        "logic_blindspots": { "type": "array", "items": { "type": "string" } },
+        "baseline_drift": { "type": "array", "items": { "type": "string" } },
+        "evidence_gaps": { "type": "array", "items": { "type": "string" } },
+        "follow_up_questions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "radar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimensions", "summary"],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "score", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "score": { "type": "number", "minimum": 0, "maximum": 5 },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "summary": { "type": "string" }
+      }
+    },
+    "swot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strengths", "weaknesses", "opportunities", "threats"],
+      "properties": {
+        "strengths": { "type": "array", "items": { "type": "string" } },
+        "weaknesses": { "type": "array", "items": { "type": "string" } },
+        "opportunities": { "type": "array", "items": { "type": "string" } },
+        "threats": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "day_30_60_90": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day_30", "day_60", "day_90"],
+      "properties": {
+        "day_30": { "type": "array", "items": { "type": "string" } },
+        "day_60": { "type": "array", "items": { "type": "string" } },
+        "day_90": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "final_conclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["business_ability", "business_reason", "byte_style"],
+      "properties": {
+        "business_ability": {
+          "type": "string",
+          "enum": ["不推荐", "中性", "强推荐", "不可错过"]
+        },
+        "business_reason": { "type": "string" },
+        "byte_style": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["dimension_scores", "total_score", "summary"],
+          "properties": {
+            "dimension_scores": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["dimension", "score", "evidence_note"],
+                "properties": {
+                  "dimension": { "type": "string" },
+                  "score": { "type": "number", "minimum": 0, "maximum": 5 },
+                  "evidence_note": { "type": "string" }
+                }
+              }
+            },
+            "total_score": { "type": "number", "minimum": 0, "maximum": 30 },
+            "summary": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

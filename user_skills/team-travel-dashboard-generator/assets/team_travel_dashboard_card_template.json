@@ -1,0 +1,30 @@
+{
+  "schema": "2.0",
+  "config": {
+    "wide_screen_mode": true
+  },
+  "header": {
+    "template": "blue",
+    "title": {
+      "tag": "plain_text",
+      "content": "团队差旅大屏自动更新"
+    }
+  },
+  "body": {
+    "elements": [
+      {
+        "tag": "markdown",
+        "content": "**团队差旅大屏自动更新已完成**\n\n本轮共解析 {{TOTAL_TRIPS}} 条行程，合规预警 {{COMPLIANCE_ALERTS}} 条，今日新增预警 {{DAILY_NEW_ALERTS}} 条。\n\n**🆕 NEW 新增预警**\n{{DAILY_NEW_ALERT_LINES}}\n\n固定大屏入口：{{DASHBOARD_URL}}"
+      },
+      {
+        "tag": "button",
+        "text": {
+          "tag": "plain_text",
+          "content": "打开团队差旅大屏"
+        },
+        "type": "primary",
+        "url": "{{DASHBOARD_URL}}"
+      }
+    ]
+  }
+}

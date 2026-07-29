@@ -5,7 +5,7 @@
 
 变更（2026-05）：
 - 取消“通过 --target-chat 实时查群成员/搜群”的逻辑（不再调用群聊搜索/拉群成员接口）。
-- 改为从同一 Spreadsheet 内的【团队联系方式】Sheet 动态读取花名册：使用 `中文名称` → (Open ID / 邮箱) 做负责人映射。
+- 改为从同一 Spreadsheet 内的【团队名单】Sheet 动态读取花名册：使用 `中文名称` → (Open ID / 邮箱) 做负责人映射。
 
 输出为 JSON（便于上层：发送飞书消息 / 写入日志 / 入库）。
 """
@@ -16,9 +16,15 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from task_flow_engine.chat_registry import (
+    DEFAULT_BROADCAST_USAGE,
+    default_broadcast_target_chat,
+    get_chat_registry_entry,
+)
 from task_flow_engine.lark_sheets_cli import LarkSheetsCLI
 from task_flow_engine.patrol import (
     OwnerIdentity,
+    PatrolCardSnapshotStore,
     PatrolStateStore,
     TaskPatrol,
     _normalize_person_key,
@@ -92,23 +98,12 @@ def validate_safe_path_under_repo(path: Path, *, repo_root: Path, arg_name: str)
     return resolved
 
 
-def _validate_target_chat_id(target_chat: str) -> Dict[str, Any]:
-    """阶段二公开提醒的目标群。
+def _validate_target_chat_id(target_chat: str, *, registry_path: Optional[Path], usage: str) -> Dict[str, Any]:
+    """把 CLI 传入的 chat_id 仅作为断言；真实 chat_id 必须来自 Chat Registry。"""
 
-    说明：
-    - 仅用于把 chat_id 原样放进输出 JSON（由上层决定如何发送）。
-    - 不再支持传群名自动搜索（避免调用群聊搜索接口）。
-    """
-
-    target_chat = (target_chat or "").strip()
-    if not target_chat:
-        raise ValueError("target_chat 不能为空")
-    if not target_chat.startswith("oc_"):
-        raise ValueError(
-            "当前版本不再支持通过群名解析 chat_id（已废弃群聊搜索接口）。"
-            "请直接传 chat_id（oc_xxx）。"
-        )
-    return {"chat_id": target_chat, "name": ""}
+    entry = get_chat_registry_entry(usage=usage, path=registry_path)
+    entry.assert_requested_chat_id(target_chat)
+    return entry.to_target_chat()
 
 
 def main() -> int:
@@ -131,11 +126,38 @@ def main() -> int:
         help="可选：指定 today（YYYY-MM-DD），用于回放；不传则使用系统日期",
     )
 
-    # 阶段二公开提醒：仅携带 chat_id（不再解析群名、不拉群成员）
+    # 阶段二公开提醒：chat_id 只能来自 Chat Registry；--target-chat 仅作为兼容断言
     ap.add_argument(
         "--target-chat",
         default=None,
-        help="阶段二公开提醒目标群 chat_id（oc_xxx）。注意：不再支持传群名。",
+        help="兼容旧参数：仅用于断言传入值等于 Chat Registry 对应用途的 chat_id；不再作为 chat_id 来源。",
+    )
+    ap.add_argument(
+        "--chat-registry",
+        default=None,
+        help="Chat Registry JSON 路径（相对路径默认相对于 task-flow-engine 根目录）。",
+    )
+    ap.add_argument(
+        "--broadcast-usage",
+        default=DEFAULT_BROADCAST_USAGE,
+        help="Chat Registry 中的群用途 key（默认：task_patrol_broadcast）。",
+    )
+
+    ap.add_argument(
+        "--group-card-max-items-per-group",
+        type=int,
+        default=3,
+        help="广播卡片采用先人后事聚合时，每位负责人在每个类别下最多展开的任务数（默认 3）",
+    )
+    ap.add_argument(
+        "--group-card-only-changed",
+        action="store_true",
+        help="仅在广播卡片中展示相对昨日新增/变化的异常（默认关闭，展示结构仍为先人后事）",
+    )
+    ap.add_argument(
+        "--group-card-snapshot-file",
+        default=".patrol_card_snapshot.json",
+        help="广播卡片快照文件路径（相对路径默认相对于 task-flow-engine 根目录）",
     )
 
     # 新增：状态文件
@@ -174,14 +196,28 @@ def main() -> int:
         raise ValueError("due-soon-days 不能为负数")
     if args.leave_check_min_busy_hours < 0:
         raise ValueError("leave-check-min-busy-hours 不能为负数")
+    if args.group_card_max_items_per_group <= 0:
+        raise ValueError("group-card-max-items-per-group 必须为正整数")
 
     # 状态文件路径（若启用 state，强制限制在 repo_root 下）
+    registry_path: Optional[Path] = None
+    if args.chat_registry:
+        p_registry = Path(args.chat_registry)
+        if not p_registry.is_absolute():
+            p_registry = repo_root / p_registry
+        registry_path = validate_safe_path_under_repo(p_registry, repo_root=repo_root, arg_name="chat-registry")
+
     state_path: Optional[Path] = None
     if not args.no_state:
         p = Path(args.state_file)
         if not p.is_absolute():
             p = repo_root / p
         state_path = validate_safe_path_under_repo(p, repo_root=repo_root, arg_name="state-file")
+
+    snapshot_path = Path(args.group_card_snapshot_file)
+    if not snapshot_path.is_absolute():
+        snapshot_path = repo_root / snapshot_path
+    snapshot_path = validate_safe_path_under_repo(snapshot_path, repo_root=repo_root, arg_name="group-card-snapshot-file")
 
     today = date.today()
     if args.today:
@@ -196,7 +232,7 @@ def main() -> int:
     task_values = cli.read_range(spreadsheet_token, task_sheet.sheet_id)
     task_rows = _values_to_rows(task_values)
 
-    # 3) 读取【团队联系方式】并构建映射
+    # 3) 读取【团队名单】并构建映射
     roster_sheet = cli.get_sheet_id(spreadsheet_token, args.roster_sheet_title)
     roster_values = cli.read_range(spreadsheet_token, roster_sheet.sheet_id)
     roster_rows = _values_to_rows(roster_values)
@@ -215,10 +251,14 @@ def main() -> int:
             source=hit.source,
         )
 
-    # 4) 阶段二群聊信息（不做任何 API 解析，仅原样透传）
-    target_chat: Optional[Dict[str, Any]] = None
+    # 4) 广播群信息：从 Chat Registry 读取；旧 --target-chat 只做一致性断言
+    target_chat = default_broadcast_target_chat(registry_path=registry_path, usage=args.broadcast_usage)
     if args.target_chat:
-        target_chat = _validate_target_chat_id(args.target_chat)
+        target_chat = _validate_target_chat_id(
+            args.target_chat,
+            registry_path=registry_path,
+            usage=args.broadcast_usage,
+        )
 
     # 5) 状态缓存（连续异常天数）
     state: Optional[PatrolStateStore] = None
@@ -226,8 +266,17 @@ def main() -> int:
         state = PatrolStateStore(state_path)
         state.load()
 
+    snapshot_store = PatrolCardSnapshotStore(snapshot_path)
+    snapshot_store.load()
+
     # 6) 巡检
-    patrol = TaskPatrol(due_soon_days=args.due_soon_days, owner_resolver=resolve_owner)
+    patrol = TaskPatrol(
+        due_soon_days=args.due_soon_days,
+        owner_resolver=resolve_owner,
+        group_card_max_items_per_group=args.group_card_max_items_per_group,
+        group_card_only_changed=args.group_card_only_changed,
+        group_card_previous_snapshot=snapshot_store.snapshot(),
+    )
     output = patrol.run(task_rows, today=today, state=state, target_chat=target_chat)
 
     # 6.1) 休假免打扰与顺延拦截器（法定节假日 + 个人休假）
@@ -257,6 +306,13 @@ def main() -> int:
         output["state"] = {"path": str(state.path), "enabled": True}
     else:
         output["state"] = {"enabled": False}
+
+    snapshot_store.save((output.get("card_state") or {}).get("snapshot", {}), today=today)
+    output["card_state"] = {
+        **(output.get("card_state") or {}),
+        "path": str(snapshot_path),
+        "target_chat": target_chat,
+    }
 
     # 8) 补充来源信息，便于上层串联
     output["source"] = {

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,6 +53,10 @@ class LarkSheetsCLI:
         if env:
             candidates.append(Path(env))
 
+        which_cli = shutil.which("lark-cli")
+        if which_cli:
+            candidates.append(Path(which_cli))
+
         # 1) 从仓库根目录推断
         # user_skills/task-flow-engine/task_flow_engine/lark_sheets_cli.py
         # parents[0]=task_flow_engine, [1]=task-flow-engine, [2]=user_skills, [3]=workspace root
@@ -65,7 +70,7 @@ class LarkSheetsCLI:
             if p and p.exists():
                 return p
         raise FileNotFoundError(
-            "找不到 lark-sheets-cli。请设置环境变量 LARK_SHEETS_CLI 或在仓库中保留 inner_skills/lark-sheets。"
+            "找不到 lark-sheets-cli。请设置环境变量 LARK_SHEETS_CLI，或确保系统 PATH 中存在 lark-cli，或在仓库中保留 inner_skills/lark-sheets。"
         )
 
     def _run(self, args: Sequence[str]) -> Dict[str, Any]:
@@ -81,8 +86,16 @@ class LarkSheetsCLI:
             )
 
         try:
-            obj = json.loads(p.stdout)
-        except json.JSONDecodeError as e:
+            # Robust JSON extraction: handle prepended logs or metrics
+            stdout = p.stdout
+            start_idx = stdout.find("{")
+            end_idx = stdout.rfind("}")
+            if start_idx != -1 and end_idx != -1:
+                json_str = stdout[start_idx : end_idx + 1]
+                obj = json.loads(json_str)
+            else:
+                obj = json.loads(stdout)
+        except (json.JSONDecodeError, ValueError) as e:
             raise LarkSheetsError(
                 "lark-sheets-cli 输出不是合法 JSON\n"
                 f"cmd: {cmd}\n"

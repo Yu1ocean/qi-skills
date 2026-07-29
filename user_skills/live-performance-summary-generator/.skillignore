@@ -1,0 +1,13 @@
+# Live Performance Summary Generator —— 打包忽略清单
+# 仅保留 SKILL.md / scripts/ / references/ / assets/ / .aime/ 等核心资产。
+__pycache__/
+*.pyc
+*.pyo
+
+# 临时导出与本地缓存
+tmp_live_performance_exports/
+verification_after.xlsx
+validation_result.json
+
+# 历史 _release 产物，不进入打包域（由 skill-forge-pipeline 重新生成）
+_release/

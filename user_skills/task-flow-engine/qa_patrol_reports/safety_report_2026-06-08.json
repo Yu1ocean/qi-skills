@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-06-08T08:53:50.066634+00:00",
+  "pipeline": "qa_patrol_daily_pipeline",
+  "mode": "patrol_and_persist_only",
+  "weekday": 0,
+  "notify_window_open": false,
+  "notify_window_closed": true,
+  "business_dispatch_enabled": false,
+  "business_dispatch_disabled": true,
+  "patrol_ran": true,
+  "notify_attempted": false,
+  "daily_log_persisted": true,
+  "skipped_steps": [
+    "task_patrol_notify"
+  ],
+  "chat_registry_sync": {
+    "ok": true,
+    "output": null,
+    "source_spreadsheet": "https://bytedance.larkoffice.com/sheets/FvkIslPSgh4XGqtcUqychqU7nzb"
+  },
+  "zombie_sweeper": {
+    "ok": true,
+    "scan_root": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.runtime/checkpoints",
+    "stale_after_seconds": 7200,
+    "detected_count": 0,
+    "findings": []
+  },
+  "travel_refresh": {
+    "enabled": true,
+    "window": {
+      "start_time": "2026-06-07T10:00:00+08:00",
+      "end_time": "2026-06-08T16:52:00+08:00",
+      "timezone": "Asia/Shanghai",
+      "lookback_hours": 30
+    },
+    "collect_json": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/output/travel_dashboard.daily_increment.json",
+    "audit_output": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/output/travel_backfill_sheet_audit.json",
+    "production_json": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/output/travel_dashboard.prod.json",
+    "production_html": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/output/travel_dashboard.prod.html",
+    "publish_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/published/travel-dashboard-live",
+    "stable_alias": "travel-dashboard-live",
+    "deploy_meta_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/published/travel-dashboard-live/deploy_meta.json",
+    "dynamic_ui_html": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/.aime/dynamic-ui/react-card/team_travel_dashboard_daily.html",
+    "sheet_append_row_count": 0,
+    "steps": [
+      {
+        "step": "collect_incremental_travel_mails",
+        "rc": 0,
+        "cwd": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
+        "command": [
+          "/root/.venv_python3.11/bin/python3",
+          "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/scripts/build_travel_dashboard.py",
+          "collect-mails",
+          "--mode",
+          "auto",
+          "--start-time",
+          "2026-06-07 10:00",
+          "--end-time",
+          "2026-06-08 16:52",
+          "--output-json",
+          "output/travel_dashboard.daily_increment.json",
+          "--geo-cache",
+          "output/geo_cache.json",
+          "--footprint-library",
+          "output/travel_footprint_library.json"
+        ]
+      },
+      {
+        "step": "append_travel_sheet2",
+        "rc": 0,
+        "cwd": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419",
+        "command": [
+          "/root/.venv_python3.11/bin/python3",
+          "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/tools/travel_backfill_write_sheet.py",
+          "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/output/travel_dashboard.daily_increment.json",
+          "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/output/travel_backfill_sheet_audit.json"
+        ]
+      },
+      {
+        "step": "refresh_travel_dashboard_assets",
+        "rc": 0,
+        "cwd": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
+        "command": [
+          "/root/.venv_python3.11/bin/python3",
+          "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator/scripts/build_travel_dashboard.py",
+          "build",
+          "--mode",
+          "auto",
+          "--output-json",
+          "output/travel_dashboard.prod.json",
+          "--output-html",
+          "output/travel_dashboard.prod.html",
+          "--geo-cache",
+          "output/geo_cache.json",
+          "--footprint-library",
+          "output/travel_footprint_library.json",
+          "--dynamic-ui-output",
+          "../../.aime/dynamic-ui/react-card/team_travel_dashboard_daily.html"
+        ]
+      }
+    ],
+    "status": "completed"
+  },
+  "travel_dashboard_card_push": {
+    "enabled": false,
+    "status": "skipped",
+    "reason": "not_saturday"
+  },
+  "business_pipeline": {
+    "enabled": true,
+    "notify_window_open": false,
+    "steps": [
+      {
+        "step": "run_task_patrol_save",
+        "rc": 0,
+        "output": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/alerts_2026-06-08.json"
+      },
+      {
+        "step": "task_patrol_notify",
+        "skipped": true,
+        "reason": "weekday_gate_closed"
+      },
+      {
+        "step": "upload_notify_logs_to_sheet",
+        "rc": 0,
+        "spreadsheet": "TnNYsLq9phIJwutJGwBl730ygjd"
+      }
+    ]
+  },
+  "notes": [
+    "脚本已硬编码：差旅大屏增量刷新链路每天执行一次（增量邮件抓取 → Sheet 2 追加 → 大屏 HTML / Dynamic UI 刷新）。",
+    "脚本已硬编码：发布目录固定为 published/travel-dashboard-live，供稳定别名部署复用。",
+    "脚本已硬编码：任务巡检与通知日志回写每天执行；群聊发信仅周二(1)/周四(3)开放。",
+    "脚本已硬编码：周六(5)若 deploy_meta.json 已登记 live_url，则主动推送差旅大屏卡片链接。",
+    "非周二/周四会跳过 task_patrol_notify，但仍保留 alerts 产出与日志落库。"
+  ]
+}

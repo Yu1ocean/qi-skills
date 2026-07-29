@@ -1,0 +1,24 @@
+{
+  "type": "Daily_Logs_ReadAfterWriteMismatch",
+  "timestamp": "2026-05-31T18:15:35.486749",
+  "sheet_url": "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+  "sheet_name": "Daily_Logs",
+  "mode": "append",
+  "located_row_index": 44,
+  "primary_key": "DL-20260531",
+  "expected": [
+    "DL-20260531",
+    "2026-05-31",
+    "【2026-05-31】今日完成晚6点归档质检与日报生成任务，拉取任务库状态并复核 Daily_Logs 台账 Schema、主键生成与写后回读链路；同步沉淀 1 项核心资产（Epicure 论文精读与 Wiki 归档报告）。\\n\\n任务状态汇总表：\\n{{TASK_STATS_TABLE}}\\n\\n对工作的建议：继续清洗任务库中的异常状态枚举，并把日报模板进一步参数化，减少人工改写。\\n\\n遗留任务提醒：若 Epicure 后续复盘、任务库异常状态修正或新增归档任务仍待处理，是否继续推进？"
+  ],
+  "read_back": [
+    "DL-20260531",
+    "2026-05-31",
+    "【2026-05-31】今日完成晚6点归档质检与日报生成任务，拉取任务库状态并复核 Daily_Logs 台账 Schema、主键生成与写后回读链路；同步沉淀 1 项核心资产（Epicure 论文精读与 Wiki 归档报告）。\\n\\n任务状态汇总表：\\n| 状态 | 数量 |\n| --- | ---: |\n| 开启 | 15 |\n| 完成 | 3 |\n| 暂停 | 0 |\\n\\n对工作的建议：继续清洗任务库中的异常状态枚举，并把日报模板进一步参数化，减少人工改写。\\n\\n遗留任务提醒：若 Epicure 后续复盘、任务库异常状态修正或新增归档任务仍待处理，是否继续推进？"
+  ],
+  "snapshots": {
+    "pre": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_pre_20260531_181524.xlsx",
+    "post": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator/assets/snapshots/daily_logs_post_20260531_181535.xlsx"
+  },
+  "note": "⚠️[数据断链_待自愈] 写后即读不一致，已熔断并落 DLQ。"
+}

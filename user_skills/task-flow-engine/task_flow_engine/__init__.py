@@ -11,10 +11,13 @@
 """
 
 from .patrol import TaskPatrol
+from .taskflow_ack_renderer import build_taskflow_ack_post, render_taskflow_ack_text
 from .vacation import FeishuVacationClient, apply_vacation_guard, is_legal_rest_day
 
 __all__ = [
     "TaskPatrol",
+    "build_taskflow_ack_post",
+    "render_taskflow_ack_text",
     "FeishuVacationClient",
     "apply_vacation_guard",
     "is_legal_rest_day",

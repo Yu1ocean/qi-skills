@@ -1,0 +1,440 @@
+{
+  "field_count": 70,
+  "record_count": 8438,
+  "top10_fields": [
+    "新leads_id",
+    "品牌名",
+    "原leads_id",
+    "BD优先级",
+    "AM优先级",
+    "行业自补线索",
+    "公司名",
+    "EU行业",
+    "一级商家标签",
+    "二级商家标签"
+  ],
+  "row2_first10_raw": {
+    "ok": true,
+    "identity": "user",
+    "data": {
+      "approx_char_count": 153,
+      "has_more": false,
+      "ranges": [
+        {
+          "actual_range": "A2:J2",
+          "cells": [
+            [
+              {
+                "value": "LD_000001"
+              },
+              {
+                "value": "PrettyGarden"
+              },
+              {
+                "value": "LD00001"
+              },
+              {
+                "value": "必招 6 月"
+              },
+              {},
+              {},
+              {
+                "value": "PrettyGarden(聚合)"
+              },
+              {
+                "value": "Fashion"
+              },
+              {
+                "value": "HIPO靶向商家"
+              },
+              {
+                "value": "CNOB"
+              }
+            ]
+          ],
+          "col_indices": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J"
+          ],
+          "range": "A2:J2",
+          "row_indices": [
+            2
+          ],
+          "truncated": false
+        }
+      ],
+      "returned_cell_count": 10,
+      "revision": 1277,
+      "warning_message": "处理 ranges[n].cells 之前，必须先查看顶层 has_more，以及每个 range 的 actual_range / row_indices / col_indices。定位真实行号时用 row_indices[i]，定位真实列字母时用 col_indices[j]，不要按二维数组下标自己数行列；skip_hidden=true 或结果被截断时，这样会错位。"
+    }
+  },
+  "ai_csv": "ai_data_view_order.csv",
+  "official_csv": "official_formula_2000.csv",
+  "cells_get_header_raw": {
+    "ok": true,
+    "identity": "user",
+    "data": {
+      "approx_char_count": 1441,
+      "has_more": false,
+      "ranges": [
+        {
+          "actual_range": "A1:CE1",
+          "cells": [
+            [
+              {
+                "value": "新leads_id"
+              },
+              {
+                "value": "品牌名"
+              },
+              {
+                "value": "原leads_id"
+              },
+              {
+                "value": "BD优先级"
+              },
+              {
+                "value": "AM优先级"
+              },
+              {
+                "value": "行业自补线索"
+              },
+              {
+                "value": "公司名"
+              },
+              {
+                "value": "EU行业"
+              },
+              {
+                "value": "一级商家标签"
+              },
+              {
+                "value": "二级商家标签"
+              },
+              {
+                "value": "一级类目"
+              },
+              {
+                "value": "二级类目"
+              },
+              {
+                "value": "CNOB直客"
+              },
+              {
+                "value": "US标签"
+              },
+              {
+                "value": "US Shopid"
+              },
+              {
+                "value": "US行业"
+              },
+              {
+                "value": "USAM"
+              },
+              {
+                "value": "跟进团队"
+              },
+              {
+                "value": "负责BD"
+              },
+              {
+                "value": "负责AM"
+              },
+              {
+                "value": "商家联系人&职位"
+              },
+              {
+                "value": "联系方式"
+              },
+              {
+                "value": "公司总部\n城市"
+              },
+              {
+                "value": "协同部门"
+              },
+              {
+                "value": "是否可联系"
+              },
+              {
+                "value": "跟进状态"
+              },
+              {
+                "value": "群聊"
+              },
+              {
+                "value": "跟进记录-BD"
+              },
+              {
+                "value": "跟进记录-AM"
+              },
+              {
+                "value": "沟通截图-BD"
+              },
+              {
+                "value": "沟通截图-AM"
+              },
+              {
+                "value": "上升LD/Joe/Kevin-BD"
+              },
+              {
+                "value": "EU_global seller id"
+              },
+              {
+                "value": "UK_global seller id"
+              },
+              {
+                "value": "上升LD/Joe/Kevin-AM"
+              },
+              {
+                "value": "EU拒绝或考虑原因-BD"
+              },
+              {
+                "value": "EU拒绝或考虑原因-AM"
+              },
+              {
+                "value": "UK拒绝或考虑原因-BD"
+              },
+              {
+                "value": "UK拒绝或考虑原因-AM"
+              },
+              {
+                "value": "其他seller_id备注(如有多个se..."
+              },
+              {
+                "value": "校验填写seller_id"
+              },
+              {
+                "value": "EU_入驻时间"
+              },
+              {
+                "value": "EU_完成靶向打标"
+              },
+              {
+                "value": "EU_状态Active"
+              },
+              {
+                "value": "EU_完成上架可售"
+              },
+              {
+                "value": "EU_sellable_0630"
+              },
+              {
+                "value": "EU_30d GMV"
+              },
+              {
+                "value": "EU_T等级"
+              },
+              {
+                "value": "UK_入驻时间"
+              },
+              {
+                "value": "UK_完成靶向打标"
+              },
+              {
+                "value": "UK_状态Active"
+              },
+              {
+                "value": "UK_完成上架可售"
+              },
+              {
+                "value": "UK_sellable_0630"
+              },
+              {
+                "value": "UK_30d GMV"
+              },
+              {
+                "value": "UK_T等级"
+              },
+              {
+                "value": "可联系"
+              },
+              {
+                "value": "已触达"
+              },
+              {
+                "value": "已触达-DoD"
+              },
+              {
+                "value": "有意愿"
+              },
+              {
+                "value": "入驻中"
+              },
+              {
+                "value": "已入驻"
+              },
+              {
+                "value": "历史入驻"
+              },
+              {
+                "value": "新增入驻"
+              },
+              {
+                "value": "新增入驻-DoD"
+              },
+              {
+                "value": "可售数"
+              },
+              {
+                "value": "历史入驻存量可售"
+              },
+              {
+                "value": "历史入驻新增可售"
+              },
+              {
+                "value": "新增入驻且可售"
+              },
+              {
+                "value": "新增入驻可售-DoD"
+              },
+              {
+                "value": "新增入驻未打标"
+              },
+              {
+                "value": "US行业"
+              },
+              {
+                "value": "UK_状态Active"
+              },
+              {
+                "value": "EU行业"
+              },
+              {
+                "value": "BD优先级"
+              },
+              {
+                "value": "负责BD"
+              },
+              {
+                "value": "线索来源"
+              },
+              {
+                "value": "US标签"
+              },
+              {
+                "value": "CNOB直客"
+              },
+              {
+                "value": "负责bd"
+              },
+              {
+                "value": "历史入驻"
+              },
+              {
+                "value": "一级类目"
+              },
+              {
+                "value": "历史入驻新增可售"
+              },
+              {
+                "value": "EU_状态Active"
+              }
+            ]
+          ],
+          "col_indices": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "L",
+            "M",
+            "N",
+            "O",
+            "P",
+            "Q",
+            "R",
+            "S",
+            "T",
+            "U",
+            "V",
+            "W",
+            "X",
+            "Y",
+            "Z",
+            "AA",
+            "AB",
+            "AC",
+            "AD",
+            "AE",
+            "AF",
+            "AG",
+            "AH",
+            "AI",
+            "AJ",
+            "AK",
+            "AL",
+            "AM",
+            "AN",
+            "AO",
+            "AP",
+            "AQ",
+            "AR",
+            "AS",
+            "AT",
+            "AU",
+            "AV",
+            "AW",
+            "AX",
+            "AY",
+            "AZ",
+            "BA",
+            "BB",
+            "BC",
+            "BD",
+            "BE",
+            "BF",
+            "BG",
+            "BH",
+            "BI",
+            "BJ",
+            "BK",
+            "BL",
+            "BM",
+            "BN",
+            "BO",
+            "BP",
+            "BQ",
+            "BR",
+            "BS",
+            "BT",
+            "BU",
+            "BV",
+            "BW",
+            "BX",
+            "BY",
+            "BZ",
+            "CA",
+            "CB",
+            "CC",
+            "CD",
+            "CE"
+          ],
+          "range": "A1:CE1",
+          "row_indices": [
+            1
+          ],
+          "truncated": false
+        }
+      ],
+      "returned_cell_count": 83,
+      "revision": 1277,
+      "warning_message": "处理 ranges[n].cells 之前，必须先查看顶层 has_more，以及每个 range 的 actual_range / row_indices / col_indices。定位真实行号时用 row_indices[i]，定位真实列字母时用 col_indices[j]，不要按二维数组下标自己数行列；skip_hidden=true 或结果被截断时，这样会错位。"
+    }
+  }
+}

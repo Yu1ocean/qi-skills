@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.4
-description: 自动化技能创建、升级、打包发布与归档流水线。强制执行 Forge、Celebrate、Archive 闭环，并在 Forge 阶段新增 CDA Guardrails（三层防御：认知-默认-断言）强制自检 Checkpoint，失败即熔断。支持技能 zip 自动发布到飞书云盘、回挂说明文档 File Block，并对报告/归档类技能强制校验“文档生动化标准”。
+version: 5.7
+description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.4)
+# 技能锻造流水线 (Forge Pipeline V5.7)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -34,10 +34,11 @@ description: 自动化技能创建、升级、打包发布与归档流水线。�
 
 1. **CDA 自检通过**：`scripts/cda_guardrails_selfcheck.py` 退出码为 0，并清晰输出风险等级与三层覆盖情况。
 2. **双轨校验通过**：升级技能时，`SKILL.md` 与底层代码（如 `.py`）必须同时有变更（否则立刻熔断）。
-3. **Zip 发布闭环**：`scripts/register_skill.py` 生成的 `metadata.json` 中必须包含 `zip_path`、`drive_file_url`、`doc_link`。
+3. **Zip 发布闭环**：`scripts/register_skill.py` 生成的 `metadata.json` 中必须包含 `zip_path`、`drive_file_url`、`doc_link`、`wiki_url`、`wiki_node_token`。
 4. **说明文档回挂验收**：回捞下载最新文档，确认标题下方存在最新 zip 的原生 File Block（非纯文本链接）。
-5. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
-6. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
+5. **Wiki 归档验收**：说明文档必须已成功迁入目标 Wiki 节点；若 Wiki Mount Phase 失败，发布流程必须立刻熔断，不得继续落盘 `metadata.json` 或宣称发布成功。
+6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
+7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
 
 ## 适用场景
 
@@ -142,9 +143,10 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - 若说明文档中存在版本标识，应通过 MCP 将其替换为最新版本号。
 
 - **Zip 打包**：在最后阶段强制运行 `scripts/register_skill.py`，传入 `--skill-dir`，将目标技能目录（如 `user_skills/xxx/`）打包为同级 `.zip` 文件。
-- **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 上传到飞书云盘，并强制为 `yuqinan@bytedance.com` 赋予 `full_access` 权限。
+- **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并通过 `feishu-doc-writing-guide` 的 MCP / personal-space 修复链路为 `yuqinan@bytedance.com` 恢复可管理访问权；严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API。
 - **文档挂载**：`scripts/register_skill.py` 必须调用 `inner_skills/lark/mcp_lark_update_lark_doc.py`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式插入到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。
-- **元数据打包**：收集并打包新技能或更新技能的元数据（技能编号、名称、功能描述、技能说明文档链接、技能目录路径、zip 路径、飞书云盘文件链接、创建/更新日期）。
+- **Wiki Mount Phase**：在 ZIP 原生文件块回挂完成后、`metadata.json` 落盘前，必须调用飞书 Wiki MCP 挂载链路（如 `mcp_lark_move_lark_doc.py`），将说明文档迁入「Aime 技能库」根节点或 `--wiki-node-token` 指定节点。该步骤属于发布成功的强契约；一旦迁移失败，必须立刻熔断，禁止继续 metadata 落盘、归档写台账或宣称发布完成。
+- **元数据打包**：收集并打包新技能或更新技能的元数据（技能编号、名称、功能描述、技能说明文档链接、技能目录路径、zip 路径、飞书云盘文件链接、Wiki 链接、Wiki 节点 token、创建/更新日期）。
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
 - **执行目标**：由 `omni-asset-archiver` 作为“唯一物理写入网关”完成向【专属技能清单】或【图书馆】台账的写入。**强制要求归档员遵循 `feishu-doc-writing-guide` 的 RAW 原子锁规范。**
 - **本技能自升级额外要求**：本次升级的版本号与变更说明必须同步写入 `CHANGELOG.md`，并追加更新到对应飞书 Wiki 说明文档。
@@ -162,12 +164,34 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 合规默认值（Defaults）
 
-- `--user-email` 默认：`yuqinan@bytedance.com`（归档与云盘文件统一赋予 full_access）
+- `--user-email` 默认：`yuqinan@bytedance.com`（ZIP 资产访问修复默认目标用户；经 MCP personal-space 链路恢复可管理权限）
 - 文档挂载默认插入点：`BLOCK_BEGIN`（标题正下方）
+- `--wiki-node-token` 默认：`GU0ewkyaGi4i5nkwBtNcM3aPn9g`（Aime 技能库根节点）
 - 写后即读 RAW 校验：默认开启（任何不一致必须熔断）
+- **`--initial-version` 默认：`1.1`**（首次发布起始版本号）
+  - 当 `SKILL.md` 当前版本仍处于 `0.x` 脚手架阶段时，流水线判定为「首次发布」，**会忽略 `--bump`，直接将版本设为 `1.1`**，不再做 `0.x → 0.x+0.1` 的小迭代。
+  - 已经 ≥ `1.0` 的技能，按原 `--bump major|minor` 规则升迁，不受影响。
+  - 如需自定义首发版本，可显式传 `--initial-version 2.0` 覆盖默认；如需强制指定任意目标版本，可显式传 `--new-version 0.2`。
 
 ## 更新日志 (Changelog)
 
+- **V5.11**: 修复 `grant drive full_access` 阶段的 `99991668 Invalid access token`。
+  - `register_skill.py` 不再把 `AIME_USER_CLOUD_JWT` 当作飞书 Access Token 直调 Drive Permission API。
+  - ZIP 附件回挂后，改为调用 `feishu-doc-writing-guide` 的兼容包装器，走 `move_lark_doc -> personal` 的 MCP 修复链路恢复资产访问权，随后继续 metadata 落盘与台账写入。
+- **V5.10**: 修复 ZIP 附件 `file_token` 回捞断点，新增“下载最新 `.lark.md` 并解析附件 token”兜底链路。
+  - 当 `mcp_lark_update_lark_doc` 的输出不再直接暴露 `file_token`，且 `list_doc_file_blocks` fallback 未拿到新插入 File Block 的 token 时，`register_skill.py` 会自动下载最新文档并从文档内容中回捞 `/file/<token>` / `file_token` 线索。
+  - 只有三层路径（attach_output → 文档块 diff → 文档 markdown introspection）全部失败时，才允许硬熔断，避免权限闭环与 metadata 验收被单点解析漂移打断。
+- **V5.7**: 新增 Wiki Mount Phase，发布成功必须完成说明文档迁入 Aime 技能库 Wiki。
+  - `register_skill.py` 在 ZIP 文件块回挂完成后、metadata 落盘前，强制调用 `mcp_lark_move_lark_doc.py` 将说明文档迁入 Wiki 节点。
+  - `metadata.json` 新增 `wiki_url`、`wiki_node_token` 断言字段，用于归档与验收。
+  - 若 Wiki 挂载失败，发布流程立即熔断，不再允许继续 metadata 落盘或宣称发布成功。
+- **V5.6**: 首次发布判定从枚举触发值升级为 `Major == 0`。
+  - 废除写死的 `0.0 / 0.1 / 0.2` 触发集合，统一将所有 `0.x` 视为脚手架阶段。
+  - 只要当前版本仍处于 `0.x`，Archive 阶段都会忽略 `--bump`，强制设为 `1.1`（或 `--initial-version` 指定值），不再做 `+0.1` 小步迭代。
+- **V5.5**: 新增「首次发布起始版本号」机制。
+  - 新增 `--initial-version` CLI 参数，默认 `1.1`。
+  - 当目标技能 `SKILL.md` 当前版本仍为脚手架占位值（`0.0` / `0.1` / `0.2`）时，流水线判定为首次发布，**强制将版本设为 `1.1`**，跳过 `0.x → 0.x+1` 的尴尬段位。
+  - 已 ≥ `1.0` 的存量技能不受影响，继续按 `--bump major|minor` 升迁。
 - **V5.4**: 新增“文档生动化标准”护栏：当升级报告生成/修复总结/架构演进/归档类技能时，Forge 阶段必须把该标准写入 Workflow / SOP，并在 Verification 中强制验收。
 - **V5.2**: 新增 `CDA-Guardrails-Selfcheck` Forge Checkpoint（风险分级 + 三层护栏自检 + 失败即熔断），并下沉反例库/模板到 `resources/cda_guardrails/`。
 - **V5.1**: 飞书说明文档（Readme / Document）模板升级，新增「🔑 触发词」与「📖 案例实录 (Best Practice)」的头尾双加持结构。
@@ -187,6 +211,7 @@ cd user_skills/skill-forge-pipeline-v4 \
     --name "skill-forge-pipeline-v4" \
     --desc "自动化技能创建、升级、打包发布与归档流水线（含 CDA Guardrails 自检）" \
     --path "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg" \
+    --wiki-node-token "GU0ewkyaGi4i5nkwBtNcM3aPn9g" \
     --bump minor \
     --skill-dir "user_skills/skill-forge-pipeline-v4" \
     --id "SKILL-FORGE-PIPELINE"

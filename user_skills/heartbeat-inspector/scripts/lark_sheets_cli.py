@@ -1,8 +1,10 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 from dataclasses import dataclass
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -30,6 +32,46 @@ def _col_num_to_a1(col_num_1_based: int) -> str:
         n, rem = divmod(n - 1, 26)
         letters.append(chr(ord("A") + rem))
     return "".join(reversed(letters))
+
+
+def _parse_json_from_stdout(text: str) -> Any:
+    """兼容 stdout 前后混入环境日志的情况，提取真正的 JSON payload。"""
+
+    text = (text or "")
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text).strip()
+    if not text:
+        raise JSONDecodeError("empty stdout", text, 0)
+
+    try:
+        return json.loads(text)
+    except JSONDecodeError:
+        pass
+
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    for ln in reversed(lines):
+        if not re.match(r"^[\[{]", ln):
+            continue
+        try:
+            return json.loads(ln)
+        except JSONDecodeError:
+            continue
+
+    decoder = json.JSONDecoder()
+    candidates: List[Any] = []
+    for match in re.finditer(r"\{|\[", text):
+        try:
+            obj, _ = decoder.raw_decode(text[match.start() :])
+        except JSONDecodeError:
+            continue
+        candidates.append(obj)
+
+    if candidates:
+        for obj in reversed(candidates):
+            if isinstance(obj, dict) and any(k in obj for k in ("ok", "code", "data", "msg")):
+                return obj
+        return candidates[-1]
+
+    raise JSONDecodeError("stdout is not valid json", text, 0)
 
 
 class LarkSheetsCLI:
@@ -62,11 +104,17 @@ class LarkSheetsCLI:
         # 2) CWD 直接相对
         candidates.append(Path.cwd() / "inner_skills" / "lark-sheets" / "bin" / "lark-sheets-cli")
 
+        # 3) PATH 中的 lark-cli / lark-sheets-cli 兜底
+        for cmd in ("lark-sheets-cli", "lark-cli"):
+            resolved = shutil.which(cmd)
+            if resolved:
+                candidates.append(Path(resolved))
+
         for p in candidates:
             if p and p.exists():
                 return p
         raise FileNotFoundError(
-            "找不到 lark-sheets-cli。请设置环境变量 LARK_SHEETS_CLI 或在仓库中保留 inner_skills/lark-sheets。"
+            "找不到 lark-sheets-cli / lark-cli。请设置环境变量 LARK_SHEETS_CLI，或在仓库中保留 inner_skills/lark-sheets/bin/lark-sheets-cli。"
         )
 
     def _run(self, args: Sequence[str]) -> Dict[str, Any]:
@@ -82,8 +130,8 @@ class LarkSheetsCLI:
             )
 
         try:
-            obj = json.loads(p.stdout)
-        except json.JSONDecodeError as e:
+            obj = _parse_json_from_stdout(p.stdout)
+        except JSONDecodeError as e:
             raise LarkSheetsError(
                 "lark-sheets-cli 输出不是合法 JSON\n"
                 f"cmd: {cmd}\n"
@@ -228,5 +276,9 @@ class LarkSheetsCLI:
         for k, v in kv.items():
             if k not in idx:
                 continue
-            row[idx[k]] = "" if v is None else str(v)
+            # ⚠️ 不要一刀切 str()：
+            # - 富文本（@人 mention block）在飞书表格里是 dict / list[dict]
+            # - 日期时间希望保留为 number（Excel serial）或原始结构
+            # 这里保持“值的原貌”，由上层负责把不可序列化对象（如 datetime）提前转换。
+            row[idx[k]] = "" if v is None else v
         return row
