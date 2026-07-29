@@ -1,5 +1,9 @@
 # Changelog - skill-forge-pipeline-v4
 
+## v5.13 (2026-07-30)
+- 正式将 Git 自动归档写入 `SKILL.md` 的 Archive 后置 SOP：明确调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`、目标仓库 `https://github.com/Yu1ocean/qi-skills`、commit message 格式与失败汇报口径。
+- 在约束条件中固化每次 forge/upsert 完成后必须触发 Git push hook，并明确 `skill-forge-pipeline-v4` 自举迭代同样需要触发 Git push。
+
 ## v5.11 (2026-06-13)
 - 修复 `register_skill.py` 在“grant drive full_access”阶段误把 `AIME_USER_CLOUD_JWT` 当作飞书 Access Token 直调 Drive Permission API，导致 `code=99991668 / Invalid access token` 的断链。
 - ZIP 文件块回挂后，改为调用 `user_skills/feishu-doc-writing-guide/scripts/grant_doc_permissions.py` 兼容包装器，底层走 `ensure_doc_in_personal.py -> mcp_lark_move_lark_doc.py` 的 MCP personal-space 修复链路，恢复 ZIP 资产可管理访问权后再继续 metadata / 台账闭环。

@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.12
+version: 5.13
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.12)
+# 技能锻造流水线 (Forge Pipeline V5.13)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -152,6 +152,13 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **本技能自升级额外要求**：本次升级的版本号与变更说明必须同步写入 `CHANGELOG.md`，并追加更新到对应飞书 Wiki 说明文档。
 - **Post-Forge Git Push Hook**：`scripts/register_skill.py` 在 metadata 写入完成后必须自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`，将 `user_skills/` 最新变更 commit+push 到 `https://github.com/Yu1ocean/qi-skills`。若需要调试跳过，可显式设置 `SKIP_POST_FORGE_GIT_PUSH=1`，否则缺失 hook 或 push 失败均视为发布链路失败。
 
+### 4. Git 自动归档（新）
+
+- 调用 `bash user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`。
+- 将本次技能变更 commit 并 push 到 `https://github.com/Yu1ocean/qi-skills`。
+- commit message 格式：`feat(skill): upsert <skill_name> <version>`。
+- 如 push 失败（网络/凭证问题），记录错误并向用户汇报；自动 hook 在正式发布链路中应视为失败熔断，手动补触发场景可作为非阻断告警处理。
+
 ## 约束条件与护栏
 
 - **唯一入口制**：任何“造/改技能”任务，必须以此技能为入口，禁止绕过直接使用 `aime-skill-creator`。
@@ -162,6 +169,8 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **单次闭环**：所有步骤必须在同一次子代理（SubAgent）执行中完成。
 - **权限申明**：所有涉及飞书操作的脚本必须设置 `include_secrets=true`。
 - **高权限通道**：涉及飞书文档、云盘与文件块写入时，优先复用 `feishu-doc-writing-guide` 的权限治理规则与系统自带 `lark` MCP。
+- **Git 同步强制触发**：每次 forge/upsert 完成后必须触发 Git push hook，确保 qi-skills 仓库与本地 `user_skills/` 保持同步。
+- **自举同频**：forge 自举（对 `skill-forge-pipeline-v4` 自身迭代）时同样需要触发 Git push。
 
 ## 合规默认值（Defaults）
 
@@ -176,6 +185,9 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 更新日志 (Changelog)
 
+- **V5.13**: 正式写入 Git 自动归档 SOP 与自举约束。
+  - 在 Archive 后新增「Git 自动归档」步骤，明确 hook 调用命令、GitHub 仓库、commit message 格式与失败汇报口径。
+  - 在约束条件中固化每次 forge/upsert 后必须触发 Git push hook，且 `skill-forge-pipeline-v4` 自举迭代同样适用。
 - **V5.12**: 新增 Post-Forge Git Push Hook。
   - `register_skill.py` 在 metadata 写入成功后自动调用 `user_skills/scripts/post_forge_git_push.sh`，将 `user_skills/` 的新建或迭代技能变更提交并推送到 GitHub 仓库 `Yu1ocean/qi-skills`。
   - 新增 `SKIP_POST_FORGE_GIT_PUSH=1` 调试开关；默认不跳过，hook 缺失或 push 失败时发布链路直接失败，避免“锻造成功但 GitHub 漏同步”的幽灵资产。
