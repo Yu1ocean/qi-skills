@@ -96,6 +96,27 @@ def run_cda_guardrails_selfcheck(skill_dir: Path, risk: str = "auto") -> str:
     )
 
 
+def run_post_forge_git_push(workspace_root: Path, skill_name: str, skill_version: str) -> str:
+    """Run the qi-skills post-forge git sync hook after a successful archive."""
+
+    if os.environ.get("SKIP_POST_FORGE_GIT_PUSH") == "1":
+        return "⏭️ post-forge git push skipped by SKIP_POST_FORGE_GIT_PUSH=1"
+
+    hook_path = workspace_root / "user_skills" / "scripts" / "post_forge_git_push.sh"
+    if not hook_path.exists():
+        raise FileNotFoundError(f"Post-forge git push hook not found: {hook_path}")
+
+    return run_subprocess(
+        [
+            "bash",
+            str(hook_path),
+            skill_name or "unknown-skill",
+            skill_version or "latest",
+        ],
+        "post-forge git push hook",
+    )
+
+
 def get_workspace_root() -> Path:
     env_path = os.environ.get("IRIS_WORKSPACE_PATH")
     if env_path:
@@ -1303,6 +1324,11 @@ def main() -> int:
     print("🚀 Metadata packaged for omni-asset-archiver:")
     print(json.dumps(metadata, indent=4, ensure_ascii=False))
     print(f"\n✅ Metadata written to {metadata_path.resolve()}")
+
+    if skill_dir:
+        print("🚀 Running post-forge git push hook...")
+        print(run_post_forge_git_push(workspace_root, args.name, ssot_version or "latest"))
+
     return 0
 
 

@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.7
+version: 5.12
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.7)
+# 技能锻造流水线 (Forge Pipeline V5.12)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -150,6 +150,7 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
 - **执行目标**：由 `omni-asset-archiver` 作为“唯一物理写入网关”完成向【专属技能清单】或【图书馆】台账的写入。**强制要求归档员遵循 `feishu-doc-writing-guide` 的 RAW 原子锁规范。**
 - **本技能自升级额外要求**：本次升级的版本号与变更说明必须同步写入 `CHANGELOG.md`，并追加更新到对应飞书 Wiki 说明文档。
+- **Post-Forge Git Push Hook**：`scripts/register_skill.py` 在 metadata 写入完成后必须自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`，将 `user_skills/` 最新变更 commit+push 到 `https://github.com/Yu1ocean/qi-skills`。若需要调试跳过，可显式设置 `SKIP_POST_FORGE_GIT_PUSH=1`，否则缺失 hook 或 push 失败均视为发布链路失败。
 
 ## 约束条件与护栏
 
@@ -175,6 +176,9 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 更新日志 (Changelog)
 
+- **V5.12**: 新增 Post-Forge Git Push Hook。
+  - `register_skill.py` 在 metadata 写入成功后自动调用 `user_skills/scripts/post_forge_git_push.sh`，将 `user_skills/` 的新建或迭代技能变更提交并推送到 GitHub 仓库 `Yu1ocean/qi-skills`。
+  - 新增 `SKIP_POST_FORGE_GIT_PUSH=1` 调试开关；默认不跳过，hook 缺失或 push 失败时发布链路直接失败，避免“锻造成功但 GitHub 漏同步”的幽灵资产。
 - **V5.11**: 修复 `grant drive full_access` 阶段的 `99991668 Invalid access token`。
   - `register_skill.py` 不再把 `AIME_USER_CLOUD_JWT` 当作飞书 Access Token 直调 Drive Permission API。
   - ZIP 附件回挂后，改为调用 `feishu-doc-writing-guide` 的兼容包装器，走 `move_lark_doc -> personal` 的 MCP 修复链路恢复资产访问权，随后继续 metadata 落盘与台账写入。
