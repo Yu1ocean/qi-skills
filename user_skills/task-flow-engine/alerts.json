@@ -1,44 +1,50 @@
 {
   "summary": {
-    "today": "2026-07-23",
-    "total_findings": 21,
+    "today": "2026-07-30",
+    "total_findings": 34,
     "counts": {
-      "临近到期": 0,
-      "已超期": 9,
+      "临近到期": 7,
+      "已超期": 13,
       "缺失 DDL": 12,
-      "格式异常": 0
+      "格式异常": 2
     },
-    "private_count": 13,
-    "group_count": 9,
+    "private_count": 30,
+    "group_count": 10,
     "task_counts": {
-      "开启": 18,
+      "开启": 32,
       "完成": 13,
       "暂停": 0
     }
   },
   "card_state": {
     "snapshot": {
-      "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -77, \"issue_type\": \"overdue\", \"overdue_days\": 77, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
-      "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -75, \"issue_type\": \"overdue\", \"overdue_days\": 75, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
-      "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
-      "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
-      "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -56, \"issue_type\": \"overdue\", \"overdue_days\": 56, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
-      "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -43, \"issue_type\": \"overdue\", \"overdue_days\": 43, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
-      "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
-      "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
-      "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -25, \"issue_type\": \"overdue\", \"overdue_days\": 25, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}",
-      "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
-      "缺失 DDL:cnob协同": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
-      "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
-      "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
-      "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
-      "缺失 DDL:623大会协助": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"623大会协助\"}",
-      "缺失 DDL:【建立靶向商家入驻追踪表并持续优化效率】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【建立靶向商家入驻追踪表并持续优化效率】\"}",
-      "缺失 DDL:bd考核方案确定并gtm": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD考核方案确定并GTM\"}",
-      "缺失 DDL:leads管理系统选型完成": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理系统选型完成\"}",
-      "缺失 DDL:bd/pop weekly数据落为看板，每周二更新": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD/POP weekly数据落为看板，每周二更新\"}",
-      "缺失 DDL:【制定eccu、bccu商家指引】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"yejiazhi@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【制定ECCU、BCCU商家指引】\"}",
-      "缺失 DDL:【拿下入驻环节skm、hipo自动识别率数据及提升办法】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"wanghaotian.666\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\"}"
+      "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -84, \"issue_type\": \"overdue\", \"overdue_days\": 84, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+      "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -82, \"issue_type\": \"overdue\", \"overdue_days\": 82, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+      "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+      "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+      "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -63, \"issue_type\": \"overdue\", \"overdue_days\": 63, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
+      "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -50, \"issue_type\": \"overdue\", \"overdue_days\": 50, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
+      "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+      "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
+      "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -32, \"issue_type\": \"overdue\", \"overdue_days\": 32, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}",
+      "已超期:【服务商政策催办对外版通过法务并明确卡点升级路径】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-27\", \"ddl_raw\": \"46230.75\", \"delta_days\": -3, \"issue_type\": \"overdue\", \"overdue_days\": 3, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【服务商政策催办对外版通过法务并明确卡点升级路径】\"}",
+      "已超期:【行业招商会整理 temu 原行业招商会打法与 by 行业招商模板】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.75\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】\"}",
+      "已超期:【服务商数据库确认服务商线索表头与主体撞库所需字段】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.75\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【服务商数据库确认服务商线索表头与主体撞库所需字段】\"}",
+      "已超期:【业绩复核差异修正】完成 38 个差异的业绩复核修正": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.666666666664\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"张志强\", \"江家徵\", \"李泽\", \"叶佳智\", \"金慧婷\", \"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【业绩复核差异修正】完成 38 个差异的业绩复核修正\"}",
+      "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
+      "缺失 DDL:cnob协同": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
+      "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
+      "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
+      "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
+      "缺失 DDL:623大会协助": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"623大会协助\"}",
+      "缺失 DDL:【建立靶向商家入驻追踪表并持续优化效率】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【建立靶向商家入驻追踪表并持续优化效率】\"}",
+      "缺失 DDL:bd考核方案确定并gtm": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD考核方案确定并GTM\"}",
+      "缺失 DDL:leads管理系统选型完成": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理系统选型完成\"}",
+      "缺失 DDL:bd/pop weekly数据落为看板，每周二更新": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD/POP weekly数据落为看板，每周二更新\"}",
+      "缺失 DDL:【制定eccu、bccu商家指引】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"yejiazhi@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【制定ECCU、BCCU商家指引】\"}",
+      "缺失 DDL:【拿下入驻环节skm、hipo自动识别率数据及提升办法】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"wanghaotian.666\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\"}",
+      "格式异常:【hipo 规则迭代覆盖四大友商平台头部商家识别规则】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": \"待确认\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】\"}",
+      "格式异常:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": \"待确认\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"【黑灰产治理定义高危服务商标准、后验指标与处罚机制】\"}"
     },
     "only_changed": false,
     "max_items_per_group": 3,
@@ -54,7 +60,176 @@
     "path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/task-flow-engine/.patrol_card_snapshot.json"
   },
   "grouped_results": {
-    "临近到期": [],
+    "临近到期": [
+      {
+        "key": "r36:【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+        "row": 36,
+        "task": "【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46233.75,
+        "ddl_parsed": "2026-07-30",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r38:【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+        "row": 38,
+        "task": "【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46233.75,
+        "ddl_parsed": "2026-07-30",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r41:【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+        "row": 41,
+        "task": "【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46235.75,
+        "ddl_parsed": "2026-08-01",
+        "delta_days": 2,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天2天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r43:【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+        "row": 43,
+        "task": "【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46233.75,
+        "ddl_parsed": "2026-07-30",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r44:【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+        "row": 44,
+        "task": "【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46234.75,
+        "ddl_parsed": "2026-07-31",
+        "delta_days": 1,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天1天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r47:【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+        "row": 47,
+        "task": "【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46233.75,
+        "ddl_parsed": "2026-07-30",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r48:【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+        "row": 48,
+        "task": "【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46233.75,
+        "ddl_parsed": "2026-07-30",
+        "delta_days": 0,
+        "alert_category": "临近到期",
+        "reason": "DDL距离今天0天",
+        "issue_type": "due_soon",
+        "overdue_days": null,
+        "abnormal_days": null,
+        "stage": "private"
+      }
+    ],
     "已超期": [
       {
         "key": "r7:UK招商专项",
@@ -72,11 +247,11 @@
         ],
         "ddl_raw": 46184,
         "ddl_parsed": "2026-06-11",
-        "delta_days": -42,
+        "delta_days": -49,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 42,
+        "overdue_days": 49,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -96,11 +271,11 @@
         ],
         "ddl_raw": 46162,
         "ddl_parsed": "2026-05-20",
-        "delta_days": -64,
+        "delta_days": -71,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 64,
+        "overdue_days": 71,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -120,11 +295,11 @@
         ],
         "ddl_raw": 46170,
         "ddl_parsed": "2026-05-28",
-        "delta_days": -56,
+        "delta_days": -63,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 56,
+        "overdue_days": 63,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -144,11 +319,11 @@
         ],
         "ddl_raw": 46184,
         "ddl_parsed": "2026-06-11",
-        "delta_days": -42,
+        "delta_days": -49,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 42,
+        "overdue_days": 49,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -168,11 +343,11 @@
         ],
         "ddl_raw": 46151,
         "ddl_parsed": "2026-05-09",
-        "delta_days": -75,
+        "delta_days": -82,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 75,
+        "overdue_days": 82,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -199,11 +374,11 @@
         ],
         "ddl_raw": 46149.7708333333,
         "ddl_parsed": "2026-05-07",
-        "delta_days": -77,
+        "delta_days": -84,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 77,
+        "overdue_days": 84,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -223,11 +398,11 @@
         ],
         "ddl_raw": 46183.770833333336,
         "ddl_parsed": "2026-06-10",
-        "delta_days": -43,
+        "delta_days": -50,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 43,
+        "overdue_days": 50,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -247,11 +422,11 @@
         ],
         "ddl_raw": 46162.75,
         "ddl_parsed": "2026-05-20",
-        "delta_days": -64,
+        "delta_days": -71,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 64,
+        "overdue_days": 71,
         "abnormal_days": null,
         "stage": "group"
       },
@@ -271,13 +446,144 @@
         ],
         "ddl_raw": 46201.99930555555,
         "ddl_parsed": "2026-06-28",
-        "delta_days": -25,
+        "delta_days": -32,
         "alert_category": "已超期",
         "reason": "DDL早于今天",
         "issue_type": "overdue",
-        "overdue_days": 25,
+        "overdue_days": 32,
         "abnormal_days": null,
         "stage": "group"
+      },
+      {
+        "key": "r37:【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+        "row": 37,
+        "task": "【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46231.75,
+        "ddl_parsed": "2026-07-28",
+        "delta_days": -2,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 2,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r39:【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+        "row": 39,
+        "task": "【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46231.75,
+        "ddl_parsed": "2026-07-28",
+        "delta_days": -2,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 2,
+        "abnormal_days": null,
+        "stage": "private"
+      },
+      {
+        "key": "r42:【服务商政策催办对外版通过法务并明确卡点升级路径】",
+        "row": 42,
+        "task": "【服务商政策催办对外版通过法务并明确卡点升级路径】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46230.75,
+        "ddl_parsed": "2026-07-27",
+        "delta_days": -3,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 3,
+        "abnormal_days": null,
+        "stage": "group"
+      },
+      {
+        "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+        "row": 49,
+        "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "张志强",
+            "display_name": "张志强",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          },
+          {
+            "raw": "江家徵",
+            "display_name": "江家徵",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          },
+          {
+            "raw": "李泽",
+            "display_name": "李泽",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          },
+          {
+            "raw": "叶佳智",
+            "display_name": "叶佳智",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          },
+          {
+            "raw": "金慧婷",
+            "display_name": "金慧婷",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          },
+          {
+            "raw": "李京达",
+            "display_name": "李京达",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": 46231.666666666664,
+        "ddl_parsed": "2026-07-28",
+        "delta_days": -2,
+        "alert_category": "已超期",
+        "reason": "DDL早于今天",
+        "issue_type": "overdue",
+        "overdue_days": 2,
+        "abnormal_days": null,
+        "stage": "private"
       }
     ],
     "缺失 DDL": [
@@ -302,7 +608,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -326,7 +632,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -350,7 +656,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -374,7 +680,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -398,7 +704,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -429,7 +735,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -453,7 +759,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -477,7 +783,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -501,7 +807,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -525,7 +831,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -549,7 +855,7 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       },
       {
@@ -573,11 +879,60 @@
         "reason": "DDL为空",
         "issue_type": "missing_ddl",
         "overdue_days": null,
-        "abnormal_days": 2,
+        "abnormal_days": 1,
         "stage": "private"
       }
     ],
-    "格式异常": []
+    "格式异常": [
+      {
+        "key": "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+        "row": 45,
+        "task": "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": "待确认",
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "DDL无法解析（unrecognized）",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 1,
+        "stage": "private"
+      },
+      {
+        "key": "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+        "row": 46,
+        "task": "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+        "status": "进行中",
+        "owners": [
+          {
+            "raw": "待确认",
+            "display_name": "待确认",
+            "open_id": null,
+            "email": null,
+            "source": "sheet"
+          }
+        ],
+        "ddl_raw": "待确认",
+        "ddl_parsed": null,
+        "delta_days": null,
+        "alert_category": "格式异常",
+        "reason": "DDL无法解析（unrecognized）",
+        "issue_type": "format_error",
+        "overdue_days": null,
+        "abnormal_days": 1,
+        "stage": "private"
+      }
+    ]
   },
   "routes": {
     "p2p": {
@@ -607,11 +962,11 @@
             ],
             "ddl_raw": 46184,
             "ddl_parsed": "2026-06-11",
-            "delta_days": -42,
+            "delta_days": -49,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 42,
+            "overdue_days": 49,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -631,11 +986,11 @@
             ],
             "ddl_raw": 46184,
             "ddl_parsed": "2026-06-11",
-            "delta_days": -42,
+            "delta_days": -49,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 42,
+            "overdue_days": 49,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -655,16 +1010,16 @@
             ],
             "ddl_raw": 46183.770833333336,
             "ddl_parsed": "2026-06-10",
-            "delta_days": -43,
+            "delta_days": -50,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 43,
+            "overdue_days": 50,
             "abnormal_days": null,
             "stage": "group"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期42天) ➡️ @于奇楠\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期42天) ➡️ @于奇楠\n- `SKM&HIPO新商家免佣周期的延长政策` (超期43天) ➡️ @于奇楠",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期49天) ➡️ @于奇楠\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期49天) ➡️ @于奇楠\n- `SKM&HIPO新商家免佣周期的延长政策` (超期50天) ➡️ @于奇楠",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -680,14 +1035,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：3"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n⏰ **DDL**：2026-06-11（已超期 42 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n⏰ **DDL**：2026-06-11（已超期 42 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n⏰ **DDL**：2026-06-10（已超期 43 天）\n🧭 **分类**：已超期"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n⏰ **DDL**：2026-06-11（已超期 49 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n⏰ **DDL**：2026-06-11（已超期 49 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n⏰ **DDL**：2026-06-10（已超期 50 天）\n🧭 **分类**：已超期"
                 }
               ]
             }
@@ -721,11 +1076,11 @@
             ],
             "ddl_raw": 46162,
             "ddl_parsed": "2026-05-20",
-            "delta_days": -64,
+            "delta_days": -71,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 64,
+            "overdue_days": 71,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -752,11 +1107,11 @@
             ],
             "ddl_raw": 46149.7708333333,
             "ddl_parsed": "2026-05-07",
-            "delta_days": -77,
+            "delta_days": -84,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 77,
+            "overdue_days": 84,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -781,7 +1136,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -805,7 +1160,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -836,11 +1191,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 5 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `合作伙伴网络 & 市场影响力` (超期64天) ➡️ @夏春雨\n- `【招商活动】设定目标并进行5分钟复盘` (超期77天) ➡️ @夏春雨\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `623大会协助` ➡️ @夏春雨",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 5 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `合作伙伴网络 & 市场影响力` (超期71天) ➡️ @夏春雨\n- `【招商活动】设定目标并进行5分钟复盘` (超期84天) ➡️ @夏春雨\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `623大会协助` ➡️ @夏春雨",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -856,14 +1211,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：5"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：5"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n⏰ **DDL**：2026-05-20（已超期 64 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 77 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：大商认证/打标流程提效\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n⏰ **DDL**：2026-05-20（已超期 71 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 84 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：大商认证/打标流程提效\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -879,7 +1234,7 @@
           "email": null,
           "source": "sheet"
         },
-        "count": 2,
+        "count": 3,
         "items": [
           {
             "key": "r15:ai工具使用复盘",
@@ -897,11 +1252,11 @@
             ],
             "ddl_raw": 46170,
             "ddl_parsed": "2026-05-28",
-            "delta_days": -56,
+            "delta_days": -63,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 56,
+            "overdue_days": 63,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -926,11 +1281,70 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `ai工具使用复盘` (超期56天) ➡️ @李京达\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `chinamaxxing可以研究下` ➡️ @李京达",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `ai工具使用复盘` (超期63天) ➡️ @李京达\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @李京达\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `chinamaxxing可以研究下` ➡️ @李京达",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -946,14 +1360,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：2"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：ai工具使用复盘\n⏰ **DDL**：2026-05-28（已超期 56 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：chinamaxxing可以研究下\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：ai工具使用复盘\n⏰ **DDL**：2026-05-28（已超期 63 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：chinamaxxing可以研究下\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -987,11 +1401,11 @@
             ],
             "ddl_raw": 46151,
             "ddl_parsed": "2026-05-09",
-            "delta_days": -75,
+            "delta_days": -82,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 75,
+            "overdue_days": 82,
             "abnormal_days": null,
             "stage": "group"
           },
@@ -1016,7 +1430,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1040,11 +1454,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `服务商/商家关于激励侧调研` (超期75天) ➡️ @赵月晨\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `服务商/商家关于激励侧调研` (超期82天) ➡️ @赵月晨\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1060,14 +1474,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：3"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n⏰ **DDL**：2026-05-09（已超期 75 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n⏰ **DDL**：2026-05-09（已超期 82 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1083,7 +1497,7 @@
           "email": null,
           "source": "sheet"
         },
-        "count": 1,
+        "count": 2,
         "items": [
           {
             "key": "r21:【招商活动】设定目标并进行5分钟复盘",
@@ -1108,16 +1522,75 @@
             ],
             "ddl_raw": 46149.7708333333,
             "ddl_parsed": "2026-05-07",
-            "delta_days": -77,
+            "delta_days": -84,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 77,
+            "overdue_days": 84,
             "abnormal_days": null,
             "stage": "group"
+          },
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【招商活动】设定目标并进行5分钟复盘` (超期77天) ➡️ @江家徵",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【招商活动】设定目标并进行5分钟复盘` (超期84天) ➡️ @江家徵\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @江家徵",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1133,14 +1606,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 77 天）\n🧭 **分类**：已超期"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n⏰ **DDL**：2026-05-07（已超期 84 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
                 }
               ]
             }
@@ -1156,7 +1629,7 @@
           "email": null,
           "source": "sheet"
         },
-        "count": 1,
+        "count": 2,
         "items": [
           {
             "key": "r27:BCCU周度分析",
@@ -1174,16 +1647,75 @@
             ],
             "ddl_raw": 46162.75,
             "ddl_parsed": "2026-05-20",
-            "delta_days": -64,
+            "delta_days": -71,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 64,
+            "overdue_days": 71,
             "abnormal_days": null,
             "stage": "group"
+          },
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `BCCU周度分析` (超期64天) ➡️ @李泽",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `BCCU周度分析` (超期71天) ➡️ @李泽\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @李泽",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1199,14 +1731,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：BCCU周度分析\n⏰ **DDL**：2026-05-20（已超期 64 天）\n🧭 **分类**：已超期"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：BCCU周度分析\n⏰ **DDL**：2026-05-20（已超期 71 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
                 }
               ]
             }
@@ -1252,7 +1784,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1276,11 +1808,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `623大会协助` ➡️ @宋欣蕖\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `623大会协助` ➡️ @宋欣蕖\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1296,14 +1828,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：2"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【建立靶向商家入驻追踪表并持续优化效率】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【建立靶向商家入驻追踪表并持续优化效率】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1342,7 +1874,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1366,7 +1898,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1390,11 +1922,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1410,14 +1942,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：3"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：BD考核方案确定并GTM\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：Leads管理系统选型完成\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：BD/POP weekly数据落为看板，每周二更新\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：BD考核方案确定并GTM\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：Leads管理系统选型完成\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：BD/POP weekly数据落为看板，每周二更新\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1456,11 +1988,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1476,14 +2008,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【制定ECCU、BCCU商家指引】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【制定ECCU、BCCU商家指引】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1522,11 +2054,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1542,14 +2074,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1583,16 +2115,16 @@
             ],
             "ddl_raw": 46201.99930555555,
             "ddl_parsed": "2026-06-28",
-            "delta_days": -25,
+            "delta_days": -32,
             "alert_category": "已超期",
             "reason": "DDL早于今天",
             "issue_type": "overdue",
-            "overdue_days": 25,
+            "overdue_days": 32,
             "abnormal_days": null,
             "stage": "group"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期25天) ➡️ @负责人：江家徵",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期32天) ➡️ @负责人：江家徵",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1608,14 +2140,647 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【调整有效Leads每周500产出SOP资源本周对齐】\n⏰ **DDL**：2026-06-28（已超期 25 天）\n🧭 **分类**：已超期"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【调整有效Leads每周500产出SOP资源本周对齐】\n⏰ **DDL**：2026-06-28（已超期 32 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "待确认": {
+        "owner": {
+          "raw": "待确认",
+          "display_name": "待确认",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 12,
+        "items": [
+          {
+            "key": "r36:【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+            "row": 36,
+            "task": "【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r37:【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+            "row": 37,
+            "task": "【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.75,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r38:【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+            "row": 38,
+            "task": "【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r39:【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+            "row": 39,
+            "task": "【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.75,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r41:【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+            "row": 41,
+            "task": "【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46235.75,
+            "ddl_parsed": "2026-08-01",
+            "delta_days": 2,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天2天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r42:【服务商政策催办对外版通过法务并明确卡点升级路径】",
+            "row": 42,
+            "task": "【服务商政策催办对外版通过法务并明确卡点升级路径】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46230.75,
+            "ddl_parsed": "2026-07-27",
+            "delta_days": -3,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 3,
+            "abnormal_days": null,
+            "stage": "group"
+          },
+          {
+            "key": "r43:【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+            "row": 43,
+            "task": "【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r44:【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+            "row": 44,
+            "task": "【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46234.75,
+            "ddl_parsed": "2026-07-31",
+            "delta_days": 1,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天1天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+            "row": 45,
+            "task": "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": "待确认",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+            "row": 46,
+            "task": "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": "待确认",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r47:【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+            "row": 47,
+            "task": "【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r48:【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+            "row": 48,
+            "task": "【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 12 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】` (超期2天) ➡️ @待确认\n- `【服务商数据库确认服务商线索表头与主体撞库所需字段】` (超期2天) ➡️ @待确认\n- `【服务商政策催办对外版通过法务并明确卡点升级路径】` (超期3天) ➡️ @待确认\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】` (DDL无法解析（unrecognized）)\n- `【黑灰产治理定义高危服务商标准、后验指标与处罚机制】` (DDL无法解析（unrecognized）)\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】` (今天到期) ➡️ @待确认\n- `【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】` (今天到期) ➡️ @待确认\n- `【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】` (还有2天) ➡️ @待确认\n- `【服务商周会建立 30 分钟周会并连续 4 周看数复盘】` (今天到期) ➡️ @待确认\n- `【直播招商决策评估是否采用直播形式及与美区分摊成本方案】` (还有1天) ➡️ @待确认\n- `【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】` (今天到期) ➡️ @待确认\n- `【规模化目标确认 8 月规模化招商新目标并明确资源诉求】` (今天到期) ➡️ @待确认",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：12"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【服务商数据库确认服务商线索表头与主体撞库所需字段】\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【服务商政策催办对外版通过法务并明确卡点升级路径】\n⏰ **DDL**：2026-07-27（已超期 3 天）\n🧭 **分类**：已超期\n\n🟠 **【临近到期】**\n\n📌 **【任务名】**：【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】\n⏰ **DDL**：2026-08-01（距离 2 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【服务商周会建立 30 分钟周会并连续 4 周看数复盘】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【直播招商决策评估是否采用直播形式及与美区分摊成本方案】\n⏰ **DDL**：2026-07-31（距离 1 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【规模化目标确认 8 月规模化招商新目标并明确资源诉求】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n🟣 **【格式异常】**\n\n📌 **【任务名】**：【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】\n⏰ **DDL**：待确认（连续 1 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：【黑灰产治理定义高危服务商标准、后验指标与处罚机制】\n⏰ **DDL**：待确认（连续 1 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "张志强": {
+        "owner": {
+          "raw": "张志强",
+          "display_name": "张志强",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @张志强",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "叶佳智": {
+        "owner": {
+          "raw": "叶佳智",
+          "display_name": "叶佳智",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @叶佳智",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "金慧婷": {
+        "owner": {
+          "raw": "金慧婷",
+          "display_name": "金慧婷",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @金慧婷",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
                 }
               ]
             }
@@ -1656,7 +2821,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1680,11 +2845,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1700,14 +2865,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：2"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：US头商沟通入驻\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：CNOB协同\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1746,7 +2911,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1770,7 +2935,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1801,11 +2966,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `623大会协助` ➡️ @夏春雨",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `623大会协助` ➡️ @夏春雨",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1821,14 +2986,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：3"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：大商认证/打标流程提效\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：大商认证/打标流程提效\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：6.23新市场上线商家大会\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1844,7 +3009,7 @@
           "email": null,
           "source": "sheet"
         },
-        "count": 1,
+        "count": 2,
         "items": [
           {
             "key": "r26:chinamaxxing可以研究下",
@@ -1867,11 +3032,70 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `chinamaxxing可以研究下` ➡️ @李京达",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @李京达\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `chinamaxxing可以研究下` ➡️ @李京达",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1887,14 +3111,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：chinamaxxing可以研究下\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：chinamaxxing可以研究下\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -1940,7 +3164,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -1964,11 +3188,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `623大会协助` ➡️ @宋欣蕖\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 2 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `623大会协助` ➡️ @宋欣蕖\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -1984,14 +3208,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：2"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：2"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【建立靶向商家入驻追踪表并持续优化效率】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：623大会协助\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：【建立靶向商家入驻追踪表并持续优化效率】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -2030,7 +3254,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -2054,7 +3278,7 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           },
           {
@@ -2078,11 +3302,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 3 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -2098,14 +3322,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：3"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：3"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：BD考核方案确定并GTM\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：Leads管理系统选型完成\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：BD/POP weekly数据落为看板，每周二更新\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：BD考核方案确定并GTM\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：Leads管理系统选型完成\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL\n\n📌 **【任务名】**：BD/POP weekly数据落为看板，每周二更新\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -2144,11 +3368,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -2164,14 +3388,14 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【制定ECCU、BCCU商家指引】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【制定ECCU、BCCU商家指引】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
                 }
               ]
             }
@@ -2210,11 +3434,11 @@
             "reason": "DDL为空",
             "issue_type": "missing_ddl",
             "overdue_days": null,
-            "abnormal_days": 2,
+            "abnormal_days": 1,
             "stage": "private"
           }
         ],
-        "message": "📌 **任务巡检提醒**（2026-07-23，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666",
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666",
         "card": {
           "name": "AimeCard",
           "dsl": {
@@ -2230,14 +3454,825 @@
               "elements": [
                 {
                   "tag": "markdown",
-                  "content": "**日期**：2026-07-23\n\n**需关注条目**：1"
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
                 },
                 {
                   "tag": "hr"
                 },
                 {
                   "tag": "markdown",
-                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\n⏰ **DDL**：无（连续 2 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                  "content": "🟡 **【缺失 DDL】**\n\n📌 **【任务名】**：【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\n⏰ **DDL**：无（连续 1 天异常：DDL为空）\n🧭 **分类**：缺失 DDL"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "待确认": {
+        "owner": {
+          "raw": "待确认",
+          "display_name": "待确认",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 11,
+        "items": [
+          {
+            "key": "r36:【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+            "row": 36,
+            "task": "【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r37:【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+            "row": 37,
+            "task": "【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.75,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r38:【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+            "row": 38,
+            "task": "【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r39:【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+            "row": 39,
+            "task": "【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.75,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r41:【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+            "row": 41,
+            "task": "【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46235.75,
+            "ddl_parsed": "2026-08-01",
+            "delta_days": 2,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天2天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r43:【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+            "row": 43,
+            "task": "【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r44:【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+            "row": 44,
+            "task": "【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46234.75,
+            "ddl_parsed": "2026-07-31",
+            "delta_days": 1,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天1天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+            "row": 45,
+            "task": "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": "待确认",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+            "row": 46,
+            "task": "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": "待确认",
+            "ddl_parsed": null,
+            "delta_days": null,
+            "alert_category": "格式异常",
+            "reason": "DDL无法解析（unrecognized）",
+            "issue_type": "format_error",
+            "overdue_days": null,
+            "abnormal_days": 1,
+            "stage": "private"
+          },
+          {
+            "key": "r47:【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+            "row": 47,
+            "task": "【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          },
+          {
+            "key": "r48:【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+            "row": 48,
+            "task": "【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "待确认",
+                "display_name": "待确认",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46233.75,
+            "ddl_parsed": "2026-07-30",
+            "delta_days": 0,
+            "alert_category": "临近到期",
+            "reason": "DDL距离今天0天",
+            "issue_type": "due_soon",
+            "overdue_days": null,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 11 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】` (超期2天) ➡️ @待确认\n- `【服务商数据库确认服务商线索表头与主体撞库所需字段】` (超期2天) ➡️ @待确认\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】` (DDL无法解析（unrecognized）)\n- `【黑灰产治理定义高危服务商标准、后验指标与处罚机制】` (DDL无法解析（unrecognized）)\n\n🟠 **【临近到期】（请注意推进节奏）**\n- `【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】` (今天到期) ➡️ @待确认\n- `【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】` (今天到期) ➡️ @待确认\n- `【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】` (还有2天) ➡️ @待确认\n- `【服务商周会建立 30 分钟周会并连续 4 周看数复盘】` (今天到期) ➡️ @待确认\n- `【直播招商决策评估是否采用直播形式及与美区分摊成本方案】` (还有1天) ➡️ @待确认\n- `【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】` (今天到期) ➡️ @待确认\n- `【规模化目标确认 8 月规模化招商新目标并明确资源诉求】` (今天到期) ➡️ @待确认",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：11"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【服务商数据库确认服务商线索表头与主体撞库所需字段】\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期\n\n🟠 **【临近到期】**\n\n📌 **【任务名】**：【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】\n⏰ **DDL**：2026-08-01（距离 2 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【服务商周会建立 30 分钟周会并连续 4 周看数复盘】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【直播招商决策评估是否采用直播形式及与美区分摊成本方案】\n⏰ **DDL**：2026-07-31（距离 1 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n📌 **【任务名】**：【规模化目标确认 8 月规模化招商新目标并明确资源诉求】\n⏰ **DDL**：2026-07-30（距离 0 天）\n🧭 **分类**：临近到期\n\n🟣 **【格式异常】**\n\n📌 **【任务名】**：【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】\n⏰ **DDL**：待确认（连续 1 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常\n\n📌 **【任务名】**：【黑灰产治理定义高危服务商标准、后验指标与处罚机制】\n⏰ **DDL**：待确认（连续 1 天异常：DDL无法解析（unrecognized））\n🧭 **分类**：格式异常"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "张志强": {
+        "owner": {
+          "raw": "张志强",
+          "display_name": "张志强",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @张志强",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "江家徵": {
+        "owner": {
+          "raw": "江家徵",
+          "display_name": "江家徵",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @江家徵",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "李泽": {
+        "owner": {
+          "raw": "李泽",
+          "display_name": "李泽",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @李泽",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "叶佳智": {
+        "owner": {
+          "raw": "叶佳智",
+          "display_name": "叶佳智",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @叶佳智",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
+                }
+              ]
+            }
+          }
+        },
+        "mentions_open_ids": []
+      },
+      "金慧婷": {
+        "owner": {
+          "raw": "金慧婷",
+          "display_name": "金慧婷",
+          "open_id": null,
+          "email": null,
+          "source": "sheet"
+        },
+        "count": 1,
+        "items": [
+          {
+            "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "row": 49,
+            "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+            "status": "进行中",
+            "owners": [
+              {
+                "raw": "张志强",
+                "display_name": "张志强",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "江家徵",
+                "display_name": "江家徵",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李泽",
+                "display_name": "李泽",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "叶佳智",
+                "display_name": "叶佳智",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "金慧婷",
+                "display_name": "金慧婷",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              },
+              {
+                "raw": "李京达",
+                "display_name": "李京达",
+                "open_id": null,
+                "email": null,
+                "source": "sheet"
+              }
+            ],
+            "ddl_raw": 46231.666666666664,
+            "ddl_parsed": "2026-07-28",
+            "delta_days": -2,
+            "alert_category": "已超期",
+            "reason": "DDL早于今天",
+            "issue_type": "overdue",
+            "overdue_days": 2,
+            "abnormal_days": null,
+            "stage": "private"
+          }
+        ],
+        "message": "📌 **任务巡检提醒**（2026-07-30，共 1 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @金慧婷",
+        "card": {
+          "name": "AimeCard",
+          "dsl": {
+            "schema": "2.0",
+            "header": {
+              "title": {
+                "tag": "plain_text",
+                "content": "任务巡检提醒（私聊）"
+              },
+              "template": "blue"
+            },
+            "body": {
+              "elements": [
+                {
+                  "tag": "markdown",
+                  "content": "**日期**：2026-07-30\n\n**需关注条目**：1"
+                },
+                {
+                  "tag": "hr"
+                },
+                {
+                  "tag": "markdown",
+                  "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：【业绩复核差异修正】完成 38 个差异的业绩复核修正\n⏰ **DDL**：2026-07-28（已超期 2 天）\n🧭 **分类**：已超期"
                 }
               ]
             }
@@ -2251,7 +4286,7 @@
         "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
         "name": ""
       },
-      "count": 21,
+      "count": 27,
       "items": [
         {
           "key": "r7:UK招商专项",
@@ -2269,11 +4304,11 @@
           ],
           "ddl_raw": 46184,
           "ddl_parsed": "2026-06-11",
-          "delta_days": -42,
+          "delta_days": -49,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 42,
+          "overdue_days": 49,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2293,11 +4328,11 @@
           ],
           "ddl_raw": 46162,
           "ddl_parsed": "2026-05-20",
-          "delta_days": -64,
+          "delta_days": -71,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 64,
+          "overdue_days": 71,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2317,11 +4352,11 @@
           ],
           "ddl_raw": 46170,
           "ddl_parsed": "2026-05-28",
-          "delta_days": -56,
+          "delta_days": -63,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 56,
+          "overdue_days": 63,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2341,11 +4376,11 @@
           ],
           "ddl_raw": 46184,
           "ddl_parsed": "2026-06-11",
-          "delta_days": -42,
+          "delta_days": -49,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 42,
+          "overdue_days": 49,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2365,11 +4400,11 @@
           ],
           "ddl_raw": 46151,
           "ddl_parsed": "2026-05-09",
-          "delta_days": -75,
+          "delta_days": -82,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 75,
+          "overdue_days": 82,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2394,7 +4429,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2418,7 +4453,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2444,11 +4479,11 @@
           ],
           "ddl_raw": 46149.7708333333,
           "ddl_parsed": "2026-05-07",
-          "delta_days": -77,
+          "delta_days": -84,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 77,
+          "overdue_days": 84,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2473,7 +4508,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2497,7 +4532,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2516,11 +4551,11 @@
           ],
           "ddl_raw": 46183.770833333336,
           "ddl_parsed": "2026-06-10",
-          "delta_days": -43,
+          "delta_days": -50,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 43,
+          "overdue_days": 50,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2545,7 +4580,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2564,11 +4599,11 @@
           ],
           "ddl_raw": 46162.75,
           "ddl_parsed": "2026-05-20",
-          "delta_days": -64,
+          "delta_days": -71,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 64,
+          "overdue_days": 71,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -2600,7 +4635,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2624,7 +4659,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2648,7 +4683,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2672,7 +4707,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2696,7 +4731,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2720,7 +4755,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2744,7 +4779,7 @@
           "reason": "DDL为空",
           "issue_type": "missing_ddl",
           "overdue_days": null,
-          "abnormal_days": 2,
+          "abnormal_days": 1,
           "stage": "private"
         },
         {
@@ -2763,17 +4798,364 @@
           ],
           "ddl_raw": 46201.99930555555,
           "ddl_parsed": "2026-06-28",
-          "delta_days": -25,
+          "delta_days": -32,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 25,
+          "overdue_days": 32,
           "abnormal_days": null,
           "stage": "group"
+        },
+        {
+          "key": "r36:【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+          "row": 36,
+          "task": "【多平台合作招商确认 Amazon、Shein、Temu、速卖通、全托管靶向清单与打法】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46233.75,
+          "ddl_parsed": "2026-07-30",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r37:【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+          "row": 37,
+          "task": "【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46231.75,
+          "ddl_parsed": "2026-07-28",
+          "delta_days": -2,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 2,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r38:【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+          "row": 38,
+          "task": "【Fashion 模板复用约 3C、H&L、FMCG 行业 LD 对齐靶向招商活动机制】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46233.75,
+          "ddl_parsed": "2026-07-30",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r39:【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+          "row": 39,
+          "task": "【服务商数据库确认服务商线索表头与主体撞库所需字段】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46231.75,
+          "ddl_parsed": "2026-07-28",
+          "delta_days": -2,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 2,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r41:【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+          "row": 41,
+          "task": "【小场活动模型设计 20 人私享会与产业带政府协会轻量合作试点】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46235.75,
+          "ddl_parsed": "2026-08-01",
+          "delta_days": 2,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天2天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r42:【服务商政策催办对外版通过法务并明确卡点升级路径】",
+          "row": 42,
+          "task": "【服务商政策催办对外版通过法务并明确卡点升级路径】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46230.75,
+          "ddl_parsed": "2026-07-27",
+          "delta_days": -3,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 3,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r43:【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+          "row": 43,
+          "task": "【服务商周会建立 30 分钟周会并连续 4 周看数复盘】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46233.75,
+          "ddl_parsed": "2026-07-30",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r44:【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+          "row": 44,
+          "task": "【直播招商决策评估是否采用直播形式及与美区分摊成本方案】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46234.75,
+          "ddl_parsed": "2026-07-31",
+          "delta_days": 1,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天1天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+          "row": 45,
+          "task": "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": "待确认",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 1,
+          "stage": "private"
+        },
+        {
+          "key": "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+          "row": 46,
+          "task": "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": "待确认",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 1,
+          "stage": "private"
+        },
+        {
+          "key": "r47:【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+          "row": 47,
+          "task": "【招商 PPT 升级补充黑五、开学季、圣诞等季节性招商招品内容与行业数据】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46233.75,
+          "ddl_parsed": "2026-07-30",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r48:【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+          "row": 48,
+          "task": "【规模化目标确认 8 月规模化招商新目标并明确资源诉求】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46233.75,
+          "ddl_parsed": "2026-07-30",
+          "delta_days": 0,
+          "alert_category": "临近到期",
+          "reason": "DDL距离今天0天",
+          "issue_type": "due_soon",
+          "overdue_days": null,
+          "abnormal_days": null,
+          "stage": "private"
+        },
+        {
+          "key": "r49:【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+          "row": 49,
+          "task": "【业绩复核差异修正】完成 38 个差异的业绩复核修正",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "张志强",
+              "display_name": "张志强",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            },
+            {
+              "raw": "江家徵",
+              "display_name": "江家徵",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            },
+            {
+              "raw": "李泽",
+              "display_name": "李泽",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            },
+            {
+              "raw": "叶佳智",
+              "display_name": "叶佳智",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            },
+            {
+              "raw": "金慧婷",
+              "display_name": "金慧婷",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            },
+            {
+              "raw": "李京达",
+              "display_name": "李京达",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46231.666666666664,
+          "ddl_parsed": "2026-07-28",
+          "delta_days": -2,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 2,
+          "abnormal_days": null,
+          "stage": "private"
         }
       ],
       "mentions_open_ids": [],
-      "message": "📌 **任务巡检提醒**（2026-07-23，共 21 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期42天) ➡️ @于奇楠\n- `合作伙伴网络 & 市场影响力` (超期64天) ➡️ @夏春雨\n- `ai工具使用复盘` (超期56天) ➡️ @李京达\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期42天) ➡️ @于奇楠\n- `服务商/商家关于激励侧调研` (超期75天) ➡️ @赵月晨\n- `【招商活动】设定目标并进行5分钟复盘` (超期77天) ➡️ @江家徵、@夏春雨\n- `SKM&HIPO新商家免佣周期的延长政策` (超期43天) ➡️ @于奇楠\n- `BCCU周度分析` (超期64天) ➡️ @李泽\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期25天) ➡️ @负责人：江家徵\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `chinamaxxing可以研究下` ➡️ @李京达\n- `623大会协助` ➡️ @宋欣蕖、@夏春雨\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666",
+      "message": "📌 **任务巡检提醒**（2026-07-30，共 27 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期49天) ➡️ @于奇楠\n- `合作伙伴网络 & 市场影响力` (超期71天) ➡️ @夏春雨\n- `ai工具使用复盘` (超期63天) ➡️ @李京达\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期49天) ➡️ @于奇楠\n- `服务商/商家关于激励侧调研` (超期82天) ➡️ @赵月晨\n- `【招商活动】设定目标并进行5分钟复盘` (超期84天) ➡️ @江家徵、@夏春雨\n- `SKM&HIPO新商家免佣周期的延长政策` (超期50天) ➡️ @于奇楠\n- `BCCU周度分析` (超期71天) ➡️ @李泽\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期32天) ➡️ @负责人：江家徵\n- `【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】` (超期2天) ➡️ @待确认\n- `【服务商数据库确认服务商线索表头与主体撞库所需字段】` (超期2天) ➡️ @待确认\n- `【服务商政策催办对外版通过法务并明确卡点升级路径】` (超期3天) ➡️ @待确认\n- `【业绩复核差异修正】完成 38 个差异的业绩复核修正` (超期2天) ➡️ @张志强、@江家徵、@李泽、@叶佳智、@金慧婷、@李京达\n\n🟡 **【缺失 DDL】（请补全截止时间）**\n- `US头商沟通入驻` ➡️ @赵月晨\n- `CNOB协同` ➡️ @赵月晨\n- `大商认证/打标流程提效` ➡️ @夏春雨\n- `6.23新市场上线商家大会` ➡️ @夏春雨\n- `chinamaxxing可以研究下` ➡️ @李京达\n- `623大会协助` ➡️ @宋欣蕖、@夏春雨\n- `【建立靶向商家入驻追踪表并持续优化效率】` ➡️ @宋欣蕖\n- `BD考核方案确定并GTM` ➡️ @王皓田\n- `Leads管理系统选型完成` ➡️ @王皓田\n- `BD/POP weekly数据落为看板，每周二更新` ➡️ @王皓田\n- `【制定ECCU、BCCU商家指引】` ➡️ @yejiazhi@bytedance.com\n- `【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】` ➡️ @wanghaotian.666\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】` (DDL无法解析（unrecognized）)\n- `【黑灰产治理定义高危服务商标准、后验指标与处罚机制】` (DDL无法解析（unrecognized）)",
       "card": {
         "name": "AimeCard",
         "dsl": {
@@ -2789,7 +5171,7 @@
             "elements": [
               {
                 "tag": "markdown",
-                "content": "**日期**：2026-07-23\n**异常任务**：21\n**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 3 项任务，同名去重\n\n👤 @夏春雨：共 5 项异常\n- 🔴 **已超期**：2 项（`【招商活动】设定目标并进行5分钟复盘`、`合作伙伴网络 & 市场影响力`）\n- 🟡 **缺失 DDL**：3 项（`大商认证/打标流程提效`、`6.23新市场上线商家大会`、`623大会协助`）\n\n👤 @于奇楠：共 3 项异常\n- 🔴 **已超期**：3 项（`SKM&HIPO新商家免佣周期的延长政策`、`UK招商专项`、`飞书词典跨公司同步，将TTS专有名词同步给商家飞书。`）\n\n👤 @王皓田：共 3 项异常\n- 🟡 **缺失 DDL**：3 项（`BD考核方案确定并GTM`、`Leads管理系统选型完成`、`BD/POP weekly数据落为看板，每周二更新`）\n\n👤 @赵月晨：共 3 项异常\n- 🔴 **已超期**：1 项（`服务商/商家关于激励侧调研`）\n- 🟡 **缺失 DDL**：2 项（`US头商沟通入驻`、`CNOB协同`）\n\n👤 @宋欣蕖：共 2 项异常\n- 🟡 **缺失 DDL**：2 项（`623大会协助`、`【建立靶向商家入驻追踪表并持续优化效率】`）\n\n👤 @李京达：共 2 项异常\n- 🔴 **已超期**：1 项（`ai工具使用复盘`）\n- 🟡 **缺失 DDL**：1 项（`chinamaxxing可以研究下`）\n\n👤 @wanghaotian.666：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】`）\n\n👤 @yejiazhi@bytedance.com：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`【制定ECCU、BCCU商家指引】`）\n\n👤 @李泽：共 1 项异常\n- 🔴 **已超期**：1 项（`BCCU周度分析`）\n\n👤 @江家徵：共 1 项异常\n- 🔴 **已超期**：1 项（`【招商活动】设定目标并进行5分钟复盘`）\n\n👤 @负责人：江家徵：共 1 项异常\n- 🔴 **已超期**：1 项（`【调整有效Leads每周500产出SOP资源本周对齐】`）"
+                "content": "**日期**：2026-07-30\n**异常任务**：27\n**展示策略**：先按负责人聚合，再按异常类别归类；每位负责人在每个类别下最多展开 3 项任务，同名去重\n\n👤 @夏春雨：共 5 项异常\n- 🔴 **已超期**：2 项（`【招商活动】设定目标并进行5分钟复盘`、`合作伙伴网络 & 市场影响力`）\n- 🟡 **缺失 DDL**：3 项（`大商认证/打标流程提效`、`6.23新市场上线商家大会`、`623大会协助`）\n\n👤 @待确认：共 5 项异常\n- 🔴 **已超期**：3 项（`【服务商政策催办对外版通过法务并明确卡点升级路径】`、`【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】`、`【服务商数据库确认服务商线索表头与主体撞库所需字段】`）\n- 🟣 **格式异常**：2 项（`【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】`、`【黑灰产治理定义高危服务商标准、后验指标与处罚机制】`）\n\n👤 @于奇楠：共 3 项异常\n- 🔴 **已超期**：3 项（`SKM&HIPO新商家免佣周期的延长政策`、`UK招商专项`、`飞书词典跨公司同步，将TTS专有名词同步给商家飞书。`）\n\n👤 @李京达：共 3 项异常\n- 🔴 **已超期**：2 项（`ai工具使用复盘`、`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）\n- 🟡 **缺失 DDL**：1 项（`chinamaxxing可以研究下`）\n\n👤 @王皓田：共 3 项异常\n- 🟡 **缺失 DDL**：3 项（`BD考核方案确定并GTM`、`Leads管理系统选型完成`、`BD/POP weekly数据落为看板，每周二更新`）\n\n👤 @赵月晨：共 3 项异常\n- 🔴 **已超期**：1 项（`服务商/商家关于激励侧调研`）\n- 🟡 **缺失 DDL**：2 项（`US头商沟通入驻`、`CNOB协同`）\n\n👤 @宋欣蕖：共 2 项异常\n- 🟡 **缺失 DDL**：2 项（`623大会协助`、`【建立靶向商家入驻追踪表并持续优化效率】`）\n\n👤 @李泽：共 2 项异常\n- 🔴 **已超期**：2 项（`BCCU周度分析`、`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）\n\n👤 @江家徵：共 2 项异常\n- 🔴 **已超期**：2 项（`【招商活动】设定目标并进行5分钟复盘`、`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）\n\n👤 @wanghaotian.666：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】`）\n\n👤 @yejiazhi@bytedance.com：共 1 项异常\n- 🟡 **缺失 DDL**：1 项（`【制定ECCU、BCCU商家指引】`）\n\n👤 @叶佳智：共 1 项异常\n- 🔴 **已超期**：1 项（`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）\n\n👤 @张志强：共 1 项异常\n- 🔴 **已超期**：1 项（`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）\n\n👤 @负责人：江家徵：共 1 项异常\n- 🔴 **已超期**：1 项（`【调整有效Leads每周500产出SOP资源本周对齐】`）\n\n👤 @金慧婷：共 1 项异常\n- 🔴 **已超期**：1 项（`【业绩复核差异修正】完成 38 个差异的业绩复核修正`）"
               },
               {
                 "tag": "hr"
@@ -2817,30 +5199,36 @@
         "max_items_per_group": 3,
         "only_changed": false,
         "snapshot": {
-          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -77, \"issue_type\": \"overdue\", \"overdue_days\": 77, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
-          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -75, \"issue_type\": \"overdue\", \"overdue_days\": 75, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
-          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
-          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
-          "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -56, \"issue_type\": \"overdue\", \"overdue_days\": 56, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
-          "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -43, \"issue_type\": \"overdue\", \"overdue_days\": 43, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
-          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
-          "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
-          "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -25, \"issue_type\": \"overdue\", \"overdue_days\": 25, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}",
-          "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
-          "缺失 DDL:cnob协同": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
-          "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
-          "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
-          "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
-          "缺失 DDL:623大会协助": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"623大会协助\"}",
-          "缺失 DDL:【建立靶向商家入驻追踪表并持续优化效率】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【建立靶向商家入驻追踪表并持续优化效率】\"}",
-          "缺失 DDL:bd考核方案确定并gtm": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD考核方案确定并GTM\"}",
-          "缺失 DDL:leads管理系统选型完成": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理系统选型完成\"}",
-          "缺失 DDL:bd/pop weekly数据落为看板，每周二更新": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD/POP weekly数据落为看板，每周二更新\"}",
-          "缺失 DDL:【制定eccu、bccu商家指引】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"yejiazhi@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【制定ECCU、BCCU商家指引】\"}",
-          "缺失 DDL:【拿下入驻环节skm、hipo自动识别率数据及提升办法】": "{\"abnormal_days\": 2, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"wanghaotian.666\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\"}"
+          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -84, \"issue_type\": \"overdue\", \"overdue_days\": 84, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -82, \"issue_type\": \"overdue\", \"overdue_days\": 82, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+          "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -63, \"issue_type\": \"overdue\", \"overdue_days\": 63, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
+          "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -50, \"issue_type\": \"overdue\", \"overdue_days\": 50, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
+          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+          "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
+          "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -32, \"issue_type\": \"overdue\", \"overdue_days\": 32, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}",
+          "已超期:【服务商政策催办对外版通过法务并明确卡点升级路径】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-27\", \"ddl_raw\": \"46230.75\", \"delta_days\": -3, \"issue_type\": \"overdue\", \"overdue_days\": 3, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【服务商政策催办对外版通过法务并明确卡点升级路径】\"}",
+          "已超期:【行业招商会整理 temu 原行业招商会打法与 by 行业招商模板】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.75\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】\"}",
+          "已超期:【服务商数据库确认服务商线索表头与主体撞库所需字段】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.75\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【服务商数据库确认服务商线索表头与主体撞库所需字段】\"}",
+          "已超期:【业绩复核差异修正】完成 38 个差异的业绩复核修正": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-28\", \"ddl_raw\": \"46231.666666666664\", \"delta_days\": -2, \"issue_type\": \"overdue\", \"overdue_days\": 2, \"owners\": [\"张志强\", \"江家徵\", \"李泽\", \"叶佳智\", \"金慧婷\", \"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【业绩复核差异修正】完成 38 个差异的业绩复核修正\"}",
+          "缺失 DDL:us头商沟通入驻": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"US头商沟通入驻\"}",
+          "缺失 DDL:cnob协同": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"CNOB协同\"}",
+          "缺失 DDL:大商认证/打标流程提效": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"大商认证/打标流程提效\"}",
+          "缺失 DDL:6.23新市场上线商家大会": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"6.23新市场上线商家大会\"}",
+          "缺失 DDL:chinamaxxing可以研究下": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"chinamaxxing可以研究下\"}",
+          "缺失 DDL:623大会协助": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"623大会协助\"}",
+          "缺失 DDL:【建立靶向商家入驻追踪表并持续优化效率】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"宋欣蕖\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【建立靶向商家入驻追踪表并持续优化效率】\"}",
+          "缺失 DDL:bd考核方案确定并gtm": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD考核方案确定并GTM\"}",
+          "缺失 DDL:leads管理系统选型完成": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"Leads管理系统选型完成\"}",
+          "缺失 DDL:bd/pop weekly数据落为看板，每周二更新": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"王皓田\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"BD/POP weekly数据落为看板，每周二更新\"}",
+          "缺失 DDL:【制定eccu、bccu商家指引】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"yejiazhi@bytedance.com\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【制定ECCU、BCCU商家指引】\"}",
+          "缺失 DDL:【拿下入驻环节skm、hipo自动识别率数据及提升办法】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": null, \"delta_days\": null, \"issue_type\": \"missing_ddl\", \"overdue_days\": null, \"owners\": [\"wanghaotian.666\"], \"raw_count\": 1, \"reason\": \"DDL为空\", \"title\": \"【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】\"}",
+          "格式异常:【hipo 规则迭代覆盖四大友商平台头部商家识别规则】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": \"待确认\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】\"}",
+          "格式异常:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】": "{\"abnormal_days\": 1, \"ddl_parsed\": null, \"ddl_raw\": \"待确认\", \"delta_days\": null, \"issue_type\": \"format_error\", \"overdue_days\": null, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL无法解析（unrecognized）\", \"title\": \"【黑灰产治理定义高危服务商标准、后验指标与处罚机制】\"}"
         },
-        "visible_total": 21,
-        "total_items": 21,
+        "visible_total": 27,
+        "total_items": 27,
         "rendered_owners": [
           {
             "owner": "夏春雨",
@@ -2866,6 +5254,29 @@
             ]
           },
           {
+            "owner": "待确认",
+            "raw_count": 5,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 3,
+                "shown_titles": [
+                  "【服务商政策催办对外版通过法务并明确卡点升级路径】",
+                  "【行业招商会整理 Temu 原行业招商会打法与 by 行业招商模板】",
+                  "【服务商数据库确认服务商线索表头与主体撞库所需字段】"
+                ]
+              },
+              {
+                "category": "格式异常",
+                "raw_count": 2,
+                "shown_titles": [
+                  "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+                  "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】"
+                ]
+              }
+            ]
+          },
+          {
             "owner": "于奇楠",
             "raw_count": 3,
             "categories": [
@@ -2876,6 +5287,27 @@
                   "SKM&HIPO新商家免佣周期的延长政策",
                   "UK招商专项",
                   "飞书词典跨公司同步，将TTS专有名词同步给商家飞书。"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "李京达",
+            "raw_count": 3,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 2,
+                "shown_titles": [
+                  "ai工具使用复盘",
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
+                ]
+              },
+              {
+                "category": "缺失 DDL",
+                "raw_count": 1,
+                "shown_titles": [
+                  "chinamaxxing可以研究下"
                 ]
               }
             ]
@@ -2931,21 +5363,29 @@
             ]
           },
           {
-            "owner": "李京达",
+            "owner": "李泽",
             "raw_count": 2,
             "categories": [
               {
                 "category": "已超期",
-                "raw_count": 1,
+                "raw_count": 2,
                 "shown_titles": [
-                  "ai工具使用复盘"
+                  "BCCU周度分析",
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "owner": "江家徵",
+            "raw_count": 2,
+            "categories": [
               {
-                "category": "缺失 DDL",
-                "raw_count": 1,
+                "category": "已超期",
+                "raw_count": 2,
                 "shown_titles": [
-                  "chinamaxxing可以研究下"
+                  "【招商活动】设定目标并进行5分钟复盘",
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
                 ]
               }
             ]
@@ -2977,27 +5417,27 @@
             ]
           },
           {
-            "owner": "李泽",
+            "owner": "叶佳智",
             "raw_count": 1,
             "categories": [
               {
                 "category": "已超期",
                 "raw_count": 1,
                 "shown_titles": [
-                  "BCCU周度分析"
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
                 ]
               }
             ]
           },
           {
-            "owner": "江家徵",
+            "owner": "张志强",
             "raw_count": 1,
             "categories": [
               {
                 "category": "已超期",
                 "raw_count": 1,
                 "shown_titles": [
-                  "【招商活动】设定目标并进行5分钟复盘"
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
                 ]
               }
             ]
@@ -3014,6 +5454,19 @@
                 ]
               }
             ]
+          },
+          {
+            "owner": "金慧婷",
+            "raw_count": 1,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "【业绩复核差异修正】完成 38 个差异的业绩复核修正"
+                ]
+              }
+            ]
           }
         ]
       }
@@ -3023,7 +5476,7 @@
         "chat_id": "oc_b566689fc5704ba70cc0f43fc32f0cc4",
         "name": ""
       },
-      "count": 9,
+      "count": 10,
       "items": [
         {
           "key": "r7:UK招商专项",
@@ -3041,11 +5494,11 @@
           ],
           "ddl_raw": 46184,
           "ddl_parsed": "2026-06-11",
-          "delta_days": -42,
+          "delta_days": -49,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 42,
+          "overdue_days": 49,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3065,11 +5518,11 @@
           ],
           "ddl_raw": 46162,
           "ddl_parsed": "2026-05-20",
-          "delta_days": -64,
+          "delta_days": -71,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 64,
+          "overdue_days": 71,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3089,11 +5542,11 @@
           ],
           "ddl_raw": 46170,
           "ddl_parsed": "2026-05-28",
-          "delta_days": -56,
+          "delta_days": -63,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 56,
+          "overdue_days": 63,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3113,11 +5566,11 @@
           ],
           "ddl_raw": 46184,
           "ddl_parsed": "2026-06-11",
-          "delta_days": -42,
+          "delta_days": -49,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 42,
+          "overdue_days": 49,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3137,11 +5590,11 @@
           ],
           "ddl_raw": 46151,
           "ddl_parsed": "2026-05-09",
-          "delta_days": -75,
+          "delta_days": -82,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 75,
+          "overdue_days": 82,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3168,11 +5621,11 @@
           ],
           "ddl_raw": 46149.7708333333,
           "ddl_parsed": "2026-05-07",
-          "delta_days": -77,
+          "delta_days": -84,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 77,
+          "overdue_days": 84,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3192,11 +5645,11 @@
           ],
           "ddl_raw": 46183.770833333336,
           "ddl_parsed": "2026-06-10",
-          "delta_days": -43,
+          "delta_days": -50,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 43,
+          "overdue_days": 50,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3216,11 +5669,11 @@
           ],
           "ddl_raw": 46162.75,
           "ddl_parsed": "2026-05-20",
-          "delta_days": -64,
+          "delta_days": -71,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 64,
+          "overdue_days": 71,
           "abnormal_days": null,
           "stage": "group"
         },
@@ -3240,17 +5693,41 @@
           ],
           "ddl_raw": 46201.99930555555,
           "ddl_parsed": "2026-06-28",
-          "delta_days": -25,
+          "delta_days": -32,
           "alert_category": "已超期",
           "reason": "DDL早于今天",
           "issue_type": "overdue",
-          "overdue_days": 25,
+          "overdue_days": 32,
+          "abnormal_days": null,
+          "stage": "group"
+        },
+        {
+          "key": "r42:【服务商政策催办对外版通过法务并明确卡点升级路径】",
+          "row": 42,
+          "task": "【服务商政策催办对外版通过法务并明确卡点升级路径】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": 46230.75,
+          "ddl_parsed": "2026-07-27",
+          "delta_days": -3,
+          "alert_category": "已超期",
+          "reason": "DDL早于今天",
+          "issue_type": "overdue",
+          "overdue_days": 3,
           "abnormal_days": null,
           "stage": "group"
         }
       ],
       "mentions_open_ids": [],
-      "message": "📣 **任务巡检·公开提醒**（2026-07-23，共 9 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期42天) ➡️ @于奇楠\n- `合作伙伴网络 & 市场影响力` (超期64天) ➡️ @夏春雨\n- `ai工具使用复盘` (超期56天) ➡️ @李京达\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期42天) ➡️ @于奇楠\n- `服务商/商家关于激励侧调研` (超期75天) ➡️ @赵月晨\n- `【招商活动】设定目标并进行5分钟复盘` (超期77天) ➡️ @江家徵、@夏春雨\n- `SKM&HIPO新商家免佣周期的延长政策` (超期43天) ➡️ @于奇楠\n- `BCCU周度分析` (超期64天) ➡️ @李泽\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期25天) ➡️ @负责人：江家徵",
+      "message": "📣 **任务巡检·公开提醒**（2026-07-30，共 10 条）\n\n🔴 **【已超期】（请立即跟进）**\n- `UK招商专项` (超期49天) ➡️ @于奇楠\n- `合作伙伴网络 & 市场影响力` (超期71天) ➡️ @夏春雨\n- `ai工具使用复盘` (超期63天) ➡️ @李京达\n- `飞书词典跨公司同步，将TTS专有名词同步给商家飞书。` (超期49天) ➡️ @于奇楠\n- `服务商/商家关于激励侧调研` (超期82天) ➡️ @赵月晨\n- `【招商活动】设定目标并进行5分钟复盘` (超期84天) ➡️ @江家徵、@夏春雨\n- `SKM&HIPO新商家免佣周期的延长政策` (超期50天) ➡️ @于奇楠\n- `BCCU周度分析` (超期71天) ➡️ @李泽\n- `【调整有效Leads每周500产出SOP资源本周对齐】` (超期32天) ➡️ @负责人：江家徵\n- `【服务商政策催办对外版通过法务并明确卡点升级路径】` (超期3天) ➡️ @待确认",
       "card": {
         "name": "AimeCard",
         "dsl": {
@@ -3266,14 +5743,14 @@
             "elements": [
               {
                 "tag": "markdown",
-                "content": "**日期**：2026-07-23\n\n**需公开提醒条目**：9"
+                "content": "**日期**：2026-07-30\n\n**需公开提醒条目**：10"
               },
               {
                 "tag": "hr"
               },
               {
                 "tag": "markdown",
-                "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-11（已超期 42 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n👤 **负责人**：@夏春雨\n⏰ **DDL**：2026-05-20（已超期 64 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：ai工具使用复盘\n👤 **负责人**：@李京达\n⏰ **DDL**：2026-05-28（已超期 56 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-11（已超期 42 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n👤 **负责人**：@赵月晨\n⏰ **DDL**：2026-05-09（已超期 75 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n👤 **负责人**：@江家徵、@夏春雨\n⏰ **DDL**：2026-05-07（已超期 77 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-10（已超期 43 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BCCU周度分析\n👤 **负责人**：@李泽\n⏰ **DDL**：2026-05-20（已超期 64 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【调整有效Leads每周500产出SOP资源本周对齐】\n👤 **负责人**：@负责人：江家徵\n⏰ **DDL**：2026-06-28（已超期 25 天）\n🧭 **分类**：已超期"
+                "content": "🔴 **【已超期】**\n\n📌 **【任务名】**：UK招商专项\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-11（已超期 49 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：合作伙伴网络 & 市场影响力\n👤 **负责人**：@夏春雨\n⏰ **DDL**：2026-05-20（已超期 71 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：ai工具使用复盘\n👤 **负责人**：@李京达\n⏰ **DDL**：2026-05-28（已超期 63 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-11（已超期 49 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：服务商/商家关于激励侧调研\n👤 **负责人**：@赵月晨\n⏰ **DDL**：2026-05-09（已超期 82 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【招商活动】设定目标并进行5分钟复盘\n👤 **负责人**：@江家徵、@夏春雨\n⏰ **DDL**：2026-05-07（已超期 84 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：SKM&HIPO新商家免佣周期的延长政策\n👤 **负责人**：@于奇楠\n⏰ **DDL**：2026-06-10（已超期 50 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：BCCU周度分析\n👤 **负责人**：@李泽\n⏰ **DDL**：2026-05-20（已超期 71 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【调整有效Leads每周500产出SOP资源本周对齐】\n👤 **负责人**：@负责人：江家徵\n⏰ **DDL**：2026-06-28（已超期 32 天）\n🧭 **分类**：已超期\n\n📌 **【任务名】**：【服务商政策催办对外版通过法务并明确卡点升级路径】\n👤 **负责人**：@待确认\n⏰ **DDL**：2026-07-27（已超期 3 天）\n🧭 **分类**：已超期"
               }
             ]
           }
@@ -3284,18 +5761,19 @@
         "max_items_per_group": 3,
         "only_changed": false,
         "snapshot": {
-          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -77, \"issue_type\": \"overdue\", \"overdue_days\": 77, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
-          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -75, \"issue_type\": \"overdue\", \"overdue_days\": 75, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
-          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
-          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -64, \"issue_type\": \"overdue\", \"overdue_days\": 64, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
-          "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -56, \"issue_type\": \"overdue\", \"overdue_days\": 56, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
-          "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -43, \"issue_type\": \"overdue\", \"overdue_days\": 43, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
-          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
-          "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -42, \"issue_type\": \"overdue\", \"overdue_days\": 42, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
-          "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -25, \"issue_type\": \"overdue\", \"overdue_days\": 25, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}"
+          "已超期:【招商活动】设定目标并进行5分钟复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-07\", \"ddl_raw\": \"46149.7708333333\", \"delta_days\": -84, \"issue_type\": \"overdue\", \"overdue_days\": 84, \"owners\": [\"江家徵\", \"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【招商活动】设定目标并进行5分钟复盘\"}",
+          "已超期:服务商/商家关于激励侧调研": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-09\", \"ddl_raw\": \"46151\", \"delta_days\": -82, \"issue_type\": \"overdue\", \"overdue_days\": 82, \"owners\": [\"赵月晨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"服务商/商家关于激励侧调研\"}",
+          "已超期:合作伙伴网络 & 市场影响力": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"夏春雨\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"合作伙伴网络 & 市场影响力\"}",
+          "已超期:bccu周度分析": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-20\", \"ddl_raw\": \"46162.75\", \"delta_days\": -71, \"issue_type\": \"overdue\", \"overdue_days\": 71, \"owners\": [\"李泽\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"BCCU周度分析\"}",
+          "已超期:ai工具使用复盘": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-05-28\", \"ddl_raw\": \"46170\", \"delta_days\": -63, \"issue_type\": \"overdue\", \"overdue_days\": 63, \"owners\": [\"李京达\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"ai工具使用复盘\"}",
+          "已超期:skm&hipo新商家免佣周期的延长政策": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-10\", \"ddl_raw\": \"46183.770833333336\", \"delta_days\": -50, \"issue_type\": \"overdue\", \"overdue_days\": 50, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"SKM&HIPO新商家免佣周期的延长政策\"}",
+          "已超期:uk招商专项": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"UK招商专项\"}",
+          "已超期:飞书词典跨公司同步，将tts专有名词同步给商家飞书。": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-11\", \"ddl_raw\": \"46184\", \"delta_days\": -49, \"issue_type\": \"overdue\", \"overdue_days\": 49, \"owners\": [\"于奇楠\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"飞书词典跨公司同步，将TTS专有名词同步给商家飞书。\"}",
+          "已超期:【调整有效leads每周500产出sop资源本周对齐】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-06-28\", \"ddl_raw\": \"46201.99930555555\", \"delta_days\": -32, \"issue_type\": \"overdue\", \"overdue_days\": 32, \"owners\": [\"负责人：江家徵\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【调整有效Leads每周500产出SOP资源本周对齐】\"}",
+          "已超期:【服务商政策催办对外版通过法务并明确卡点升级路径】": "{\"abnormal_days\": null, \"ddl_parsed\": \"2026-07-27\", \"ddl_raw\": \"46230.75\", \"delta_days\": -3, \"issue_type\": \"overdue\", \"overdue_days\": 3, \"owners\": [\"待确认\"], \"raw_count\": 1, \"reason\": \"DDL早于今天\", \"title\": \"【服务商政策催办对外版通过法务并明确卡点升级路径】\"}"
         },
-        "visible_total": 9,
-        "total_items": 9,
+        "visible_total": 10,
+        "total_items": 10,
         "rendered_owners": [
           {
             "owner": "于奇楠",
@@ -3322,6 +5800,19 @@
                 "shown_titles": [
                   "【招商活动】设定目标并进行5分钟复盘",
                   "合作伙伴网络 & 市场影响力"
+                ]
+              }
+            ]
+          },
+          {
+            "owner": "待确认",
+            "raw_count": 1,
+            "categories": [
+              {
+                "category": "已超期",
+                "raw_count": 1,
+                "shown_titles": [
+                  "【服务商政策催办对外版通过法务并明确卡点升级路径】"
                 ]
               }
             ]
@@ -3400,13 +5891,62 @@
       "message": ""
     },
     "admin": {
-      "count": 0,
-      "items": [],
-      "message": ""
+      "count": 2,
+      "items": [
+        {
+          "key": "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+          "row": 45,
+          "task": "【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": "待确认",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 1,
+          "stage": "private"
+        },
+        {
+          "key": "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+          "row": 46,
+          "task": "【黑灰产治理定义高危服务商标准、后验指标与处罚机制】",
+          "status": "进行中",
+          "owners": [
+            {
+              "raw": "待确认",
+              "display_name": "待确认",
+              "open_id": null,
+              "email": null,
+              "source": "sheet"
+            }
+          ],
+          "ddl_raw": "待确认",
+          "ddl_parsed": null,
+          "delta_days": null,
+          "alert_category": "格式异常",
+          "reason": "DDL无法解析（unrecognized）",
+          "issue_type": "format_error",
+          "overdue_days": null,
+          "abnormal_days": 1,
+          "stage": "private"
+        }
+      ],
+      "message": "🛠️ **任务巡检·管理员兜底**（2026-07-30，共 2 条）\n\n🟣 **【格式异常 / 缺负责人】（请管理员 @于奇楠 协助核对）**\n- `【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】` (DDL无法解析（unrecognized）)\n- `【黑灰产治理定义高危服务商标准、后验指标与处罚机制】` (DDL无法解析（unrecognized）)"
     }
   },
   "vacation": {
-    "date": "2026-07-23",
+    "date": "2026-07-30",
     "is_holiday": false,
     "personal_checker_enabled": true,
     "skipped": {
@@ -3424,12 +5964,12 @@
     "task_sheet": {
       "title": "任务库",
       "sheet_id": "KmlJhs",
-      "total_rows_read": 34
+      "total_rows_read": 48
     },
     "roster_sheet": {
       "title": "团队名单",
       "sheet_id": "L5xh7h",
-      "total_rows_read": 18
+      "total_rows_read": 19
     }
   },
   "directory": {
