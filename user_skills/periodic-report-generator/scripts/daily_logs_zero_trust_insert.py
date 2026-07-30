@@ -37,11 +37,9 @@ import openpyxl
 
 DEFAULT_SHEET_URL = "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
 DEFAULT_SHEET_NAME = "Daily_Logs"
-# 写入模式约定：倒序插入到表头下方（Row 2）。
-# 底层写入由 feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py 负责：
-# - row_index > 0：先 insert row(s) 再 write（覆盖写入新插入的空行）
-# - row_index <= 0：回退到 +append
-DEFAULT_ROW_INDEX = 2
+# 写入模式约定：底部追加（Append）。MCP 不支持“插入空行”，故采用 +append 直接追加到表尾。
+# row_index 仅作为兼容入参传给 safe_insert_sheet_row.py，底层会忽略它并改走 +append。
+DEFAULT_ROW_INDEX = 0  # 0 = ignored by safe_insert（append-only）
 
 REQUIRED_HEADERS = ["编号", "日期", "日报内容"]
 DEFAULT_TASK_STATS_WIKI_URL = "https://bytedance.larkoffice.com/sheets/TnNYsLq9phIJwutJGwBl730ygjd"
@@ -186,25 +184,6 @@ def read_sheet_headers(xlsx_path: str, sheet_name: str) -> list[str]:
         headers.append(str(v).strip() if v is not None else "")
     print(f"[Debug] Explicit headers: {headers}")
     return headers
-
-
-_HEADER_WRAPPER_RE = re.compile(r"^【(.+)】$")
-
-
-def normalize_header(name: str) -> str:
-    """兼容历史表头写法：`日期` vs `【日期】`。
-
-    规则：
-    - strip 空白
-    - 若整体被全角【】包裹，则剥离外层
-    """
-    if name is None:
-        return ""
-    s = str(name).strip()
-    m = _HEADER_WRAPPER_RE.match(s)
-    if m:
-        s = m.group(1).strip()
-    return s
 
 
 def _normalize_cell(value) -> str:
@@ -583,8 +562,7 @@ def main() -> int:
     pre_snap = snapshot(skill_root, xlsx_path, stage="pre")
 
     headers = read_sheet_headers(xlsx_path, args.sheet_name)
-    normalized_headers = [normalize_header(h) for h in headers]
-    if normalized_headers[: len(REQUIRED_HEADERS)] != REQUIRED_HEADERS:
+    if headers[: len(REQUIRED_HEADERS)] != REQUIRED_HEADERS:
         dlq_file = write_dlq(
             skill_root,
             {
@@ -594,7 +572,6 @@ def main() -> int:
                 "sheet_name": args.sheet_name,
                 "expected_headers_prefix": REQUIRED_HEADERS,
                 "actual_headers": headers,
-                "actual_headers_normalized": normalized_headers,
                 "payload": {
                     "date": args.date,
                     "content": resolved_content,
@@ -602,14 +579,13 @@ def main() -> int:
                     "task_stats_wiki_url": args.task_stats_wiki_url,
                     "task_stats_sheet_name": args.task_stats_sheet_name,
                 },
-                "note": "⚠️[数据断链_待自愈] Schema 不匹配（含去【】归一化后仍不匹配），已熔断写入。",
+                "note": "⚠️[数据断链_待自愈] Schema 不匹配，已熔断写入。",
             },
         )
         raise RuntimeError(
             "Daily_Logs 表头 Schema 不符合预期，已熔断并落 DLQ："
             f"\n- 预期前缀：{REQUIRED_HEADERS}"
             f"\n- 实际表头：{headers}"
-            f"\n- 归一化表头：{normalized_headers}"
             f"\n- DLQ：{dlq_file}"
         )
 

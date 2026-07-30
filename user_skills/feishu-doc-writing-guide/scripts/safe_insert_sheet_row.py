@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import subprocess
@@ -43,17 +44,6 @@ def run_lark_sheets(args):
         return None
 
 
-def _col_letter(n: int) -> str:
-    """1 -> A, 2 -> B, ... 26 -> Z, 27 -> AA ..."""
-    if n <= 0:
-        raise ValueError(f"invalid col index: {n}")
-    s = ""
-    while n:
-        n, r = divmod(n - 1, 26)
-        s = chr(65 + r) + s
-    return s
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 5:
         print("Usage: python safe_insert_sheet_row.py <document_url> <sheet_name> <row_index> <data_json>")
@@ -61,104 +51,36 @@ if __name__ == "__main__":
 
     doc_url = sys.argv[1]
     sheet_name = sys.argv[2]
-    try:
-        row_index = int(sys.argv[3])
-    except Exception:
-        print(f"Invalid row_index: {sys.argv[3]}")
-        sys.exit(1)
-
+    # row_idx is ignored because we use +append to fulfill the "Append mode" requirement
     try:
         values = normalize_values(json.loads(sys.argv[4]))
     except Exception as exc:
         print(f"Invalid data_json: {exc}")
         sys.exit(1)
-
     data_json = json.dumps(values, ensure_ascii=False)
-
-    # 1) Get sheet info to find sheet_id
+    
+    # 1. Get sheet info to find sheet_id
     info = run_lark_sheets(["sheets", "+info", "--url", doc_url])
     if not info or not info.get("ok"):
         print(f"Failed to get spreadsheet info: {info}")
         sys.exit(1)
-
+        
     sheet_id = None
     for s in info["data"]["sheets"]["sheets"]:
         if s["title"] == sheet_name:
             sheet_id = s["sheet_id"]
             break
-
+            
     if not sheet_id:
         print(f"Sheet '{sheet_name}' not found.")
         sys.exit(1)
-
-    # 2) Insert/Append
-    row_count = len(values)
-    col_count = len(values[0]) if values and values[0] else 0
-    if col_count <= 0:
-        print(f"Invalid values (empty columns): {values}")
-        sys.exit(1)
-
-    if row_index and row_index > 0:
-        # row_index: 1-based row number. lark-sheets insert-dimension uses 0-indexed positions.
-        # To insert at row_index, we insert ROWS in [row_index-1, row_index-1+row_count)
-        start = row_index - 1
-        end = start + row_count
-        print(
-            f"Inserting {row_count} row(s) at row_index={row_index} (0-indexed start={start}, end={end})..."
-        )
-        ins = run_lark_sheets(
-            [
-                "sheets",
-                "+insert-dimension",
-                "--url",
-                doc_url,
-                "--sheet-id",
-                sheet_id,
-                "--dimension",
-                "ROWS",
-                "--start-index",
-                str(start),
-                "--end-index",
-                str(end),
-                "--inherit-style",
-                "BEFORE",
-            ]
-        )
-        if not ins or not ins.get("ok"):
-            print(f"Insert failed: {ins}")
-            sys.exit(1)
-
-        end_col = _col_letter(col_count)
-        end_row = row_index + row_count - 1
-        write_range = f"{sheet_id}!A{row_index}:{end_col}{end_row}"
-        print(f"Writing values to range {write_range}...")
-        res = run_lark_sheets(
-            [
-                "sheets",
-                "+write",
-                "--url",
-                doc_url,
-                "--sheet-id",
-                sheet_id,
-                "--range",
-                write_range,
-                "--values",
-                data_json,
-            ]
-        )
-        if not res or not res.get("ok"):
-            print(f"Write failed: {res}")
-            sys.exit(1)
-
-        print("Success: Row inserted safely.")
-        sys.exit(0)
-
-    # Default fallback: append to the end
+        
+    # 2. Use +append to add to the end (fulfills "Append mode" and "No insert" requirement)
     print(f"Appending to sheet '{sheet_name}' (id: {sheet_id})...")
     res = run_lark_sheets(["sheets", "+append", "--url", doc_url, "--sheet-id", sheet_id, "--values", data_json])
-
+    
     if not res or not res.get("ok"):
         print(f"Append failed: {res}")
         sys.exit(1)
-
+        
     print("Success: Row appended safely.")
