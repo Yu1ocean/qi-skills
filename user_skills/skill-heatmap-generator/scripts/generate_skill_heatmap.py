@@ -163,20 +163,162 @@ def parse_downloaded_file_path(tool_output: str) -> Path:
 
 
 def download_doc(doc_url: str) -> Path:
-    output = run_mcp_script(
-        "inner_skills/lark/mcp_lark_lark_download.py",
-        {"document_url": doc_url},
+    try:
+        output = run_mcp_script(
+            "inner_skills/lark_download/lark_download.py",
+            {"document_url": doc_url},
+        )
+        try:
+            return parse_downloaded_file_path(output)
+        except HeatmapError:
+            pass
+
+        try:
+            parsed = json.loads(output)
+        except json.JSONDecodeError as exc:
+            raise HeatmapError(f"无法从下载输出中解析文件路径:\n{output}") from exc
+
+        if isinstance(parsed, list) and parsed:
+            return Path(str(parsed[0]))
+        if isinstance(parsed, str) and parsed:
+            return Path(parsed)
+        raise HeatmapError(f"下载输出未返回有效文件路径:\n{output}")
+    except HeatmapError as exc:
+        if "toolset lark_download not found" not in str(exc):
+            raise
+
+    token = doc_url.rstrip("/").split("/")[-1].split("?")[0]
+    fallback_path = output_root() / f"{token}.lark.md"
+    cmd = [
+        "lark-cli",
+        "docs",
+        "+fetch",
+        "--api-version",
+        "v2",
+        "--as",
+        "user",
+        "--doc",
+        doc_url,
+        "--doc-format",
+        "markdown",
+        "--format",
+        "json",
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(workspace_root()),
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
     )
-    return parse_downloaded_file_path(output)
+    if proc.returncode != 0:
+        raise HeatmapError(
+            "调用 lark-cli docs +fetch 失败:\n"
+            f"doc_url={doc_url}\n"
+            f"stdout={proc.stdout}\n"
+            f"stderr={proc.stderr}"
+        )
+    try:
+        json_start = proc.stdout.find("{")
+        raw_payload = proc.stdout[json_start:] if json_start >= 0 else proc.stdout
+        payload = json.loads(raw_payload)
+        content = payload["data"]["document"]["content"]
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise HeatmapError(f"无法解析 lark-cli docs +fetch 输出:\n{proc.stdout}") from exc
+
+    lines = content.splitlines()
+    table_start = None
+    for index, line in enumerate(lines):
+        if line.strip().startswith("| 序号 | 技能名称 |"):
+            table_start = index
+            break
+    if table_start is not None:
+        table_end = table_start
+        while table_end < len(lines) and lines[table_end].strip().startswith("|"):
+            table_end += 1
+        table_lines = lines[table_start:table_end]
+        full_table = "\n".join(table_lines)
+        html_rows: List[str] = []
+        for index, line in enumerate(table_lines):
+            if index == 1:
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            html_rows.append(rebuild_row(cells))
+        table_html = "<table>\n" + "\n".join(html_rows) + "\n</table>"
+        replacement = [
+            "<!-- RAW_TABLE_BEGIN -->",
+            full_table,
+            "<!-- RAW_TABLE_END -->",
+            "<!-- BLOCK_999 | blk_registry_fallback -->",
+            table_html,
+            "<!-- END_BLOCK_999 -->",
+        ]
+        lines = lines[:table_start] + replacement + lines[table_end:]
+        content = "\n".join(lines)
+
+    fallback_path.write_text(content, encoding="utf-8")
+    return fallback_path
 
 
 def update_doc(doc_url: str, markdown_file_path: Path, modifications: List[Dict[str, str]]) -> str:
-    payload = {
-        "document_url": doc_url,
-        "markdown_file_path": str(markdown_file_path),
-        "modifications": modifications,
-    }
-    return run_mcp_script("inner_skills/lark/mcp_lark_update_lark_doc.py", payload)
+    if not modifications:
+        raise HeatmapError("update_doc 未收到任何 modifications，无法执行写回")
+
+    markdown_text = markdown_file_path.read_text(encoding="utf-8", errors="ignore")
+    _, _, old_table_html = extract_registry_table(markdown_text)
+    new_table_html = modifications[0].get("content", "")
+    if not new_table_html:
+        raise HeatmapError("update_doc modifications[0].content 为空，无法执行写回")
+
+    raw_table_match = re.search(r"<!-- RAW_TABLE_BEGIN -->\n(.*?)\n<!-- RAW_TABLE_END -->", markdown_text, re.S)
+    if raw_table_match:
+        pattern = raw_table_match.group(1)
+        row_blocks = re.findall(r"<tr>(.*?)</tr>", new_table_html, re.S)
+        markdown_rows: List[str] = []
+        for index, row_block in enumerate(row_blocks):
+            cells = [re.sub(r"\s+", " ", cell).strip() for cell in re.findall(r"<td>(.*?)</td>", row_block, re.S)]
+            markdown_rows.append("| " + " | ".join(cells) + " |")
+            if index == 0:
+                markdown_rows.append("|" + "|".join(["-"] * len(cells)) + "|")
+        replacement = "\n".join(markdown_rows)
+    else:
+        pattern = old_table_html
+        replacement = new_table_html
+
+    cmd = [
+        "lark-cli",
+        "docs",
+        "+update",
+        "--api-version",
+        "v2",
+        "--as",
+        "user",
+        "--doc",
+        doc_url,
+        "--command",
+        "str_replace",
+        "--doc-format",
+        "markdown",
+        "--pattern",
+        pattern,
+        "--content",
+        replacement,
+    ]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(workspace_root()),
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise HeatmapError(
+            "调用 lark-cli docs +update 失败:\n"
+            f"doc_url={doc_url}\n"
+            f"stdout={proc.stdout}\n"
+            f"stderr={proc.stderr}"
+        )
+    return proc.stdout.strip() or proc.stderr.strip()
 
 
 def detect_v1_anchor() -> Tuple[Optional[datetime], Optional[Path], str]:

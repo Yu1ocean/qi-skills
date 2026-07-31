@@ -322,18 +322,26 @@ def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str
     if not repair_script.exists():
         raise FileNotFoundError(f"grant_doc_permissions wrapper not found: {repair_script}")
 
-    return run_subprocess(
-        [
-            "python3",
-            str(repair_script),
-            drive_file_url,
-            "--email",
-            email,
-            "--perm",
-            perm,
-        ],
-        "repair drive asset access via MCP personal flow",
-    )
+    try:
+        return run_subprocess(
+            [
+                "python3",
+                str(repair_script),
+                drive_file_url,
+                "--email",
+                email,
+                "--perm",
+                perm,
+            ],
+            "repair drive asset access via MCP personal flow",
+        )
+    except RuntimeError as exc:
+        if "mcp_lark_move_lark_doc.py" not in str(exc):
+            raise
+        return (
+            "⚠️ drive asset access repair skipped: legacy move_lark_doc MCP path is unavailable; "
+            "file block was inserted via lark-cli docs +media-insert as user identity."
+        )
 
 
 def run_subprocess(command: list[str], action: str) -> str:
@@ -448,24 +456,63 @@ def build_ssot_spreadsheet_url(spreadsheet_token: str) -> str:
 
 def mcp_lark_download(document_url: str) -> list[Path]:
     workspace_root = get_workspace_root()
-    download_script = workspace_root / "inner_skills/lark/mcp_lark_lark_download.py"
+    download_script = workspace_root / "inner_skills/lark_download/lark_download.py"
     if not download_script.exists():
-        raise FileNotFoundError(f"Lark MCP download script not found: {download_script}")
+        raise FileNotFoundError(f"Lark download script not found: {download_script}")
 
-    output = run_subprocess(
-        [
-            "python3",
-            str(download_script),
-            json.dumps({"document_url": document_url}, ensure_ascii=False),
-        ],
-        "lark download",
-    )
+    try:
+        output = run_subprocess(
+            [
+                "python3",
+                str(download_script),
+                json.dumps({"document_url": document_url}, ensure_ascii=False),
+            ],
+            "lark download",
+        )
+    except RuntimeError as exc:
+        if "toolset lark_download not found" not in str(exc):
+            raise
+        token = document_url.rstrip("/").split("/")[-1].split("?")[0]
+        fallback_path = workspace_root / "user_skills" / "skill-forge-pipeline-v4" / f"{token}.lark.md"
+        fetch_output = run_subprocess(
+            [
+                "lark-cli",
+                "docs",
+                "+fetch",
+                "--api-version",
+                "v2",
+                "--as",
+                "user",
+                "--doc",
+                document_url,
+                "--doc-format",
+                "markdown",
+                "--format",
+                "json",
+            ],
+            "lark-cli docs fetch fallback",
+        )
+        try:
+            payload = json.loads(fetch_output[fetch_output.find("{"):])
+            content = payload["data"]["document"]["content"]
+        except (json.JSONDecodeError, KeyError, TypeError) as parse_exc:
+            raise RuntimeError(f"Unable to parse lark-cli docs +fetch output: {fetch_output}") from parse_exc
+        fallback_path.write_text(content, encoding="utf-8")
+        return [fallback_path.resolve()]
 
-    # Typical output contains repeated: file_path: "..."
     paths = [Path(p).resolve() for p in re.findall(r'file_path:\s*"([^"]+)"', output)]
     if not paths:
-        # fallback: any xlsx path in output
-        paths = [Path(p).resolve() for p in re.findall(r'(/[^\s\"]+\.xlsx)', output)]
+        paths = [Path(p).resolve() for p in re.findall(r'(/[^\s\"]+\.(?:lark\.md|xlsx|xls|md))', output)]
+
+    if not paths:
+        try:
+            parsed = json.loads(output)
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, list):
+            paths = [Path(str(p)).resolve() for p in parsed if str(p).strip()]
+        elif isinstance(parsed, str) and parsed.strip():
+            paths = [Path(parsed).resolve()]
 
     if not paths:
         raise RuntimeError(f"Unable to parse downloaded file paths from output: {output}")
@@ -728,50 +775,40 @@ def ensure_skill_inventory_updated_at_formatter(row_number: int, expected_text: 
 
 
 def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
-    workspace_root = get_workspace_root()
-    update_script = workspace_root / "inner_skills/lark/mcp_lark_update_lark_doc.py"
-    if not update_script.exists():
-        raise FileNotFoundError(f"Lark MCP update script not found: {update_script}")
-
-    with tempfile.TemporaryDirectory(prefix="skill_zip_attach_", dir=workspace_root) as temp_dir:
-        temp_path = Path(temp_dir)
-        temp_zip = temp_path / zip_path.name
-        shutil.copy2(zip_path, temp_zip)
-        markdown_path = temp_path / "attachment.lark.md"
-        markdown_path.write_text(f"![{temp_zip.name}]({temp_zip.name})\n", encoding="utf-8")
-
-        payload = {
-            "document_url": doc_url,
-            "markdown_file_path": str(markdown_path.resolve()),
-            "modifications": [
-                {
-                    "block_number": "BLOCK_BEGIN",
-                    "block_id": "",
-                    "content": f"![{temp_zip.name}]({temp_zip.name})\n",
-                    "modification_type": "insert",
-                }
-            ],
-        }
-        return run_subprocess(
-            ["python3", str(update_script), json.dumps(payload, ensure_ascii=False)],
-            "insert native file block via lark MCP",
+    result = subprocess.run(
+        [
+            "lark-cli",
+            "docs",
+            "+media-insert",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--file",
+            zip_path.name,
+            "--type",
+            "file",
+        ],
+        cwd=str(zip_path.resolve().parent),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"insert native file block via lark-cli failed with exit code {result.returncode}\n"
+            f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         )
+    return result.stdout.strip()
 
 
 def download_doc_markdown(doc_url: str) -> Path:
-    workspace_root = get_workspace_root()
-    download_script = workspace_root / "inner_skills/lark/mcp_lark_lark_download.py"
-    if not download_script.exists():
-        raise FileNotFoundError(f"Lark MCP download script not found: {download_script}")
-
-    output = run_subprocess(
-        ["python3", str(download_script), json.dumps({"document_url": doc_url}, ensure_ascii=False)],
-        "download latest skill doc",
-    )
-    match = re.search(r'file_path: "([^"]+)"', output)
-    if not match:
-        raise RuntimeError(f"Unable to parse downloaded markdown path from output: {output}")
-    return Path(match.group(1)).resolve()
+    paths = mcp_lark_download(doc_url)
+    for path in paths:
+        if path.suffix.lower() in {".md", ".lark.md"} or path.name.endswith(".lark.md"):
+            return path.resolve()
+    if paths:
+        return paths[0].resolve()
+    raise RuntimeError(f"Unable to download markdown for doc: {doc_url}")
 
 
 def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
@@ -784,11 +821,6 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
 
     If no marker is found, we will log a warning and skip.
     """
-
-    workspace_root = get_workspace_root()
-    update_script = workspace_root / "inner_skills/lark/mcp_lark_update_lark_doc.py"
-    if not update_script.exists():
-        raise FileNotFoundError(f"Lark MCP update script not found: {update_script}")
 
     md_path = download_doc_markdown(doc_url)
     text = md_path.read_text(encoding="utf-8", errors="ignore")
@@ -817,22 +849,27 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
         content = "\n".join(content_lines).strip("\n")
         if version_re.search(content):
             updated_content = version_re.sub(r"\\1" + new_version, content)
-            payload = {
-                "document_url": doc_url,
-                "markdown_file_path": str(md_path.resolve()),
-                "modifications": [
-                    {
-                        "block_number": block_number,
-                        "block_id": block_id,
-                        "content": updated_content + "\n",
-                        "modification_type": "update",
-                    }
-                ],
-            }
-
-            print(f"📝 Syncing doc version marker via MCP: {block_number} | {block_id}")
+            print(f"📝 Syncing doc version marker via lark-cli: {block_number} | {block_id}")
             run_subprocess(
-                ["python3", str(update_script), json.dumps(payload, ensure_ascii=False)],
+                [
+                    "lark-cli",
+                    "docs",
+                    "+update",
+                    "--api-version",
+                    "v2",
+                    "--as",
+                    "user",
+                    "--doc",
+                    doc_url,
+                    "--command",
+                    "str_replace",
+                    "--doc-format",
+                    "markdown",
+                    "--pattern",
+                    content,
+                    "--content",
+                    updated_content,
+                ],
                 "sync doc version marker",
             )
             return
@@ -851,23 +888,48 @@ def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
 
 
 def move_doc_to_wiki_via_mcp(doc_url: str, wiki_node_token: str) -> Dict[str, str]:
-    workspace_root = get_workspace_root()
-    move_script = workspace_root / "inner_skills/lark/mcp_lark_move_lark_doc.py"
-    if not move_script.exists():
-        raise FileNotFoundError(f"Lark MCP move script not found: {move_script}")
+    doc_token = doc_url.rstrip("/").split("/")[-1].split("?")[0]
+    node_info_output = run_subprocess(
+        [
+            "lark-cli",
+            "wiki",
+            "+node-get",
+            "--as",
+            "user",
+            "--node-token",
+            wiki_node_token,
+            "--format",
+            "json",
+        ],
+        "resolve target wiki node",
+    )
+    try:
+        node_info = json.loads(node_info_output[node_info_output.find("{"):])
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Unable to parse target wiki node info: {node_info_output}") from exc
+    data = node_info.get("data", {}) if isinstance(node_info, dict) else {}
+    node = data.get("node", data) if isinstance(data, dict) else {}
+    space_id = str(node.get("space_id") or data.get("space_id") or "").strip()
+    if not space_id:
+        raise RuntimeError(f"Unable to resolve target wiki space id: {node_info_output}")
 
     output = run_subprocess(
         [
-            "python3",
-            str(move_script),
-            json.dumps(
-                {
-                    "document_urls": [doc_url],
-                    "target_type": "wiki",
-                    "target_location": wiki_node_token,
-                },
-                ensure_ascii=False,
-            ),
+            "lark-cli",
+            "wiki",
+            "+move",
+            "--as",
+            "user",
+            "--obj-type",
+            "docx",
+            "--obj-token",
+            doc_token,
+            "--target-space-id",
+            space_id,
+            "--target-parent-token",
+            wiki_node_token,
+            "--format",
+            "json",
         ],
         "lark move doc to wiki",
     )
@@ -875,6 +937,15 @@ def move_doc_to_wiki_via_mcp(doc_url: str, wiki_node_token: str) -> Dict[str, st
     urls = re.findall(r'https?://[^\s"\'<>]+', output)
     moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), doc_url)
     moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+    if not moved_wiki_url:
+        try:
+            payload = json.loads(output[output.find("{"):])
+            payload_text = json.dumps(payload, ensure_ascii=False)
+            urls = re.findall(r'https?://[^\s"\'<>]+', payload_text)
+            moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+            moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), moved_doc_url)
+        except json.JSONDecodeError:
+            pass
 
     return {
         "doc_link": moved_doc_url,
