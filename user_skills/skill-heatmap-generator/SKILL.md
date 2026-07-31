@@ -14,7 +14,7 @@ description: 扫描 `.aime/log/subagent` 的 legacy slug 日志窗口，按旧�
 
 **默认目标文档：** `https://bytedance.larkoffice.com/docx/AKmddboNJos7RcxGiOlcoWCvnjd`
 
-**当前版本：** `1.4`
+**当前版本：** `1.5`
 
 version: 1.5
 ## 🔑 触发词

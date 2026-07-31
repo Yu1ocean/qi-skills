@@ -336,10 +336,10 @@ def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str
             "repair drive asset access via MCP personal flow",
         )
     except RuntimeError as exc:
-        if "mcp_lark_move_lark_doc.py" not in str(exc):
+        if "move_lark_doc" not in str(exc):
             raise
         return (
-            "⚠️ drive asset access repair skipped: legacy move_lark_doc MCP path is unavailable; "
+            "⚠️ drive asset access repair skipped: legacy move_lark_doc path is unavailable; "
             "file block was inserted via lark-cli docs +media-insert as user identity."
         )
 
