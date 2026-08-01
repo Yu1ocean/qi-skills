@@ -108,6 +108,13 @@ class DailyLogsZeroTrustInsertTest(unittest.TestCase):
                 self.module.mcp_download_lark_sheet = original_download
                 self.module.list_existing_ids_via_cli = original_existing_ids
                 sys.argv = original_argv
+    def test_bracketed_headers_match_required_schema(self):
+        headers = ["编号", "【日期】", "【日报内容】"]
+        self.assertTrue(self.module.headers_match_required(headers))
+        self.assertEqual(
+            [self.module.normalize_header_name(h) for h in headers],
+            ["编号", "日期", "日报内容"],
+        )
 
 
 if __name__ == "__main__":

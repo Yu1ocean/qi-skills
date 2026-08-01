@@ -42,6 +42,25 @@ DEFAULT_SHEET_NAME = "Daily_Logs"
 DEFAULT_ROW_INDEX = 0  # 0 = ignored by safe_insert（append-only）
 
 REQUIRED_HEADERS = ["编号", "日期", "日报内容"]
+
+
+def normalize_header_name(header: str) -> str:
+    """Normalize Daily_Logs header names for schema comparison.
+
+    The online sheet may wrap business headers with full-width Chinese brackets,
+    e.g. 【日期】/【日报内容】. Strip the wrapper only at the schema-compat layer;
+    keep raw headers unchanged for logging and DLQ evidence.
+    """
+    value = str(header).strip()
+    if value.startswith("【") and value.endswith("】"):
+        value = value[1:-1].strip()
+    return value
+
+
+def headers_match_required(headers: list[str]) -> bool:
+    return [normalize_header_name(h) for h in headers[: len(REQUIRED_HEADERS)]] == REQUIRED_HEADERS
+
+
 DEFAULT_TASK_STATS_WIKI_URL = "https://bytedance.larkoffice.com/sheets/TnNYsLq9phIJwutJGwBl730ygjd"
 DEFAULT_TASK_STATS_SHEET_NAME = "任务库"
 TASK_STATUS_COLUMN = "完成情况"
@@ -562,7 +581,7 @@ def main() -> int:
     pre_snap = snapshot(skill_root, xlsx_path, stage="pre")
 
     headers = read_sheet_headers(xlsx_path, args.sheet_name)
-    if headers[: len(REQUIRED_HEADERS)] != REQUIRED_HEADERS:
+    if not headers_match_required(headers):
         dlq_file = write_dlq(
             skill_root,
             {

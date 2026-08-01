@@ -1,0 +1,32 @@
+{
+  "type": "Daily_Logs_SchemaMismatch",
+  "timestamp": "2026-07-31T18:07:25.496446",
+  "sheet_url": "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh",
+  "sheet_name": "Daily_Logs",
+  "expected_headers_prefix": [
+    "编号",
+    "日期",
+    "日报内容"
+  ],
+  "actual_headers": [
+    "编号",
+    "【日期】",
+    "【日报内容】"
+  ],
+  "payload": {
+    "date": "2026-07-31",
+    "content": "任务状态汇总：开启 34 个，完成 13 个，暂停 0 个\n\n【2026-07-31】今日完成技能热度榜 Plan B-1 修复、午后长任务巡检、Heartbeat 增量监测与 runtime bridge 多轮刷新；任务库读取 48 行，活跃 32、完成 13、暂停 0，超期升至 18、缺 DDL 12。建议优先给待确认招商任务补负责人，再重排你名下 3 条陈账 DDL。遗留：CHAT_REGISTRY 缺映射与 MCP 旧脚本缺失仍需继续收敛。",
+    "task_stats": {
+      "opened": 34,
+      "completed": 13,
+      "paused": 0,
+      "recognized": 47,
+      "unknown_statuses": "{}",
+      "summary": "开启 34 个，完成 13 个，暂停 0 个",
+      "table": "| 状态 | 数量 |\n| --- | ---: |\n| 开启 | 34 |\n| 完成 | 13 |\n| 暂停 | 0 |"
+    },
+    "task_stats_wiki_url": "https://bytedance.larkoffice.com/sheets/TnNYsLq9phIJwutJGwBl730ygjd",
+    "task_stats_sheet_name": "任务库"
+  },
+  "note": "⚠️[数据断链_待自愈] Schema 不匹配，已熔断写入。"
+}
