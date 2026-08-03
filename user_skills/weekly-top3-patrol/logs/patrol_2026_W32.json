@@ -1,0 +1,20 @@
+{
+  "week": "2026-W32",
+  "mode_a_runs": [],
+  "mode_b_bookings": [],
+  "error_runs": [
+    {
+      "timestamp": "2026-08-03T08:37:07.418867+08:00",
+      "status": "ERROR_ROSTER_EMPTY",
+      "error": "团队名单人数低于阈值：0 < 2",
+      "raw_evidence": {
+        "roster_count": 0,
+        "owner_blocks_count": 1,
+        "complete_users": [],
+        "absent_users": [],
+        "week_marker": "Week 32",
+        "fallback_reason": null
+      }
+    }
+  ]
+}

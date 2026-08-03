@@ -1,6 +1,6 @@
 ---
 name: weekly-top3-patrol
-version: 1.6
+version: 1.6.1
 updated_at: "2026-08-03"
 risk_level: high
 description: 每周「重要三件事」进展巡检与自动化催办日历闭环。Mode A 软性催办（周日 16:00 群内 @ 未填写同学），Mode B 硬性收口（周一 16:00 调用飞书日历找空闲交集自动占位 15min 1on1）。
@@ -16,7 +16,7 @@ trigger_keywords:
 
 # Weekly Top3 Patrol — 重要三件事周巡检与日历闭环
 
-> **版本**：1.6 · **更新时间**：2026-08-03
+> **版本**：1.6.1 · **更新时间**：2026-08-03
 > **作者**：于奇楠 / Aime
 > **风险等级**：High（涉及群内 @ 广播 + 日历强插写操作 + 飞书 Bitable 读取）
 
@@ -69,6 +69,10 @@ trigger_keywords:
   - Mode B — 周一 16:00：硬性收口（调用 `feishu-calendar` 查找未填同学与 `yuqinan` 的共同空闲，自动插入 15min 1on1，并群内通知）
 
 ### 更新日志（Changelog）
+
+#### 2026-08-03 (v1.6.1)
+
+- fix(tests): 补全 fallback fixture 至 2 人满足 ROSTER_MIN_COUNT=2 阈值；新增 ERROR_ROSTER_EMPTY 熔断契约用例。
 
 #### 2026-08-03 (v1.6)
 
