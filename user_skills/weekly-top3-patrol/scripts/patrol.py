@@ -115,41 +115,12 @@ def _next_quarter(dt: datetime) -> datetime:
 
 
 def download_sheet(url: str) -> Path:
-    """Download the source workbook.
-
-    The legacy MCP downloader was removed from the runtime in 2026-08.
-    Prefer lark-cli's read-only workbook export path, and keep the legacy
-    MCP branch only as a compatibility fallback when the script exists.
-    """
-    legacy_downloader = LARK_SKILL_DIR / "mcp_lark_lark_download.py"
-    if legacy_downloader.exists():
-        output = _run([
-            "python3",
-            str(legacy_downloader),
-            json.dumps({"document_url": url}, ensure_ascii=False),
-        ])
-        return _extract_file_path(output)
-
-    export_dir = Path.cwd() / ".tmp_exports"
-    export_dir.mkdir(parents=True, exist_ok=True)
-    output_path = export_dir / f"weekly_top3_source_{datetime.now(CST).strftime('%Y%m%dT%H%M%S%z')}.xlsx"
-    output_arg = os.path.relpath(output_path, Path.cwd())
-    _run([
-        "lark-cli",
-        "sheets",
-        "+workbook-export",
-        "--url",
-        url,
-        "--file-extension",
-        "xlsx",
-        "--output-path",
-        output_arg,
-        "--format",
-        "json",
+    output = _run([
+        "python3",
+        str(LARK_SKILL_DIR / "mcp_lark_lark_download.py"),
+        json.dumps({"document_url": url}, ensure_ascii=False),
     ])
-    if not output_path.exists():
-        raise RuntimeError(f"lark-cli workbook export did not create file: {output_path}")
-    return output_path
+    return _extract_file_path(output)
 
 
 def load_roster_from_chat_registry() -> dict[str, dict[str, str]]:
