@@ -122,18 +122,40 @@ def _parse_mcp_output_file_path(text: str) -> str:
 def _mcp_lark_download_spreadsheet(*, spreadsheet_url: str) -> Path:
     ws = _workspace_root()
     tool = ws / "inner_skills" / "lark" / "mcp_lark_lark_download.py"
-    if not tool.exists():
-        raise FileNotFoundError(f"找不到 mcp_lark_lark_download：{tool}")
+    if tool.exists():
+        payload = json.dumps({"document_url": spreadsheet_url}, ensure_ascii=False)
+        res = _run_cmd([sys.executable, str(tool), payload], cwd=ws)
+        _require_ok(res, what="mcp:lark_lark_download")
 
-    payload = json.dumps({"document_url": spreadsheet_url}, ensure_ascii=False)
-    res = _run_cmd([sys.executable, str(tool), payload], cwd=ws)
-    _require_ok(res, what="mcp:lark_lark_download")
+        file_path = _parse_mcp_output_file_path(res.stdout + "\n" + res.stderr)
+        p = Path(file_path)
+        if not p.exists():
+            raise FileNotFoundError(f"MCP 下载返回的文件不存在：{p}")
+        return p
 
-    file_path = _parse_mcp_output_file_path(res.stdout + "\n" + res.stderr)
-    p = Path(file_path)
-    if not p.exists():
-        raise FileNotFoundError(f"MCP 下载返回的文件不存在：{p}")
-    return p
+    # 2026-08-02: mcp_lark_lark_download 在当前运行时已下线。
+    # 保持 MCP-only / lark-cli 用户身份链路，降级使用定制版 lark-cli 的只读 workbook export。
+    export_dir = _repo_root() / ".runtime" / "downloads"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"notify_log_source_{datetime.now(TZ_SHANGHAI).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    output_path = export_dir / filename
+    output_rel = output_path.relative_to(ws)
+    res = _run_cmd(
+        [
+            "lark-cli",
+            "sheets",
+            "+workbook-export",
+            "--url",
+            spreadsheet_url,
+            "--output-path",
+            str(output_rel),
+        ],
+        cwd=ws,
+    )
+    _require_ok(res, what="lark-cli sheets +workbook-export")
+    if not output_path.exists():
+        raise FileNotFoundError(f"lark-cli 导出成功但本地文件不存在：{output_path}")
+    return output_path
 
 
 def _mcp_update_sheet(*, spreadsheet_url: str, sheet_name: str, source_file_path: Path) -> None:

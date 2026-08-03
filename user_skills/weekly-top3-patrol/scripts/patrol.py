@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -35,6 +36,7 @@ CST = timezone(timedelta(hours=8))
 YUQINAN_EMAIL = "yuqinan@bytedance.com"
 YUQINAN_OPEN_ID = "ou_900ddd9ff611254a74ac32adafc016b4"
 PLACEHOLDERS = {"", "tbd", "待填", "n/a", "—", "/", "待定"}
+ROSTER_MIN_COUNT = int(os.environ.get("WEEKLY_TOP3_ROSTER_MIN_COUNT", "2"))
 ROOT = Path(__file__).resolve().parents[3]
 EPHEMERAL_DIR = ROOT / ".ephemeral_pool"
 LOGS_DIR = ROOT / "user_skills" / "weekly-top3-patrol" / "logs"
@@ -113,12 +115,41 @@ def _next_quarter(dt: datetime) -> datetime:
 
 
 def download_sheet(url: str) -> Path:
-    output = _run([
-        "python3",
-        str(LARK_SKILL_DIR / "mcp_lark_lark_download.py"),
-        json.dumps({"document_url": url}, ensure_ascii=False),
+    """Download the source workbook.
+
+    The legacy MCP downloader was removed from the runtime in 2026-08.
+    Prefer lark-cli's read-only workbook export path, and keep the legacy
+    MCP branch only as a compatibility fallback when the script exists.
+    """
+    legacy_downloader = LARK_SKILL_DIR / "mcp_lark_lark_download.py"
+    if legacy_downloader.exists():
+        output = _run([
+            "python3",
+            str(legacy_downloader),
+            json.dumps({"document_url": url}, ensure_ascii=False),
+        ])
+        return _extract_file_path(output)
+
+    export_dir = Path.cwd() / ".tmp_exports"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    output_path = export_dir / f"weekly_top3_source_{datetime.now(CST).strftime('%Y%m%dT%H%M%S%z')}.xlsx"
+    output_arg = os.path.relpath(output_path, Path.cwd())
+    _run([
+        "lark-cli",
+        "sheets",
+        "+workbook-export",
+        "--url",
+        url,
+        "--file-extension",
+        "xlsx",
+        "--output-path",
+        output_arg,
+        "--format",
+        "json",
     ])
-    return _extract_file_path(output)
+    if not output_path.exists():
+        raise RuntimeError(f"lark-cli workbook export did not create file: {output_path}")
+    return output_path
 
 
 def load_roster_from_chat_registry() -> dict[str, dict[str, str]]:
@@ -147,12 +178,34 @@ def load_roster_from_chat_registry() -> dict[str, dict[str, str]]:
     return roster
 
 
+class RosterEmptyError(RuntimeError):
+    def __init__(self, message: str, raw_evidence: dict[str, Any]):
+        super().__init__(message)
+        self.status = "ERROR_ROSTER_EMPTY"
+        self.raw_evidence = raw_evidence
+
+
+def _normalize_roster_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """兼容团队名单列名：姓名 -> 中文名称，open_id -> Open ID。"""
+    column_aliases = {
+        "姓名": "中文名称",
+        "open_id": "Open ID",
+    }
+    rename_map = {
+        col: column_aliases[_normalize_text(col)]
+        for col in df.columns
+        if _normalize_text(col) in column_aliases
+    }
+    return df.rename(columns=rename_map)
+
+
 def load_team_roster(xlsx_path: Path) -> dict[str, dict[str, str]]:
     xls = pd.ExcelFile(xlsx_path)
     if "团队名单" not in xls.sheet_names:
         return load_roster_from_chat_registry()
 
     df = pd.read_excel(xlsx_path, sheet_name="团队名单")
+    df = _normalize_roster_columns(df)
     roster = {}
     for _, row in df.iterrows():
         name = _normalize_name(row.get("中文名称"))
@@ -201,6 +254,32 @@ def extract_pending_users(xlsx_path: Path, now: datetime) -> tuple[list[dict[str
         resolved_week_marker = f"{week_marker} (fallback_by_date_token)"
 
     roster = load_team_roster(xlsx_path)
+    roster_count = len(roster)
+    owner_blocks_count = int(week_df["负责人"].map(_normalize_name).replace("", pd.NA).dropna().nunique())
+    fallback_reason = "fallback_by_date_token" if "fallback_by_date_token" in resolved_week_marker else None
+    if roster_count < ROSTER_MIN_COUNT:
+        raw_evidence = {
+            "roster_count": roster_count,
+            "owner_blocks_count": owner_blocks_count,
+            "complete_users": [],
+            "absent_users": [],
+            "week_marker": resolved_week_marker,
+            "fallback_reason": fallback_reason,
+        }
+        try:
+            _append_error_log(
+                f"{now.isocalendar().year}-W{now.isocalendar().week:02d}",
+                "ERROR_ROSTER_EMPTY",
+                raw_evidence,
+                f"团队名单人数低于阈值：{roster_count} < {ROSTER_MIN_COUNT}",
+            )
+        except Exception:
+            pass
+        raise RosterEmptyError(
+            f"ERROR_ROSTER_EMPTY: 团队名单人数低于阈值：{roster_count} < {ROSTER_MIN_COUNT}",
+            raw_evidence,
+        )
+
     owner_blocks: dict[str, list[dict[str, Any]]] = {}
     owner_order: list[str] = []
 
@@ -325,11 +404,37 @@ def extract_pending_users(xlsx_path: Path, now: datetime) -> tuple[list[dict[str
         ),
     }
 
+    complete_users = [
+        {
+            "name": item.get("owner", ""),
+            "email": item.get("email", ""),
+        }
+        for item in debug_owner_blocks
+        if item.get("status") == "complete"
+    ]
+    absent_users = [
+        {
+            "name": item.get("owner", ""),
+            "email": item.get("email", ""),
+        }
+        for item in debug_owner_blocks
+        if item.get("status") == "pending_absent_from_sheet"
+    ]
+    raw_evidence = {
+        "roster_count": roster_count,
+        "owner_blocks_count": owner_blocks_count,
+        "complete_users": complete_users,
+        "absent_users": absent_users,
+        "week_marker": resolved_week_marker,
+        "fallback_reason": fallback_reason,
+    }
+
     return pending, {
         "week_marker": resolved_week_marker,
         "owner_blocks": debug_owner_blocks,
         "exempted_hits": exempted_hits,
         "safety_filter": safety_filter,
+        "raw_evidence": raw_evidence,
     }
 
 
@@ -628,6 +733,17 @@ def _write_week_log(week: str, payload: dict[str, Any]) -> str:
     return str(path)
 
 
+def _append_error_log(week: str, status: str, raw_evidence: dict[str, Any], error: str) -> str:
+    week_log = _load_week_log(week)
+    week_log.setdefault("error_runs", []).append({
+        "timestamp": datetime.now(CST).isoformat(),
+        "status": status,
+        "error": error,
+        "raw_evidence": raw_evidence,
+    })
+    return _write_week_log(week, week_log)
+
+
 def _already_booked_this_week(week_log: dict[str, Any], user: dict[str, Any]) -> dict[str, Any] | None:
     user_email = _normalize_text(user.get("email")).lower()
     user_name = _normalize_text(user.get("name"))
@@ -740,6 +856,7 @@ def run_mode_a(url: str, dry_run: bool, confirm_real_send: bool = False) -> dict
             "week_marker": meta["week_marker"],
             "owner_blocks": meta["owner_blocks"],
             "exempted_hits": meta["exempted_hits"],
+            "raw_evidence": meta["raw_evidence"],
         },
         "route": "L0_FLAT (planned only; not sent in dry-run)" if dry_run else "L0_FLAT (real send)",
     }
@@ -907,6 +1024,7 @@ def run_mode_b(url: str, dry_run: bool, confirm_real_send: bool = False) -> dict
             "week_marker": meta["week_marker"],
             "owner_blocks": meta["owner_blocks"],
             "exempted_hits": meta["exempted_hits"],
+            "raw_evidence": meta["raw_evidence"],
         },
         "route": "L0_FLAT (planned only; not sent in dry-run)" if dry_run else "L0_FLAT (real send)",
     }
@@ -1040,6 +1158,16 @@ def main() -> int:
             plan = run_mode_b(args.bitable, args.dry_run, args.confirm_real_send)
         print(json.dumps(plan, ensure_ascii=False, indent=2))
         return 0
+    except RosterEmptyError as exc:
+        safe_summary = {
+            "status": exc.status,
+            "error_boundary_routing": "blocked_before_card_send",
+            "run_id": run_id,
+            "error": str(exc),
+            "raw_evidence": exc.raw_evidence,
+        }
+        print(json.dumps(safe_summary, ensure_ascii=False, indent=2), file=sys.stderr)
+        return 1
     except Exception as exc:
         admin_email = ""
         try:

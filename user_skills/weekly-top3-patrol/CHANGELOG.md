@@ -1,5 +1,13 @@
 # Changelog — weekly-top3-patrol
 
+## v1.6 — 2026-08-03 (roster 兼容与零信任日志修复)
+
+### 修复
+
+- `load_team_roster()` 新增字段兼容映射：`姓名` → `中文名称`，`open_id` → `Open ID`，兼容两套名单表头且不改后续巡检逻辑。
+- roster 读取后若人数低于 `WEEKLY_TOP3_ROSTER_MIN_COUNT`（默认 2）立即熔断，写入 `ERROR_ROSTER_EMPTY`，禁止静默输出 `pending_users: []` 或继续发卡。
+- 巡检日志新增 `raw_evidence`，记录 `roster_count`、`owner_blocks_count`、`complete_users`、`absent_users`、`week_marker`、`fallback_reason`，用于区分全部已填、缺席漏判与查询失败。
+
 ## v1.4 — 2026-06-08 (安全与渲染修复)
 
 ### 修复

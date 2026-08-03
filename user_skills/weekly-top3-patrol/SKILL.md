@@ -1,7 +1,7 @@
 ---
 name: weekly-top3-patrol
-version: 1.5
-updated_at: "2026-06-08"
+version: 1.6
+updated_at: "2026-08-03"
 risk_level: high
 description: 每周「重要三件事」进展巡检与自动化催办日历闭环。Mode A 软性催办（周日 16:00 群内 @ 未填写同学），Mode B 硬性收口（周一 16:00 调用飞书日历找空闲交集自动占位 15min 1on1）。
 trigger_keywords:
@@ -16,7 +16,7 @@ trigger_keywords:
 
 # Weekly Top3 Patrol — 重要三件事周巡检与日历闭环
 
-> **版本**：1.4 · **更新时间**：2026-06-08
+> **版本**：1.6 · **更新时间**：2026-08-03
 > **作者**：于奇楠 / Aime
 > **风险等级**：High（涉及群内 @ 广播 + 日历强插写操作 + 飞书 Bitable 读取）
 
@@ -69,6 +69,12 @@ trigger_keywords:
   - Mode B — 周一 16:00：硬性收口（调用 `feishu-calendar` 查找未填同学与 `yuqinan` 的共同空闲，自动插入 15min 1on1，并群内通知）
 
 ### 更新日志（Changelog）
+
+#### 2026-08-03 (v1.6)
+
+- `load_team_roster()` 新增字段兼容映射：`姓名` 归一为 `中文名称`，`open_id` 归一为 `Open ID`，兼容新旧名单表头且不改变后续巡检逻辑。
+- 团队名单读取后若人数低于 `WEEKLY_TOP3_ROSTER_MIN_COUNT`（默认 2）立即熔断，日志状态写入 `ERROR_ROSTER_EMPTY`，禁止继续输出 `pending_users: []` 或发送卡片。
+- 巡检日志新增 `raw_evidence` 字段，记录 `roster_count`、`owner_blocks_count`、`complete_users`、`absent_users`、`week_marker`、`fallback_reason`，用于区分全部已填、缺席漏判与查询失败。
 
 #### 2026-05-25 (v1.1)
 
