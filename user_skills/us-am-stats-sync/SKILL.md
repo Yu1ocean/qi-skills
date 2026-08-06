@@ -1,7 +1,7 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.1
+version: 1.2
 description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表全量覆盖写入、更新日期落列、US行业统计表 SUMIF 公式化改造与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
@@ -22,7 +22,8 @@ author: yuqinan
 出现任意情况时必须熔断，不得继续写入或宣称成功：
 
 - 未通过 `include_secrets=true` 获得 AIME 定制版 `lark-cli` 用户级飞书权限。
-- Bitable 源字段缺少任一输出必需字段。
+- Bitable 源字段缺少任一仍为必需的输出字段，且没有在脚本中显式配置别名映射或可选 NULL 兜底。
+- 上游 Schema 发生漂移但脚本没有输出 `schema_drift` 结构化告警日志。
 - 目标 Sheet token 或 worksheet id 不等于本技能合规默认值，且用户未明确指定调试目标。
 - 写入后未完成 `VM2reD!A1:J3` RAW 回捞，或 `2unp6l!B2:I9` 公式校验不是 success。
 - `US行业统计!B2` 写后不包含 `SUMIF` 公式。
@@ -31,8 +32,8 @@ author: yuqinan
 
 一次同步任务只有同时满足以下条件，才允许标记成功：
 
-1. 明细写入前完成源字段契约校验，缺字段直接 `raise`。
-2. 明细写入后等待 2 秒并回读 `VM2reD!A1:J3`。
+1. 明细写入前完成源字段契约校验；字段漂移时必须先生成 `schema_drift` 结构化报告，只有仍为必需字段且无别名/兜底时才 `raise`。
+2. 已知漂移处理：`历史入驻新增可售` 读取上游现存字段 `可售数`；`USAM` 上游已删除或不可见，作为可选字段写入 `NULL` 兜底。
 3. 汇总表 `B2:F9` 如需写公式，必须写入 `SUMIF` / `SUM` 公式；如已存在 `SUMIF`，仅刷新 `K1:K2` 更新日期。
 4. 汇总表写入后回读 `B2` 公式，确认包含 `SUMIF`。
 5. 使用 `sheets +formula-verify` 校验 `2unp6l!B2:I9`，状态必须为 `success`。
@@ -79,10 +80,13 @@ python3 scripts/daily_sync.py
 2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文，按固定列序写入 `VM2reD!A:J`，并在 J 列写入当天 `M/D` 格式更新日期。
 3. `step2_update_formulas()`：读取 `2unp6l` 当前内容；如果 `B2` 还不是 `SUMIF` 公式，则把 `B2:F9` 改为从「明细」表汇总的公式；如果已是 `SUMIF`，则跳过公式重写，仅刷新 `K1:K2` 的更新日期。
 4. 写入后回读 `VM2reD!A1:J3`、`2unp6l!A1:K14`，并使用 `+formula-verify` 校验 `2unp6l!B2:I9` 为 zero-error。
+5. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
 
 ## 字段与映射
 
 明细输出列固定为：`US行业 / USAM / 线索数 / 可联系 / 已触达 / 有意愿 / 新增入驻数 / 新增入驻可售 / 历史入驻新增可售 / 更新日期`。`SourceID` 与 `序号` 不写入。
+
+字段漂移契约：`历史入驻新增可售` 当前从上游字段 `可售数` 读取；`USAM` 当前上游字段已删除或当前权限不可见，输出列保留但写入 `NULL`，用于保证目标 Sheet 结构稳定。
 
 行业映射为：`Fashion → 服饰服配`，`FMCG → 快消生活`，`Sports & Lifestyle → 运动潮奢`，`Electronics → 3C家电`，`Home & Textiles → 日用家纺`，`Automotive & Tools → 汽摩工具`，`Furniture & Home Improvements → 家具家装`。
 
@@ -111,4 +115,5 @@ python3 scripts/sync_bitable_to_sheet.py
 
 ## 更新日志 (Changelog)
 
+- 1.2：修复源 Bitable 字段漂移导致连续熔断的问题：`历史入驻新增可售` 改读 `可售数` 别名，`USAM` 改为可选字段并写入 `NULL` 兜底；新增每次运行的 Schema 漂移主动巡检与结构化告警日志。
 - 0.1：补齐 Forge 规范字段、CDA 三层护栏说明与副作用前契约校验入口，为正式锻造 Upsert 做准备。

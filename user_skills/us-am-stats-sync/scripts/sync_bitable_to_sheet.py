@@ -23,6 +23,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Sequence, Tuple
 
 
@@ -30,6 +31,17 @@ BITABLE_TOKEN = "MPN9bUhBTaUsgcsrN92m2Oq0yde"
 TABLE_ID = "tblZerjwuSM5rOG3"
 SHEET_TOKEN = "XZoSsAwObh72kPtn3DLmWJ4AyWc"
 DETAIL_SHEET_ID = "VM2reD"
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+SKILL_DIR = SCRIPT_DIR.parent
+DRIFT_LOG_DIR = SKILL_DIR / "output" / "schema_drift"
+
+FIELD_ALIASES: Dict[str, List[str]] = {
+    # Upstream renamed the historical salable metric to the shorter current-stock label.
+    "历史入驻新增可售": ["可售数"],
+}
+OPTIONAL_SOURCE_COLUMNS = {"USAM"}
+NULL_FALLBACK = "NULL"
 
 INDUSTRY_MAP: Dict[str, str] = {
     "Fashion": "服饰服配",
@@ -198,21 +210,35 @@ def fetch_all_bitable_records(bitable_token: str = BITABLE_TOKEN, table_id: str 
     return all_rows, field_order
 
 
+def resolve_source_value(record: Dict[str, Any], output_column: str) -> Any:
+    """Resolve output value from canonical field, alias, or explicit NULL fallback."""
+    if output_column == "更新日期":
+        raise ValueError("更新日期 is generated locally and must not be resolved from Bitable")
+    if output_column in record:
+        return record.get(output_column, "")
+    for alias in FIELD_ALIASES.get(output_column, []):
+        if alias in record:
+            return record.get(alias, "")
+    if output_column in OPTIONAL_SOURCE_COLUMNS:
+        return NULL_FALLBACK
+    return ""
+
+
 def build_sheet_values(records: List[Dict[str, Any]], update_date: str | None = None) -> List[List[Any]]:
     """Reorder Bitable records into the exact Sheet output order, including header row and update date."""
     date_value = update_date or today_m_d()
     values: List[List[Any]] = [OUTPUT_COLUMNS]
     for record in records:
         values.append([
-            record.get("US行业", ""),
-            record.get("USAM", ""),
-            record.get("线索数", ""),
-            record.get("可联系", ""),
-            record.get("已触达", ""),
-            record.get("有意愿", ""),
-            record.get("新增入驻数", ""),
-            record.get("新增入驻可售", ""),
-            record.get("历史入驻新增可售", ""),
+            resolve_source_value(record, "US行业"),
+            resolve_source_value(record, "USAM"),
+            resolve_source_value(record, "线索数"),
+            resolve_source_value(record, "可联系"),
+            resolve_source_value(record, "已触达"),
+            resolve_source_value(record, "有意愿"),
+            resolve_source_value(record, "新增入驻数"),
+            resolve_source_value(record, "新增入驻可售"),
+            resolve_source_value(record, "历史入驻新增可售"),
             date_value,
         ])
     return values
@@ -283,6 +309,61 @@ def raw_readback(sheet_token: str, sheet_id: str, read_range: str = "A1:J3") -> 
     return _extract_json_object(stdout)
 
 
+def inspect_schema_drift(source_fields: List[str]) -> Dict[str, Any]:
+    """Compare expected output fields with actual Bitable fields before writing."""
+    drift_items: List[Dict[str, Any]] = []
+    required_missing: List[str] = []
+    for column in [item for item in OUTPUT_COLUMNS if item != "更新日期"]:
+        if column in source_fields:
+            continue
+        alias_hit = next((alias for alias in FIELD_ALIASES.get(column, []) if alias in source_fields), None)
+        if alias_hit:
+            drift_items.append({
+                "column": column,
+                "status": "renamed",
+                "mapped_from": alias_hit,
+                "action": "use_alias",
+            })
+        elif column in OPTIONAL_SOURCE_COLUMNS:
+            drift_items.append({
+                "column": column,
+                "status": "deleted_or_not_granted",
+                "mapped_from": None,
+                "action": f"write_{NULL_FALLBACK}_fallback",
+            })
+        else:
+            required_missing.append(column)
+            drift_items.append({
+                "column": column,
+                "status": "missing_required",
+                "mapped_from": None,
+                "action": "hard_fail_before_write",
+            })
+    return {
+        "expected_fields": [item for item in OUTPUT_COLUMNS if item != "更新日期"],
+        "actual_fields": source_fields,
+        "aliases": FIELD_ALIASES,
+        "optional_fields": sorted(OPTIONAL_SOURCE_COLUMNS),
+        "drift_items": drift_items,
+        "required_missing": required_missing,
+    }
+
+
+def write_schema_drift_log(drift_report: Dict[str, Any]) -> str | None:
+    """Persist an explicit schema drift warning when upstream fields do not match the contract."""
+    if not drift_report.get("drift_items"):
+        return None
+    DRIFT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    path = DRIFT_LOG_DIR / f"schema_drift_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    payload = {
+        "status": "schema_drift_detected",
+        "detected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        **drift_report,
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(path)
+
+
 def sync_bitable_to_sheet(
     bitable_token: str = BITABLE_TOKEN,
     table_id: str = TABLE_ID,
@@ -293,10 +374,14 @@ def sync_bitable_to_sheet(
     validate_sync_contract(bitable_token, table_id, sheet_token, sheet_id)
     records, source_fields = fetch_all_bitable_records(bitable_token, table_id)
 
-    required_source_columns = [column for column in OUTPUT_COLUMNS if column != "更新日期"]
-    missing = [column for column in required_source_columns if column not in source_fields]
-    if missing:
-        raise ValueError(f"Missing required Bitable fields: {missing}; source_fields={source_fields}")
+    schema_drift = inspect_schema_drift(source_fields)
+    schema_drift_log = write_schema_drift_log(schema_drift)
+    if schema_drift["required_missing"]:
+        raise ValueError(
+            "Missing required Bitable fields: "
+            f"{schema_drift['required_missing']}; source_fields={source_fields}; "
+            f"schema_drift_log={schema_drift_log}"
+        )
 
     values = build_sheet_values(records)
     clear_sheet_range(sheet_token, sheet_id)
@@ -310,6 +395,8 @@ def sync_bitable_to_sheet(
         "rows_written_including_header": len(values),
         "data_rows_written": max(len(values) - 1, 0),
         "source_fields": source_fields,
+        "schema_drift": schema_drift,
+        "schema_drift_log": schema_drift_log,
         "output_columns": OUTPUT_COLUMNS,
         "raw_readback_A1_J3": readback,
     }
