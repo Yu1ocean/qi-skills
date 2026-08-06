@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.7 · 2026-08-06
+- **飞书卡片 NEW 标签原生化**：`build_travel_card_payload.py` 不再把 `🆕 **NEW**` 拼进单块 markdown 文本，而是把新增预警拆成逐条独立 element，并在左侧使用飞书原生 `tag` 组件承载 NEW。
+- **模板改为摘要 + 明细拼装**：`assets/team_travel_dashboard_card_template.json` 只保留摘要与固定大屏入口，新增预警列表在运行时注入，避免继续把 badge 和明细耦合在同一段正文里。
+- **说明层同步**：`SKILL.md` 与 `README.lark.md` 升级到 V3.7，明确本次修复只触达卡片展示层，不改 diff 逻辑与快照逻辑。
+
 ## V3.6 · 2026-07-29
 - **新增预警对象级标记**：快照 diff 改为按“人员姓名 + 预警类型 + 日期区间”三元组生成稳定 `alert_key`，并把 `is_new` 注入到 `compliance.alerts` 与 `compliance.daily_new_alerts.alerts`。
 - **HTML / Dynamic UI 高亮**：今日新增预警卡片增加 `🆕 NEW` 角标、橙红渐变底与发光边框，和持续预警做视觉隔离。

@@ -1,9 +1,9 @@
 ---
 name: team-travel-dashboard-generator
-description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.3 固化 UI 说明层同步机制与费用主卡展示规则，输出团队差旅大屏。
+description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.7 修复飞书卡片 NEW 标签原生展示，输出团队差旅大屏。
 ---
 
-version: 3.6
+version: 3.7
 
 ## Config（运行配置）
 
@@ -11,7 +11,7 @@ version: 3.6
 fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 ```
 
-# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.6
+# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.7
 
 将“差旅审批邮件 → 结构化 JSON → 静态暗色大屏 / Dynamic UI 入口 → 合规巡检视图 → 邮件审计台账 QA”的链路固化成一个可复用技能。
 
@@ -83,7 +83,7 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - 抓取范围：`ALL_PARSED_TRAVELERS`，只要邮件中能解析出姓名，就进入候选行程。
 - Email Ledger 分类护栏：`travel_booking` 必须命中明确 booking 主题/正文信号或 travel parser 证据；`SSO / 验证码 / login verification / auth code` 默认强制排除出 travel 类目。
 - `compliance.alerts`：按“人员姓名 + 预警类型 + 日期区间”三元组生成稳定 `alert_key / alert_id` 的合规预警明细。
-- `compliance.daily_new_alerts`：基于昨日快照对比得出的今日新增预警；diff key 固定为“人员姓名 + 预警类型 + 日期区间”三元组；新增项必须写入 `is_new=true`，用于 HTML / Dynamic UI / 飞书消息卡片显示 `🆕 NEW` 高亮；首次运行显示无历史基线。
+- `compliance.daily_new_alerts`：基于昨日快照对比得出的今日新增预警；diff key 固定为“人员姓名 + 预警类型 + 日期区间”三元组；新增项必须写入 `is_new=true`，用于 HTML / Dynamic UI 高亮，以及飞书卡片中的原生 `tag` NEW 标签展示；首次运行显示无历史基线。
 - **发送目标**：差旅大屏卡片发送目标固定为 `CHAT_REGISTRY.json -> travel_dashboard_report`，即用户 `yuqinan` 私聊；**禁止发到群聊**。
 - JSON 默认输出：`output/travel_dashboard.json`。
 - 快照默认输出：`output/snapshots/YYYY-MM-DD.json`，同日重跑覆盖，供次日 diff 使用。
@@ -358,10 +358,14 @@ python3 scripts/build_travel_dashboard.py materialize-dynamic-ui \
 
 ## 更新日志
 
+- **V3.7**：修复飞书卡片 NEW 标签静默降级问题。
+  - `build_travel_card_payload.py` 改为逐条新增预警独立 element 渲染，NEW 使用飞书原生 `tag` 组件展示。
+  - `assets/team_travel_dashboard_card_template.json` 回退为摘要模板，新增预警明细改为运行时动态注入，避免再把 badge 混在 markdown 正文里。
+  - 本次仅修改卡片展示层；diff 逻辑、快照逻辑与 `is_new` 计算保持不变。
 - **V3.6**：新增预警对象级 `is_new` 标记与 UI 高亮。
   - 快照 diff key 改为“人员姓名 + 预警类型 + 日期区间”三元组，生成稳定 `alert_key / alert_id`。
   - `compliance.alerts` 与 `compliance.daily_new_alerts.alerts` 中的新增项均带 `is_new=true`。
-  - 静态 HTML、Dynamic UI 与飞书消息卡片统一展示 `🆕 NEW` 角标 / 前缀，并用橙红高亮块区分新增预警。
+  - 静态 HTML 与 Dynamic UI 继续使用 `🆕 NEW` 文案高亮；飞书消息卡片在 V3.7 起切换为原生 `tag` NEW 标签，避免客户端把伪 badge 静默降级为普通正文。
 - **V3.3**：补齐 UI 升级说明层，并加入“说明层同步闸门”。
   - `assets/travel_dashboard_template.html` 的文本详情渲染改为规范换行，用户侧不再暴露原始 `\\n`。
   - 明细视图移除 `Message ID` 调试字段，减少非业务噪音。

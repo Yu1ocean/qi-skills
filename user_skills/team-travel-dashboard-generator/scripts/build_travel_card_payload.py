@@ -31,29 +31,70 @@ def count_daily_new_alerts(payload: dict[str, Any]) -> int:
     return 0
 
 
-def format_daily_new_alert_lines(payload: dict[str, Any], *, limit: int = 5) -> str:
+def collect_daily_new_alerts(payload: dict[str, Any], *, limit: int = 5) -> tuple[list[dict[str, str]], int]:
     daily = (payload.get("compliance") or {}).get("daily_new_alerts")
     alerts: list[Any] = []
     if isinstance(daily, dict):
         raw_alerts = daily.get("alerts")
         if isinstance(raw_alerts, list):
             alerts = raw_alerts
-    if not alerts:
-        message = daily.get("message") if isinstance(daily, dict) else "今日无新增预警 ✅"
-        return str(message or "今日无新增预警 ✅")
-    lines = []
+    rows: list[dict[str, str]] = []
     for item in alerts[:limit]:
         if not isinstance(item, dict):
             continue
-        person = item.get("person") or "--"
-        rule_type = item.get("rule_type") or "--"
-        route = item.get("route") or "--"
-        date_range = item.get("date_range") or item.get("date") or "--"
-        lines.append(f"- 🆕 **NEW**｜{person} · {rule_type}｜{route}｜{date_range}")
-    remaining = len(alerts) - len(lines)
+        rows.append(
+            {
+                "person": str(item.get("person") or "--"),
+                "rule_type": str(item.get("rule_type") or "--"),
+                "route": str(item.get("route") or "--"),
+                "date_range": str(item.get("date_range") or item.get("date") or "--"),
+            }
+        )
+    remaining = max(len(alerts) - len(rows), 0)
+    return rows, remaining
+
+
+def build_daily_new_alert_elements(payload: dict[str, Any], *, limit: int = 5) -> list[dict[str, Any]]:
+    daily = (payload.get("compliance") or {}).get("daily_new_alerts")
+    rows, remaining = collect_daily_new_alerts(payload, limit=limit)
+    if not rows:
+        message = daily.get("message") if isinstance(daily, dict) else "今日无新增预警 ✅"
+        return [{"tag": "markdown", "content": str(message or "今日无新增预警 ✅")}]
+
+    elements: list[dict[str, Any]] = []
+    for row in rows:
+        elements.append(
+            {
+                "tag": "column_set",
+                "columns": [
+                    {
+                        "tag": "column",
+                        "width": "shrink",
+                        "elements": [
+                            {
+                                "tag": "tag",
+                                "text": {"tag": "plain_text", "content": "NEW"},
+                                "color": "red",
+                            }
+                        ],
+                    },
+                    {
+                        "tag": "column",
+                        "width": "weighted",
+                        "weight": 1,
+                        "elements": [
+                            {
+                                "tag": "markdown",
+                                "content": f"**{row['person']} · {row['rule_type']}**｜{row['route']}｜{row['date_range']}",
+                            }
+                        ],
+                    },
+                ],
+            }
+        )
     if remaining > 0:
-        lines.append(f"- 另有 {remaining} 条新增预警，请打开大屏查看")
-    return "\n".join(lines) if lines else "今日无新增预警 ✅"
+        elements.append({"tag": "markdown", "content": f"另有 **{remaining}** 条新增预警，请打开大屏查看"})
+    return elements
 
 
 def render_template(value: Any, replacements: dict[str, str]) -> Any:
@@ -89,10 +130,17 @@ def build_card(
         "TOTAL_TRIPS": str(total_trips),
         "COMPLIANCE_ALERTS": str(compliance_alerts),
         "DAILY_NEW_ALERTS": str(daily_new_alerts),
-        "DAILY_NEW_ALERT_LINES": format_daily_new_alert_lines(snapshot),
         "DASHBOARD_URL": dashboard_url,
     }
     card = render_template(template, replacements)
+    alert_elements = build_daily_new_alert_elements(snapshot)
+    body = card.get("body") or {}
+    elements = body.get("elements") if isinstance(body, dict) else None
+    if not isinstance(elements, list):
+        raise ValueError("schema 2.0 card must use body.elements")
+    if len(elements) < 2:
+        raise ValueError("card template must contain summary and button elements")
+    body["elements"] = [elements[0], *alert_elements, *elements[1:]]
     card["schema"] = "2.0"
     card["task_id"] = task_id
     card["topic"] = topic

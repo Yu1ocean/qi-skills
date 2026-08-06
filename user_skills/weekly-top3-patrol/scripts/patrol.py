@@ -115,12 +115,42 @@ def _next_quarter(dt: datetime) -> datetime:
 
 
 def download_sheet(url: str) -> Path:
+    """下载 wiki/sheets 链接对应的 xlsx 到本地。
+
+    兼容性说明：
+    - 历史版本依赖 inner_skills/lark/mcp_lark_lark_download.py（已在部分环境中下线）。
+    - 当前默认走 lark-cli sheets +workbook-export（read-only），保持 dry-run/真实发送门禁不变。
+    """
+
+    legacy_downloader = LARK_SKILL_DIR / "mcp_lark_lark_download.py"
+    if legacy_downloader.exists():
+        output = _run([
+            "python3",
+            str(legacy_downloader),
+            json.dumps({"document_url": url}, ensure_ascii=False),
+        ])
+        return _extract_file_path(output)
+
+    # Fallback: lark-cli 导出 xlsx（要求 output-path 为相对路径且位于当前目录）
+    out_name = f"top3_export_{datetime.now(CST).strftime('%Y%m%d_%H%M%S')}.xlsx"
+    workdir = ROOT / "user_skills" / "weekly-top3-patrol"
     output = _run([
-        "python3",
-        str(LARK_SKILL_DIR / "mcp_lark_lark_download.py"),
-        json.dumps({"document_url": url}, ensure_ascii=False),
+        "lark-cli",
+        "sheets",
+        "+workbook-export",
+        "--url",
+        url,
+        "--file-extension",
+        "xlsx",
+        "--output-path",
+        f"./{out_name}",
+        "--json",
     ])
-    return _extract_file_path(output)
+    resp = _parse_json_from_mixed_output(output)
+    saved = (((resp or {}).get("data") or {}).get("saved_path"))
+    if saved:
+        return Path(saved)
+    return workdir / out_name
 
 
 def load_roster_from_chat_registry() -> dict[str, dict[str, str]]:

@@ -48,5 +48,46 @@
       ]
     }
   ],
-  "mode_b_bookings": []
+  "mode_b_bookings": [],
+  "error_runs": [
+    {
+      "timestamp": "2026-08-03T10:12:47.263093+08:00",
+      "status": "ERROR_ROSTER_EMPTY",
+      "error": "团队名单人数低于阈值：1 < 2",
+      "raw_evidence": {
+        "roster_count": 1,
+        "owner_blocks_count": 1,
+        "complete_users": [],
+        "absent_users": [],
+        "week_marker": "Week 28",
+        "fallback_reason": null
+      }
+    },
+    {
+      "timestamp": "2026-08-04T13:35:57.510382+08:00",
+      "status": "ERROR_ROSTER_EMPTY",
+      "error": "团队名单人数低于阈值：1 < 2",
+      "raw_evidence": {
+        "roster_count": 1,
+        "owner_blocks_count": 1,
+        "complete_users": [],
+        "absent_users": [],
+        "week_marker": "Week 28",
+        "fallback_reason": null
+      }
+    },
+    {
+      "timestamp": "2026-08-05T13:34:05.776136+08:00",
+      "status": "ERROR_ROSTER_EMPTY",
+      "error": "团队名单人数低于阈值：1 < 2",
+      "raw_evidence": {
+        "roster_count": 1,
+        "owner_blocks_count": 1,
+        "complete_users": [],
+        "absent_users": [],
+        "week_marker": "Week 28",
+        "fallback_reason": null
+      }
+    }
+  ]
 }
