@@ -40,7 +40,7 @@ FIELD_ALIASES: Dict[str, List[str]] = {
     # Upstream renamed the historical salable metric to the shorter current-stock label.
     "历史入驻新增可售": ["可售数"],
 }
-OPTIONAL_SOURCE_COLUMNS = {"USAM"}
+OPTIONAL_SOURCE_COLUMNS = {"USAM", "历史入驻新增可售"}
 NULL_FALLBACK = "NULL"
 
 INDUSTRY_MAP: Dict[str, str] = {
