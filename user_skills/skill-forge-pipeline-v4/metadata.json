@@ -1,16 +1,16 @@
 {
-    "skill_id": "team-travel-dashboard-generator",
-    "name": "team-travel-dashboard-generator",
-    "description": "自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.8 增加飞书卡片 NEW 标签 lark_md 兼容降级。",
-    "version": "3.8",
-    "doc_link": "https://bytedance.larkoffice.com/docx/OJ4Xd5utOoVJbzxYgOEcQxycnHf",
+    "skill_id": "SKILL-MULTI-SOURCE-SYNC",
+    "name": "multi-source-sync",
+    "description": "多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞与轻量交叉质检。",
+    "version": "1.1",
+    "doc_link": "https://bytedance.my.larkoffice.com/docx/UKGydgbxKo2TibxunSem1ioOykc",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-07",
-    "updated_at": "2026-08-07 08:06",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator.zip",
-    "zip_name": "team-travel-dashboard-generator.zip",
-    "drive_file_token": "X4MfbzYjdohNjcx3LL1cplEZn6c",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/X4MfbzYjdohNjcx3LL1cplEZn6c"
+    "updated_at": "2026-08-07 15:03",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/multi-source-sync",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/multi-source-sync.zip",
+    "zip_name": "multi-source-sync.zip",
+    "drive_file_token": "QwRMbVaGDoO0osxRXWkmG6MCydc",
+    "drive_file_url": "https://bytedance.my.larkoffice.com/file/QwRMbVaGDoO0osxRXWkmG6MCydc"
 }

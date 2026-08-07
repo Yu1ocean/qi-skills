@@ -1,0 +1,45 @@
+{
+  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb (sheet=d85fa5)。用户已手动验证：50 行写入成功，K2=2026-08-07。",
+  "sources": [
+    {
+      "id": "va_dq_2503254957",
+      "type": "aeolus",
+      "url": "https://aeolus-va.tiktok-row.net/pages/dataQuery?appId=555771&dashboardId=727928&id=2503254957&isDefault=1&reportQuerySchemaKey=58976a47-26c9-444e-bff9-ab7d213b0ee6&rid=6081878&sid=3377819&waitForDataReady=0",
+      "region": "VA",
+      "download_full": true,
+      "filters": [],
+      "field_map": {
+        "__by_position__": "target_columns"
+      },
+      "$note": "字段映射说明：用户上游 dataQuery 已固定 10 列结构，字段名与 target.columns 保持顺序一致（按位置直接映射）。若上游列名与目标列名不同，改写 field_map 为 {'上游字段名': '目标列名'} 精确映射。"
+    }
+  ],
+  "target": {
+    "sheet_url": "https://bytedance.my.larkoffice.com/sheets/KRIUslDgdh7WvYtXK8ZmhOCcyOb?sheet=d85fa5",
+    "sheet_id": "d85fa5",
+    "header_row": 1,
+    "data_start_row": 2,
+    "data_range": "A2:J10000",
+    "readback_range": "A1:J3",
+    "updated_at_cell": "K2",
+    "updated_at_format": "YYYY-MM-DD",
+    "columns": [
+      "column_1",
+      "column_2",
+      "column_3",
+      "column_4",
+      "column_5",
+      "column_6",
+      "column_7",
+      "column_8",
+      "column_9",
+      "column_10"
+    ],
+    "$note": "target.columns 是目标 Sheet 表头第一行的真实列名。首次配置时请把上面 column_1 ~ column_10 改为该 Sheet A1:J1 的实际表头文本。"
+  },
+  "merge_strategy": "union_append",
+  "qa": {
+    "engine": "builtin",
+    "cross_checks": ["records_vs_rows", "field_map_zero_loss", "updated_at_anchor"]
+  }
+}
