@@ -1,0 +1,5 @@
+## V3.8 · 2026-08-07
+- **NEW 标签兼容降级**：`build_travel_card_payload.py` 保留 V3.7 原生 `tag` 首选逻辑，同时新增 `--new-label-style lark_md` 降级模式；当卡片服务返回 `not support tag` 时，可把 NEW 渲染为 `**🆕 NEW**` 加粗文本。
+- **结构不降级**：降级后仍保持每条新增预警独立 element，不回退到整段混排 post，避免再次触发 `230001 invalid message content`。
+- **范围收敛**：本次仅修改卡片 payload 兼容层与说明层，不触达快照、diff、邮件抓取、HTML 或 Dynamic UI 逻辑。
+

@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.8 · 2026-08-07
+- **NEW 标签兼容降级**：`build_travel_card_payload.py` 保留 V3.7 原生 `tag` 首选逻辑，同时新增 `--new-label-style lark_md` 降级模式；当卡片服务返回 `not support tag` 时，可把 NEW 渲染为 `**🆕 NEW**` 加粗文本。
+- **结构不降级**：降级后仍保持每条新增预警独立 element，不回退到整段混排 post，避免再次触发 `230001 invalid message content`。
+- **范围收敛**：本次仅修改卡片 payload 兼容层与说明层，不触达快照、diff、邮件抓取、HTML 或 Dynamic UI 逻辑。
+
 ## V3.7 · 2026-08-06
 - **飞书卡片 NEW 标签原生化**：`build_travel_card_payload.py` 不再把 `🆕 **NEW**` 拼进单块 markdown 文本，而是把新增预警拆成逐条独立 element，并在左侧使用飞书原生 `tag` 组件承载 NEW。
 - **模板改为摘要 + 明细拼装**：`assets/team_travel_dashboard_card_template.json` 只保留摘要与固定大屏入口，新增预警列表在运行时注入，避免继续把 badge 和明细耦合在同一段正文里。

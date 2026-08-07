@@ -3,7 +3,7 @@ name: team-travel-dashboard-generator
 description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.7 修复飞书卡片 NEW 标签原生展示，输出团队差旅大屏。
 ---
 
-version: 3.7
+version: 3.8
 
 ## Config（运行配置）
 
@@ -11,7 +11,7 @@ version: 3.7
 fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 ```
 
-# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.7
+# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.8
 
 将“差旅审批邮件 → 结构化 JSON → 静态暗色大屏 / Dynamic UI 入口 → 合规巡检视图 → 邮件审计台账 QA”的链路固化成一个可复用技能。
 
@@ -358,6 +358,10 @@ python3 scripts/build_travel_dashboard.py materialize-dynamic-ui \
 
 ## 更新日志
 
+- **V3.8**：新增飞书卡片 NEW 标签 lark_md 兼容降级。
+  - V3.7 仍优先构造飞书原生 `tag` 组件，保持新版客户端的视觉表达。
+  - 当创建卡片链路返回 `not support tag` 等组件兼容错误时，可用 `--new-label-style lark_md` 生成兼容 payload，把 NEW 渲染为 `**🆕 NEW**` 加粗文本。
+  - 降级模式仍保持每条新增预警独立 element，不改快照 diff、邮件抓取、HTML 或 Dynamic UI 逻辑。
 - **V3.7**：修复飞书卡片 NEW 标签静默降级问题。
   - `build_travel_card_payload.py` 改为逐条新增预警独立 element 渲染，NEW 使用飞书原生 `tag` 组件展示。
   - `assets/team_travel_dashboard_card_template.json` 回退为摘要模板，新增预警明细改为运行时动态注入，避免再把 badge 混在 markdown 正文里。

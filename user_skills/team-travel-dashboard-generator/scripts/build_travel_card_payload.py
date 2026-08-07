@@ -54,15 +54,27 @@ def collect_daily_new_alerts(payload: dict[str, Any], *, limit: int = 5) -> tupl
     return rows, remaining
 
 
-def build_daily_new_alert_elements(payload: dict[str, Any], *, limit: int = 5) -> list[dict[str, Any]]:
+def build_daily_new_alert_elements(
+    payload: dict[str, Any],
+    *,
+    limit: int = 5,
+    new_label_style: str = "tag",
+) -> list[dict[str, Any]]:
     daily = (payload.get("compliance") or {}).get("daily_new_alerts")
     rows, remaining = collect_daily_new_alerts(payload, limit=limit)
     if not rows:
         message = daily.get("message") if isinstance(daily, dict) else "今日无新增预警 ✅"
         return [{"tag": "markdown", "content": str(message or "今日无新增预警 ✅")}]
 
+    if new_label_style not in {"tag", "lark_md"}:
+        raise ValueError(f"unsupported new_label_style: {new_label_style}")
+
     elements: list[dict[str, Any]] = []
     for row in rows:
+        alert_text = f"**{row['person']} · {row['rule_type']}**｜{row['route']}｜{row['date_range']}"
+        if new_label_style == "lark_md":
+            elements.append({"tag": "markdown", "content": f"**🆕 NEW** {alert_text}"})
+            continue
         elements.append(
             {
                 "tag": "column_set",
@@ -85,7 +97,7 @@ def build_daily_new_alert_elements(payload: dict[str, Any], *, limit: int = 5) -
                         "elements": [
                             {
                                 "tag": "markdown",
-                                "content": f"**{row['person']} · {row['rule_type']}**｜{row['route']}｜{row['date_range']}",
+                                "content": alert_text,
                             }
                         ],
                     },
@@ -117,6 +129,7 @@ def build_card(
     topic: str,
     dashboard_url: str,
     chat_registry_usage: str,
+    new_label_style: str = "tag",
 ) -> dict[str, Any]:
     summary = snapshot.get("summary") or {}
     compliance = snapshot.get("compliance") or {}
@@ -133,7 +146,7 @@ def build_card(
         "DASHBOARD_URL": dashboard_url,
     }
     card = render_template(template, replacements)
-    alert_elements = build_daily_new_alert_elements(snapshot)
+    alert_elements = build_daily_new_alert_elements(snapshot, new_label_style=new_label_style)
     body = card.get("body") or {}
     elements = body.get("elements") if isinstance(body, dict) else None
     if not isinstance(elements, list):
@@ -170,6 +183,7 @@ def main() -> int:
     parser.add_argument("--topic", default="团队差旅大屏自动更新")
     parser.add_argument("--dashboard-url", default=DEFAULT_DASHBOARD_URL)
     parser.add_argument("--chat-registry-usage", default=DEFAULT_CHAT_REGISTRY_USAGE)
+    parser.add_argument("--new-label-style", choices=("tag", "lark_md"), default="tag", help="NEW label renderer: native tag first, lark_md fallback when card service rejects tag component")
     args = parser.parse_args()
 
     skill_root = Path(__file__).resolve().parents[1]
@@ -182,6 +196,7 @@ def main() -> int:
         topic=args.topic,
         dashboard_url=args.dashboard_url,
         chat_registry_usage=args.chat_registry_usage,
+        new_label_style=args.new_label_style,
     )
     validate_card(card)
 
