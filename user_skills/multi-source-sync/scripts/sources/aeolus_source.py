@@ -99,6 +99,33 @@ def _read_csv_rows(csv_path: Path) -> Tuple[List[str], List[List[str]]]:
     return rows[0], rows[1:]
 
 
+def _read_xlsx_rows(xlsx_path: Path) -> Tuple[List[str], List[List[str]]]:
+    try:
+        from openpyxl import load_workbook
+    except ImportError as exc:  # pragma: no cover - dependency should exist in workspace
+        raise AeolusSourceError(f"openpyxl is required to read xlsx exports: {exc}")
+
+    wb = load_workbook(xlsx_path, data_only=True, read_only=True)
+    ws = wb[wb.sheetnames[0]]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return [], []
+    header = ["" if v is None else str(v) for v in rows[0]]
+    data_rows: List[List[str]] = []
+    for raw_row in rows[1:]:
+        data_rows.append(["" if v is None else str(v) for v in raw_row])
+    return header, data_rows
+
+
+def _read_tabular_rows(file_path: Path) -> Tuple[List[str], List[List[str]]]:
+    suffix = file_path.suffix.lower()
+    if suffix == ".csv":
+        return _read_csv_rows(file_path)
+    if suffix == ".xlsx":
+        return _read_xlsx_rows(file_path)
+    raise AeolusSourceError(f"Unsupported download file format: {file_path}")
+
+
 def fetch(source_config: Dict[str, Any]) -> Dict[str, Any]:
     """Fetch data from an Aeolus source configuration.
 
@@ -129,24 +156,69 @@ def fetch(source_config: Dict[str, Any]) -> Dict[str, Any]:
     filters = source_config.get("filters") or []
     download_full = bool(source_config.get("download_full", False))
     report_id = source_config.get("report_id")
+    field_map = source_config.get("field_map") or {}
+    source_id = source_config.get("id", "aeolus")
 
     if download_full:
-        return _fetch_via_download(
-            url=url,
-            base_url=base_url,
-            region=region,
-            filters=filters,
-            report_id=report_id,
-            source_id=source_config.get("id", "aeolus"),
-        )
+        try:
+            downloaded = _fetch_via_download(
+                url=url,
+                base_url=base_url,
+                region=region,
+                filters=filters,
+                report_id=report_id,
+                source_id=source_id,
+            )
+            required_fields = [str(k) for k in field_map.keys() if str(k)]
+            if required_fields and any(name not in downloaded.get("columns", []) for name in required_fields):
+                missing = [name for name in required_fields if name not in downloaded.get("columns", [])]
+                fallback = _fetch_via_url_query(
+                    url=url,
+                    base_url=base_url,
+                    region=region,
+                    filters=filters,
+                    report_id=report_id,
+                    source_id=source_id,
+                )
+                fallback.setdefault("source_meta", {})["download_full_requested"] = True
+                fallback["source_meta"]["download_full_fallback_reason"] = (
+                    f"download output missing declared field_map columns: {missing}"
+                )
+                fallback["source_meta"]["download_file"] = downloaded.get("source_meta", {}).get("file")
+                fallback["source_meta"]["mode"] = "url_query_fallback"
+                return fallback
+            return downloaded
+        except AeolusSourceError as exc:
+            fallback = _fetch_via_url_query(
+                url=url,
+                base_url=base_url,
+                region=region,
+                filters=filters,
+                report_id=report_id,
+                source_id=source_id,
+            )
+            fallback.setdefault("source_meta", {})["download_full_requested"] = True
+            fallback["source_meta"]["download_full_fallback_reason"] = str(exc)
+            fallback["source_meta"]["mode"] = "url_query_fallback"
+            return fallback
     return _fetch_via_url_query(
         url=url,
         base_url=base_url,
         region=region,
         filters=filters,
         report_id=report_id,
-        source_id=source_config.get("id", "aeolus"),
+        source_id=source_id,
     )
+
+
+def _normalize_column_names(columns: List[Any]) -> List[str]:
+    normalized: List[str] = []
+    for col in columns:
+        if isinstance(col, dict):
+            normalized.append(str(col.get("label") or col.get("name") or col.get("uniqueId") or ""))
+        else:
+            normalized.append(str(col))
+    return normalized
 
 
 def _fetch_via_url_query(
@@ -166,21 +238,21 @@ def _fetch_via_url_query(
         )
     payload = _parse_url_query_output(stdout)
 
-    columns = payload.get("columns") or []
+    columns = _normalize_column_names(payload.get("columns") or [])
     rows = payload.get("rows") or []
     data_truncated = payload.get("data_truncated", False)
-    raw_file = payload.get("rawFile")
+    data_file = payload.get("dataFile")
 
-    # If truncated, read from rawFile for full data
-    if data_truncated and raw_file and Path(raw_file).exists():
+    # If truncated, prefer the processed dataFile emitted by url_query.py
+    if data_truncated and data_file and Path(data_file).exists():
         try:
-            with Path(raw_file).open("r", encoding="utf-8") as f:
-                raw_payload = json.load(f)
-            columns = raw_payload.get("columns") or columns
-            rows = raw_payload.get("rows") or rows
+            with Path(data_file).open("r", encoding="utf-8") as f:
+                full_payload = json.load(f)
+            columns = _normalize_column_names(full_payload.get("columns") or columns)
+            rows = full_payload.get("rows") or rows
         except (json.JSONDecodeError, OSError) as exc:
             raise AeolusSourceError(
-                f"Failed to read rawFile for full data: {exc}. Consider setting download_full=true."
+                f"Failed to read dataFile for full data: {exc}. data_file={data_file}"
             )
 
     if not columns:
@@ -189,7 +261,7 @@ def _fetch_via_url_query(
         )
 
     return {
-        "columns": [str(c) for c in columns],
+        "columns": columns,
         "rows": rows,
         "records_fetched": len(rows),
         "source_meta": {
@@ -198,6 +270,7 @@ def _fetch_via_url_query(
             "url": url,
             "mode": "url_query",
             "data_truncated": data_truncated,
+            "data_file": data_file,
         },
     }
 
@@ -227,14 +300,14 @@ def _fetch_via_download(
         end = text.rfind("}")
         payload = json.loads(text[start:end + 1])
 
-    csv_file = payload.get("file") or payload.get("csvFile") or payload.get("filePath")
-    if not csv_file or not Path(csv_file).exists():
+    data_file = payload.get("file") or payload.get("csvFile") or payload.get("filePath")
+    if not data_file or not Path(data_file).exists():
         raise AeolusSourceError(
-            f"download_dashboard_data.py did not produce a CSV file. payload={payload}"
+            f"download_dashboard_data.py did not produce a readable file. payload={payload}"
         )
-    columns, rows = _read_csv_rows(Path(csv_file))
+    columns, rows = _read_tabular_rows(Path(data_file))
     if not columns:
-        raise AeolusSourceError(f"Downloaded CSV has no header: {csv_file}")
+        raise AeolusSourceError(f"Downloaded file has no header: {data_file}")
 
     return {
         "columns": columns,
@@ -245,6 +318,11 @@ def _fetch_via_download(
             "region": region,
             "url": url,
             "mode": "download_full",
-            "csv_file": csv_file,
+            "file": data_file,
+            "download_payload": {
+                "rowCount": payload.get("rowCount"),
+                "displayType": payload.get("displayType"),
+                "limitReached": payload.get("limitReached"),
+            },
         },
     }

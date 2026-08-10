@@ -1,13 +1,13 @@
 ---
 name: multi-source-sync
-description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
+description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞、源级 value_map 值转写与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
 author: yuqinan
-version: 1.1
+version: 1.2
 ---
 
-# Multi Source Sync (v1.1)
+# Multi Source Sync (v1.2)
 
-多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、合并、幂等写入、更新日期锚点、RAW 回捞与轻量质检。
+多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、合并、幂等写入、更新日期锚点、RAW 回捞、源级 `value_map` 值转写与轻量质检。
 
 ## Common Rationalizations（常见借口库 - L1）
 
@@ -105,13 +105,14 @@ user_skills/multi-source-sync/
 {
   "sources": [
     {
-      "id": "va_dq_2503254957",
+      "id": "va_dq_2507297138",
       "type": "aeolus",
-      "url": "https://aeolus-va.tiktok-row.net/pages/dataQuery?...",
+      "url": "https://aeolus-va.tiktok-row.net/pages/dataQuery?...id=2507297138...",
       "region": "VA",
       "download_full": true,
       "filters": [],
-      "field_map": { "col_a": "A列", "col_b": "B列" }
+      "field_map": { "shop_id": "shop_id", "shop_name": "shop_name" },
+      "value_map": { "shop_status": { "2": "active" } }
     },
     {
       "id": "bitable_source_1",
@@ -155,7 +156,7 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
   - 支持 dataQuery / dashboard / chart / historyId 四种 URL。
   - Region 从 URL 自动推断（`data.bytedance.net` → CN，`aeolus-sg` → SG，`aeolus-va` / `tiktok-row.net` 带 `-va` / VA 关键字 → VA，`aeolus-mybd` → MYBD）。
   - 支持 `filters`（`aeolus_url_query --filters` 语法）。
-  - 支持 `download_full=true`：走 `download_dashboard_data.py` 拿完整 CSV，规避 1000 行 hard limit。
+  - 支持 `download_full=true`：优先走 `download_dashboard_data.py` 拿完整下载；若下载失败或返回结果缺少 `field_map` 所需字段，则自动回退 `url_query.py`。
 - **type=bitable**：底层调用 `lark-cli base +record-list`。
   - 支持 `base_url` / `base_token + table_id`（自动解析）。
   - 支持 `view_id`、`filter`（DSL）。
@@ -164,6 +165,7 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 ### 字段映射与合并
 
 - 每个数据源必须配置 `field_map`：`{"上游字段名": "目标列名"}`。
+- `value_map` 为可选源级值映射：在该源归一化到 `target.columns` 后，对指定列做值级转写；若 key 写的是上游字段名，会先通过 `field_map` 解析到目标列，再应用如 `{"shop_status": {"2": "active"}}` 的映射。
 - 目标列顺序由 `target.columns` 唯一决定。
 - 多源结果按 `field_map` 归一化到 `target.columns` 后**行拼接**（默认 `union_append`，不去重）。
 - 缺失字段以空字符串填充；额外字段丢弃并记录警告到 QA 报告。
@@ -206,15 +208,17 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 - 🤖 标准输出：
   ```text
   已完成同步：
-  - 数据源 [va_dq_2503254957](aeolus/VA): records_fetched=50
+  - 数据源 [va_dq_2507297138](aeolus/VA): records_fetched=350
   - 目标 Sheet [my.larkoffice/KRIUslDgdh7WvYtXK8ZmhOCcyOb]:
       - data_range=A2:J10000 已清空
-      - rows_written=50
-      - K2 = 2026-08-07
+      - rows_written=350
+      - K2 = 2026-08-10
+      - value_map(shop_status): 343 行 `2 → active`
   - RAW 回捞 A1:J3 通过
-  - QA report → output/qa_report_20260807_144500.json (status=PASS)
+  - QA report → output/qa_report_20260810_150323.json (status=PASS)
   ```
 
 ## 更新日志 (Changelog)
 
+- **1.2（2026-08-10）**：数据源热更新 + `value_map` 支持；首个实例 URL 切换到 `id=2507297138`；新增源级值转写（示例：`shop_status: {"2": "active"}`）；`scripts/sync_main.py` 在归一化后应用 `value_map`；Aeolus 下载结果缺字段时自动回退 `url_query` 继续取数。
 - **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker；首个实例：每周五 VA dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb（sheet=d85fa5）。

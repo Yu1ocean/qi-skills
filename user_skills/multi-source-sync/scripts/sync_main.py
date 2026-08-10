@@ -70,6 +70,19 @@ def validate_sync_contract(config: Dict[str, Any]) -> None:
                 f"config.sources[{i}].field_map must be a non-empty dict; "
                 f"got {type(field_map).__name__}"
             )
+        value_map = src.get("value_map")
+        if value_map is not None:
+            if not isinstance(value_map, dict):
+                raise SyncContractError(
+                    f"config.sources[{i}].value_map must be a dict when provided; "
+                    f"got {type(value_map).__name__}"
+                )
+            for col_name, mapping in value_map.items():
+                if not isinstance(mapping, dict):
+                    raise SyncContractError(
+                        f"config.sources[{i}].value_map[{col_name!r}] must be a dict; "
+                        f"got {type(mapping).__name__}"
+                    )
     # sheet_writer will do its own contract check on target
 
 
@@ -111,16 +124,60 @@ def normalize_rows(
     normalized: List[List[Any]] = []
     for raw_row in source_result.get("rows") or []:
         new_row: List[Any] = []
+        is_dict_row = isinstance(raw_row, dict)
         for tgt_col in target_columns:
             idx = target_to_src_idx.get(tgt_col)
             if idx is None:
                 new_row.append("")
+            elif is_dict_row:
+                src_name = source_columns[idx]
+                new_row.append(raw_row.get(src_name, ""))
             elif idx < len(raw_row):
                 new_row.append(raw_row[idx])
             else:
                 new_row.append("")
         normalized.append(new_row)
     return normalized
+
+
+def apply_value_map(
+    *,
+    normalized_rows: List[List[Any]],
+    field_map: Dict[str, str],
+    target_columns: List[str],
+    value_map: Dict[str, Dict[str, Any]] | None,
+) -> Tuple[List[List[Any]], Dict[str, int]]:
+    """Apply optional source-level value mapping after normalization.
+
+    Resolution order for each value_map key:
+    1. exact target column name
+    2. source column name resolved through field_map
+    """
+    if not value_map:
+        return normalized_rows, {}
+
+    target_index = {name: idx for idx, name in enumerate(target_columns)}
+    stats: Dict[str, int] = {}
+
+    for value_map_key, mapping in value_map.items():
+        target_name = value_map_key if value_map_key in target_index else field_map.get(value_map_key)
+        if target_name not in target_index:
+            raise SyncContractError(
+                f"value_map key {value_map_key!r} could not be resolved to a target column"
+            )
+        idx = target_index[target_name]
+        hit_count = 0
+        for row in normalized_rows:
+            if idx >= len(row):
+                continue
+            current_value = row[idx]
+            mapped_value = mapping.get(str(current_value))
+            if mapped_value is None:
+                continue
+            row[idx] = mapped_value
+            hit_count += 1
+        stats[value_map_key] = hit_count
+    return normalized_rows, stats
 
 
 def merge_rows(all_normalized: List[List[List[Any]]], strategy: str) -> List[List[Any]]:
@@ -201,6 +258,7 @@ def main() -> int:
 
     target_columns: List[str] = [str(c) for c in config["target"]["columns"]]
     sources_results: List[Dict[str, Any]] = []
+    value_map_applied: List[Dict[str, Any]] = []
     all_normalized: List[List[List[Any]]] = []
 
     try:
@@ -212,6 +270,18 @@ def main() -> int:
                 source_result=fetched,
                 field_map=src_cfg.get("field_map", {}),
                 target_columns=target_columns,
+            )
+            normalized, value_map_stats = apply_value_map(
+                normalized_rows=normalized,
+                field_map=src_cfg.get("field_map", {}),
+                target_columns=target_columns,
+                value_map=src_cfg.get("value_map"),
+            )
+            value_map_applied.append(
+                {
+                    "source_id": src_cfg.get("id", "?"),
+                    "per_column": value_map_stats,
+                }
             )
             all_normalized.append(normalized)
 
@@ -254,6 +324,7 @@ def main() -> int:
                 "updated_at_cell": write_result.get("updated_at_cell"),
                 "data_range_cleared": write_result.get("data_range_cleared"),
             },
+            "value_map_applied": value_map_applied,
             "cross_checks": cross_report["cross_checks"],
             "warnings": cross_report.get("warnings", []),
             "errors": cross_report.get("errors", []),

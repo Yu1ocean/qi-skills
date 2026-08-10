@@ -7,9 +7,10 @@
 - **数据源 1（Aeolus）**：
   - 类型：`aeolus` dataQuery
   - Region: `VA`（自动从域名 `aeolus-va.tiktok-row.net` 推断）
-  - URL: `https://aeolus-va.tiktok-row.net/pages/dataQuery?appId=555771&dashboardId=727928&id=2503254957&isDefault=1&reportQuerySchemaKey=58976a47-26c9-444e-bff9-ab7d213b0ee6&rid=6081878&sid=3377819&waitForDataReady=0`
-  - `download_full=true`（走 `download_dashboard_data`，规避 1000 行 hard limit）
-  - `field_map`：按 `target.columns` 顺序直接映射（用户已验证 50 行结构）
+  - URL: `https://aeolus-va.tiktok-row.net/pages/dataQuery?appId=555771&dashboardId=727928&id=2507297138&isDefault=1&reportQuerySchemaKey=58976a47-26c9-444e-bff9-ab7d213b0ee6&rid=6081878&sid=3377819&waitForDataReady=0`
+  - `download_full=true`（优先走 `download_dashboard_data`，缺字段或失败时自动回退 `url_query`）
+  - `field_map`：显式映射到目标表头 `shop_id/shop_name/US行业/US AM/US Live AM/直播日均GMV/竞拍日均GMV/竞拍渗透/竞拍日均UV/空白J列`
+  - `value_map`：`shop_status` 的值 `2 → active`（写入目标空白 J 列）
 
 ## 产出物
 
@@ -17,7 +18,7 @@
 - **目标 Sheet ID**: `d85fa5`
 - **写入范围**: `A2:J10000`（表头第一行 `A1:J1` 只读锁死）
 - **更新日期锚点**: `K2`，格式 `YYYY-MM-DD`
-- **验收锚点（用户已验证）**：`K2 = 2026-08-07`，rows_written = 50（可用作首次 dry-run 回读校验）
+- **验收锚点（最近一次真跑）**：`K2 = 2026-08-10`，rows_written = 350，`value_map(shop_status)` 命中 343 行
 - **QA 报告目录**: `output/qa_report_YYYYMMDD_HHMMSS.json`（每次同步落盘一份）
 
 ## 质检方案结论
@@ -33,22 +34,25 @@
 
 ```json
 {
-  "run_id": "20260807_144500",
+  "run_id": "20260810_150049",
   "config": "resources/example_weekly_friday.json",
   "status": "PASS | WARN | FAIL",
   "sources": [
-    { "id": "va_dq_2503254957", "type": "aeolus", "records_fetched": 50 }
+    { "id": "va_dq_2507297138", "type": "aeolus", "records_fetched": 350 }
   ],
   "target": {
     "sheet_url": "...",
     "sheet_id": "d85fa5",
-    "rows_written": 50,
-    "updated_at": "2026-08-07"
+    "rows_written": 350,
+    "updated_at": "2026-08-10"
   },
+  "value_map_applied": [
+    { "source_id": "va_dq_2507297138", "per_column": { "shop_status": 343 } }
+  ],
   "cross_checks": {
-    "records_vs_rows": { "expected": 50, "actual": 50, "ok": true },
+    "records_vs_rows": { "expected": 350, "actual": 350, "ok": true },
     "field_map_zero_loss": { "mapped_fields": 10, "unmapped_fields": [], "ok": true },
-    "updated_at_anchor": { "cell": "K2", "value": "2026-08-07", "ok": true }
+    "updated_at_anchor": { "cell": "K2", "value": "2026-08-10", "ok": true }
   },
   "raw_readback": {
     "range": "A1:J3",

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2 — 数据源热更新 + value_map 支持
+
+- resources/example_weekly_friday.json: id 2503254957 → 2507297138
+- 新增 value_map 字段（可选）：源级值映射，示例 shop_status: {"2":"active"}
+- scripts/sync_main.py: 合并阶段应用 value_map
+- scripts/sources/aeolus_source.py: download_full 返回缺字段或失败时自动回退 url_query
+- CDA 自检重新通过
+
 ## 1.1（首发 2026-08-07）
 
 - 首次锻造 `multi-source-sync` 技能。
