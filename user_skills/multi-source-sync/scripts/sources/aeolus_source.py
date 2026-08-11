@@ -242,6 +242,7 @@ def _fetch_via_url_query(
     rows = payload.get("rows") or []
     data_truncated = payload.get("data_truncated", False)
     data_file = payload.get("dataFile")
+    server_total = payload.get("total")
 
     # If truncated, prefer the processed dataFile emitted by url_query.py
     if data_truncated and data_file and Path(data_file).exists():
@@ -250,6 +251,7 @@ def _fetch_via_url_query(
                 full_payload = json.load(f)
             columns = _normalize_column_names(full_payload.get("columns") or columns)
             rows = full_payload.get("rows") or rows
+            server_total = full_payload.get("total", server_total)
         except (json.JSONDecodeError, OSError) as exc:
             raise AeolusSourceError(
                 f"Failed to read dataFile for full data: {exc}. data_file={data_file}"
@@ -258,6 +260,18 @@ def _fetch_via_url_query(
     if not columns:
         raise AeolusSourceError(
             f"aeolus url_query returned no columns. exit={exit_code}, payload keys={list(payload.keys())}"
+        )
+
+    # Safety guard: for paginated/pivot DataQuery responses, url_query may expose
+    # server_total > extracted rows. Do not silently write partial data.
+    try:
+        server_total_int = int(server_total) if server_total is not None else None
+    except (TypeError, ValueError):
+        server_total_int = None
+    if server_total_int is not None and len(rows) < server_total_int:
+        raise AeolusSourceError(
+            f"Aeolus pagination incomplete: fetched_rows={len(rows)} < server_total={server_total_int}. "
+            f"data_file={data_file or ''}. Refusing to write partial data."
         )
 
     return {
@@ -271,6 +285,7 @@ def _fetch_via_url_query(
             "mode": "url_query",
             "data_truncated": data_truncated,
             "data_file": data_file,
+            "server_total": server_total_int,
         },
     }
 
@@ -278,13 +293,59 @@ def _fetch_via_url_query(
 def _fetch_via_download(
     url: str, base_url: str, region: str, filters: List[str], report_id: Optional[str], source_id: str
 ) -> Dict[str, Any]:
-    args = ["--url", url, "--base-url", base_url]
-    if report_id:
-        args += ["--chart-id", str(report_id)]
+    # Prefer the single-viz `--chart-id` path over `--url` because:
+    #   - `--url` auto-extracts dashboard_id + rid → drives the dashboard route, which
+    #     requires dashboardAndSheet / sheetReport permissions. When only chart-level
+    #     access is granted (common for shared dataQuery links), the dashboard path
+    #     fails with 403 while the single-viz path (dataMart/report + vizQuery/download)
+    #     succeeds.
+    #   - The pivot_table server export via vizQuery/download returns the full row set
+    #     (e.g. 542 real data rows + Sum), whereas `url_query.py`'s
+    #     `extract_vizquery_data` only flattens partial pivot cells (~350 duplicates in
+    #     the observed case). This is the fix for the 350→542 pagination gap.
+    effective_chart_id = report_id
+    if not effective_chart_id and url:
+        try:
+            from url_query import parse_aeolus_url  # type: ignore
+        except ImportError:
+            import sys as _sys
+            _sys.path.insert(0, str(AEOLUS_SKILL_DIR / "scripts"))
+            from url_query import parse_aeolus_url  # type: ignore
+        parsed = parse_aeolus_url(url)
+        rid = parsed.get("reportId") or 0
+        if rid:
+            effective_chart_id = str(rid)
+
+    args: List[str] = ["--base-url", base_url]
+    if effective_chart_id:
+        args += ["--chart-id", str(effective_chart_id)]
+    else:
+        # Fall back to raw URL parsing inside download script (dashboard route).
+        args += ["--url", url]
     for f in filters:
         args += ["--filters", f]
 
-    stdout, stderr, exit_code = _run_aeolus_script("download_dashboard_data.py", args)
+    # The Aeolus vizQuery/download endpoint is asynchronously polled; it occasionally
+    # returns `aeolus/unknown` after 3 poll cycles (~6s). Retry the whole download a
+    # couple of times before giving up, since the backend can recover on the next call.
+    max_attempts = 3
+    last_stdout = last_stderr = ""
+    last_exit = 0
+    for attempt in range(1, max_attempts + 1):
+        stdout, stderr, exit_code = _run_aeolus_script("download_dashboard_data.py", args)
+        last_stdout, last_stderr, last_exit = stdout, stderr, exit_code
+        if exit_code == 0 and stdout.strip():
+            break
+        if attempt < max_attempts:
+            import time as _time
+            print(
+                f"[aeolus_source] download attempt {attempt}/{max_attempts} failed "
+                f"(exit={exit_code}); retrying in 5s",
+                flush=True,
+            )
+            _time.sleep(5)
+
+    stdout, stderr, exit_code = last_stdout, last_stderr, last_exit
     if exit_code != 0:
         raise AeolusSourceError(
             f"download_dashboard_data.py failed. exit={exit_code}\nstdout={stdout[:800]}\nstderr={stderr[:800]}"

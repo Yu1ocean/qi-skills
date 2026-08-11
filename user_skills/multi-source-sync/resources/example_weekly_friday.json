@@ -1,5 +1,5 @@
 {
-  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb (sheet=d85fa5)。2026-08-10 热更新：source id=2507297138，新增 shop_status 值映射 2→active。",
+  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb (sheet=d85fa5)。2026-08-10 v1.3 热更新：source id=2507297138，新增 shop_status 值映射 2→active、shop_id 去重/Sum 行剔除、数值格式清洗。",
   "sources": [
     {
       "id": "va_dq_2507297138",
@@ -18,14 +18,17 @@
         "竞拍日均GMV": "竞拍日均GMV",
         "竞拍渗透": "竞拍渗透",
         "竞拍日均UV": "竞拍日均UV",
-        "shop_status": ""
+        "shop_status": "shop_status"
+      },
+      "dedup": {
+        "drop_sum_rows": true
       },
       "value_map": {
         "shop_status": {
           "2": "active"
         }
       },
-      "$note": "字段映射说明：当前目标 Sheet A:J 实际表头为 shop_id / shop_name / US行业 / US AM / US Live AM / 直播日均GMV / 竞拍日均GMV / 竞拍渗透 / 竞拍日均UV / 空白列。空白 J 列承接 shop_status，值级转写由 value_map 完成。"
+      "$note": "字段映射说明：目标 Sheet A:J 表头为 shop_id / shop_name / US行业 / US AM / US Live AM / 直播日均GMV / 竞拍日均GMV / 竞拍渗透 / 竞拍日均UV / shop_status。"
     }
   ],
   "target": {
@@ -34,7 +37,7 @@
     "header_row": 1,
     "data_start_row": 2,
     "data_range": "A2:J10000",
-    "readback_range": "A1:J3",
+    "readback_range": "A1:K3",
     "updated_at_cell": "K2",
     "updated_at_format": "YYYY-MM-DD",
     "columns": [
@@ -47,9 +50,15 @@
       "竞拍日均GMV",
       "竞拍渗透",
       "竞拍日均UV",
-      ""
+      "shop_status"
     ],
-    "$note": "target.columns 与目标 Sheet A1:J1 物理对齐；J1 当前为空白表头，但仍受第一行只读锁保护。"
+    "$note": "target.columns 与目标 Sheet A1:J1 物理对齐；J1 已授权写入 shop_status。"
+  },
+  "field_format": {
+    "直播日均GMV": "int_round",
+    "竞拍日均GMV": "int_round",
+    "竞拍日均UV": "int_round",
+    "竞拍渗透": "percent_no_decimal"
   },
   "merge_strategy": "union_append",
   "qa": {

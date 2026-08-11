@@ -139,4 +139,6 @@ python3 scripts/sync_main.py --config <path> --dry-run
 
 - **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker；首个实例：每周五 VA dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb（sheet=d85fa5）。
 
-<figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODY2ZjhiYjgwYTEzZjgzNjljZWIwZmFjNDViNTAyY2VfNjQ4ZTEzZmU1M2NmZjVjN2UyNjFmYmZjNWQwM2EyNmRfSUQ6NzY3MTE4MTg2ODQ3MDk5NzA0N18xNzg2MDg2MjE2OjE3ODYwODk4MTZfVjM" mime="application/zip" size="29694" token="QwRMbVaGDoO0osxRXWkmG6MCydc"/></figure>
+<figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NmJiOWI5YTViMGQ5YTk4ZTI3NjU3ZGZlYzA5NzYzZWJfMGIxYzk0MjAxNjMwZjM3OGUwYjMwYjRhYmRjZmNjMzBfSUQ6NzY3MTE4MTg2ODQ3MDk5NzA0N18xNzg2NDMwNzEyOjE3ODY0MzQzMTJfVjM" mime="application/zip" size="29694" token="QwRMbVaGDoO0osxRXWkmG6MCydc"/></figure>
+
+<figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NmRlZDcyNzYwOGUyY2FjODFlNzE1MGZmMzkzNmY2YzJfNTNhYmY0MDU4ZWNhM2NmNDFjMjllNTYyOTE4M2UyMmFfSUQ6NzY3MjY2MTcxMjcwODg4MjAzNl8xNzg2NDMwNzcwOjE3ODY0MzQzNzBfVjM" mime="application/zip" size="46891" token="QV8sbnu8iol4Xyxbx0Lm16GRyNe"/></figure>

@@ -180,6 +180,109 @@ def apply_value_map(
     return normalized_rows, stats
 
 
+def deduplicate_rows(
+    *,
+    rows: List[List[Any]],
+    dedup_config: Dict[str, Any] | None,
+    target_columns: List[str],
+) -> Tuple[List[List[Any]], Dict[str, int]]:
+    """Remove Sum rows and duplicates based on key column."""
+    if not dedup_config:
+        return rows, {"original": len(rows), "dropped_sum": 0, "duplicates": 0, "final": len(rows)}
+
+    original_count = len(rows)
+    dropped_sum = 0
+    
+    # 1. Drop Sum/Empty rows
+    final_rows = []
+    if dedup_config.get("drop_sum_rows"):
+        try:
+            shop_id_idx = target_columns.index("shop_id")
+            for row in rows:
+                val = str(row[shop_id_idx]).strip().lower()
+                if val in {"", "sum", "总计", "null"}:
+                    dropped_sum += 1
+                    continue
+                final_rows.append(row)
+        except ValueError:
+            final_rows = rows
+    else:
+        final_rows = rows
+
+    # 2. Deduplicate
+    dedup_key = dedup_config.get("key")
+    if dedup_key and dedup_key in target_columns:
+        idx = target_columns.index(dedup_key)
+        seen = set()
+        unique_rows = []
+        for row in final_rows:
+            key_val = str(row[idx])
+            if key_val not in seen:
+                unique_rows.append(row)
+                seen.add(key_val)
+        duplicates = len(final_rows) - len(unique_rows)
+        final_rows = unique_rows
+    else:
+        duplicates = 0
+
+    stats = {
+        "original": original_count,
+        "dropped_sum": dropped_sum,
+        "duplicates": duplicates,
+        "final": len(final_rows),
+    }
+    return final_rows, stats
+
+
+def apply_field_format(
+    *,
+    rows: List[List[Any]],
+    field_formats: Dict[str, str] | None,
+    target_columns: List[str],
+) -> Tuple[List[List[Any]], Dict[str, Dict[str, int]]]:
+    """Clean numeric values: int_round / percent_no_decimal."""
+    if not field_formats:
+        return rows, {}
+
+    target_index = {name: idx for idx, name in enumerate(target_columns)}
+    stats: Dict[str, Dict[str, int]] = {}
+
+    for col_name, fmt in field_formats.items():
+        if col_name not in target_index:
+            continue
+        
+        idx = target_index[col_name]
+        col_stats = {"hit": 0, "null": 0}
+        
+        for row in rows:
+            if idx >= len(row):
+                continue
+            
+            val = row[idx]
+            if val is None or val == "" or str(val).strip().lower() == "null":
+                col_stats["null"] += 1
+                row[idx] = ""
+                continue
+            
+            try:
+                num_val = float(val)
+                if fmt == "int_round":
+                    row[idx] = int(round(num_val))
+                elif fmt == "percent_no_decimal":
+                    if num_val <= 1:
+                        row[idx] = f"{int(round(num_val * 100))}%"
+                    else:
+                        row[idx] = f"{int(round(num_val))}%"
+                col_stats["hit"] += 1
+            except (ValueError, TypeError):
+                # Keep as is if not a number
+                pass
+        
+        stats[col_name] = col_stats
+
+    return rows, stats
+
+
 def merge_rows(all_normalized: List[List[List[Any]]], strategy: str) -> List[List[Any]]:
     """Union-append merge (default). Extend here if new strategies added."""
     if strategy == "union_append" or not strategy:
@@ -259,6 +362,7 @@ def main() -> int:
     target_columns: List[str] = [str(c) for c in config["target"]["columns"]]
     sources_results: List[Dict[str, Any]] = []
     value_map_applied: List[Dict[str, Any]] = []
+    dedup_applied: List[Dict[str, Any]] = []
     all_normalized: List[List[List[Any]]] = []
 
     try:
@@ -271,6 +375,16 @@ def main() -> int:
                 field_map=src_cfg.get("field_map", {}),
                 target_columns=target_columns,
             )
+            # 1. Deduplicate
+            normalized, dedup_stats = deduplicate_rows(
+                rows=normalized,
+                dedup_config=src_cfg.get("dedup"),
+                target_columns=target_columns,
+            )
+            print(f"[sync] source {src_cfg.get('id')} dedup: {dedup_stats}")
+            dedup_applied.append({"source_id": src_cfg.get("id", "?"), **dedup_stats})
+
+            # 2. Value Map
             normalized, value_map_stats = apply_value_map(
                 normalized_rows=normalized,
                 field_map=src_cfg.get("field_map", {}),
@@ -287,12 +401,23 @@ def main() -> int:
 
         merged = merge_rows(all_normalized, config.get("merge_strategy", "union_append"))
 
+        # 3. Field Format
+        merged, field_format_stats = apply_field_format(
+            rows=merged,
+            field_formats=config.get("field_format"),
+            target_columns=target_columns,
+        )
+        print(f"[sync] global field_format applied to {len(field_format_stats)} columns")
+
         # Write to sheet
         write_result = sheet_writer.write_all(config["target"], merged)
 
         # Cross-checks
         cross_report = qa_check.run_cross_checks(
-            config=config, sources_results=sources_results, write_result=write_result
+            config=config,
+            sources_results=sources_results,
+            write_result=write_result,
+            expected_rows_after_transform=len(merged),
         )
 
         # Optional zero-trust
@@ -324,7 +449,9 @@ def main() -> int:
                 "updated_at_cell": write_result.get("updated_at_cell"),
                 "data_range_cleared": write_result.get("data_range_cleared"),
             },
+            "dedup_applied": dedup_applied,
             "value_map_applied": value_map_applied,
+            "field_format_applied": field_format_stats,
             "cross_checks": cross_report["cross_checks"],
             "warnings": cross_report.get("warnings", []),
             "errors": cross_report.get("errors", []),

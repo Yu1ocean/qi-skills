@@ -41,6 +41,7 @@ def run_cross_checks(
     config: Dict[str, Any],
     sources_results: List[Dict[str, Any]],
     write_result: Dict[str, Any],
+    expected_rows_after_transform: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Run cross-checks and return a structured report.
 
@@ -55,17 +56,18 @@ def run_cross_checks(
     total_records = sum(int(s.get("records_fetched", 0)) for s in sources_results)
     rows_written = int(write_result.get("rows_written", 0))
     merge_strategy = (config.get("merge_strategy") or "union_append").lower()
-    ok_records = (total_records == rows_written) if merge_strategy == "union_append" else True
+    expected_rows = total_records if expected_rows_after_transform is None else int(expected_rows_after_transform)
+    ok_records = expected_rows == rows_written
     cross_checks["records_vs_rows"] = {
-        "expected": total_records,
+        "records_fetched": total_records,
+        "expected_after_transform": expected_rows,
         "actual": rows_written,
         "merge_strategy": merge_strategy,
         "ok": ok_records,
     }
     if not ok_records:
-        # For union_append, mismatch is a WARN, not FAIL (dedup / mapping loss allowed with note).
-        warnings.append(
-            f"records_vs_rows mismatch: Σ(records_fetched)={total_records}, rows_written={rows_written}"
+        errors.append(
+            f"records_vs_rows mismatch: expected_after_transform={expected_rows}, rows_written={rows_written}, records_fetched={total_records}"
         )
 
     # 2) field_map_zero_loss

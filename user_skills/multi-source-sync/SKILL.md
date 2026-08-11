@@ -1,13 +1,13 @@
 ---
 name: multi-source-sync
-description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞、源级 value_map 值转写与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
+description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞、源级 value_map 值转写、按 key 去重/Sum 行剔除、field_format 数值格式清洗与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
 author: yuqinan
-version: 1.2
+version: 1.4
 ---
 
-# Multi Source Sync (v1.2)
+# Multi Source Sync (v1.4)
 
-多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、合并、幂等写入、更新日期锚点、RAW 回捞、源级 `value_map` 值转写与轻量质检。
+多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、合并、去重/Sum 行剔除、数值格式清洗、幂等写入、更新日期锚点、RAW 回捞、源级 `value_map` 值转写与轻量质检。
 
 ## Common Rationalizations（常见借口库 - L1）
 
@@ -44,7 +44,7 @@ version: 1.2
 4. 幂等写入：先 `+cells-clear --scope content` 清空 `data_range`，再 `+csv-put` 从数据行起始格（默认 `A2`）批量写入。**严禁**使用 `+values-append`。
 5. 更新日期单元格（默认 `K2`）已写入 `YYYY-MM-DD`。
 6. RAW 回捞：读回 `A1:<最右列>3` + 更新日期单元格，回读值与写入值逐字段一致；不一致立即 raise。
-7. QA 报告落盘到 `output/qa_report_YYYYMMDD_HHMMSS.json`，包含 `records_fetched` / `rows_written` / `raw_readback` / `status` / `errors`。
+7. QA 报告落盘到 `output/qa_report_YYYYMMDD_HHMMSS.json`，包含 `records_fetched` / `dedup_applied` / `rows_written` / `value_map_applied` / `field_format_applied` / `raw_readback` / `status` / `errors`。
 8. 顶层脚本输出结构化 JSON，`status ∈ {SUCCESS, FAIL}`；FAIL 时非零退出码。
 
 ## 🔑 触发词
@@ -112,6 +112,7 @@ user_skills/multi-source-sync/
       "download_full": true,
       "filters": [],
       "field_map": { "shop_id": "shop_id", "shop_name": "shop_name" },
+      "dedup": { "key": "shop_id", "drop_sum_rows": true },
       "value_map": { "shop_status": { "2": "active" } }
     },
     {
@@ -132,6 +133,12 @@ user_skills/multi-source-sync/
     "updated_at_cell": "K2",
     "updated_at_format": "YYYY-MM-DD",
     "columns": ["A列","B列","C列","D列","E列","F列","G列","H列","I列","J列"]
+  },
+  "field_format": {
+    "直播日均GMV": "int_round",
+    "竞拍日均GMV": "int_round",
+    "竞拍日均UV": "int_round",
+    "竞拍渗透": "percent_no_decimal"
   },
   "merge_strategy": "union_append",
   "qa": {
@@ -156,7 +163,8 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
   - 支持 dataQuery / dashboard / chart / historyId 四种 URL。
   - Region 从 URL 自动推断（`data.bytedance.net` → CN，`aeolus-sg` → SG，`aeolus-va` / `tiktok-row.net` 带 `-va` / VA 关键字 → VA，`aeolus-mybd` → MYBD）。
   - 支持 `filters`（`aeolus_url_query --filters` 语法）。
-  - 支持 `download_full=true`：优先走 `download_dashboard_data.py` 拿完整下载；若下载失败或返回结果缺少 `field_map` 所需字段，则自动回退 `url_query.py`。
+  - 支持 `download_full=true`：优先走单图表 `--chart-id <rid>` 的 xlsx 直出链路，绕开 dashboard 路由 403 与 `url_query` 对 pivot cells 的误展开；xlsx 异步下载内置 3 次幂等重试（每次间隔 5s）。若下载失败或返回结果缺少 `field_map` 所需字段，则自动回退 `url_query.py`。
+  - 保留 `server_total > fetched_rows` 熔断，防止上游返回截断结果时误写入目标 Sheet。
 - **type=bitable**：底层调用 `lark-cli base +record-list`。
   - 支持 `base_url` / `base_token + table_id`（自动解析）。
   - 支持 `view_id`、`filter`（DSL）。
@@ -166,8 +174,10 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 
 - 每个数据源必须配置 `field_map`：`{"上游字段名": "目标列名"}`。
 - `value_map` 为可选源级值映射：在该源归一化到 `target.columns` 后，对指定列做值级转写；若 key 写的是上游字段名，会先通过 `field_map` 解析到目标列，再应用如 `{"shop_status": {"2": "active"}}` 的映射。
+- `dedup` 为可选源级去重配置：`{"key":"shop_id","drop_sum_rows":true}` 会先剔除 key 为空 / `Sum` / `总计` / `NULL` 的合计行，再按 key 保留首行，确保每个业务主键仅 1 行。
+- `field_format` 为可选全局字段格式清洗配置，key 使用目标列名：`int_round` 将数值四舍五入为整数；`percent_no_decimal` 将小数或百分比数值转为无小数百分比字符串（如 `0.689` → `69%`）。
 - 目标列顺序由 `target.columns` 唯一决定。
-- 多源结果按 `field_map` 归一化到 `target.columns` 后**行拼接**（默认 `union_append`，不去重）。
+- 多源结果按 `field_map` 归一化到 `target.columns` 后**行拼接**（默认 `union_append`），可在源级 `dedup` 后再合并。
 - 缺失字段以空字符串填充；额外字段丢弃并记录警告到 QA 报告。
 
 ### 写入安全规范（强制实现）
@@ -187,10 +197,10 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 
 - **`zero-trust-qa-checker` 复用**：适合对目标 Sheet 数据做契约断言（`non_null` / `unique` / `positive` / `link_present` 等），配套 `resources/qa_manifest.example.json` 提供最小可运行示例。写入完成后**如果**用户配置 `qa.engine=zero_trust`，脚本会自动调用其 `v3_engine.py`。
 - **自建 `scripts/qa_check.py`**：覆盖 zero-trust 未覆盖的"多源合并交叉校验"缺口：
-  - `records_vs_rows`：Σ(records_fetched) == rows_written（允许 union_append 去重后差值，记录警告不熔断）。
+  - `records_vs_rows`：Σ(records_fetched) 与转换后的 `expected_after_transform` / `rows_written` 一致性校验；启用 dedup 时以去重后目标行数为准。
   - `field_map_zero_loss`：每个源的 `field_map` 映射到目标列时字段不丢失（除已知丢弃字段外全部命中）。
   - `updated_at_anchor`：目标 `updated_at_cell` 存在且格式正确。
-- **QA 报告输出**：`output/qa_report_YYYYMMDD_HHMMSS.json`，包含每源 `records_fetched`、`rows_written`、`raw_readback` diff、`cross_checks` 结果、`status` (`PASS`/`WARN`/`FAIL`)、`errors[]`。
+- **QA 报告输出**：`output/qa_report_YYYYMMDD_HHMMSS.json`，包含每源 `records_fetched`、`dedup_applied`、`value_map_applied`、`field_format_applied`、`rows_written`、`raw_readback` diff、`cross_checks` 结果、`status` (`PASS`/`WARN`/`FAIL`)、`errors[]`。
 
 ### 依赖 Skill
 
@@ -209,16 +219,20 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
   ```text
   已完成同步：
   - 数据源 [va_dq_2507297138](aeolus/VA): records_fetched=350
+  - dedup(shop_id): 原始 350 行 → 剔除 Sum/空 7 行 → 去重后 49 行
   - 目标 Sheet [my.larkoffice/KRIUslDgdh7WvYtXK8ZmhOCcyOb]:
       - data_range=A2:J10000 已清空
-      - rows_written=350
+      - rows_written=49
       - K2 = 2026-08-10
-      - value_map(shop_status): 343 行 `2 → active`
-  - RAW 回捞 A1:J3 通过
-  - QA report → output/qa_report_20260810_150323.json (status=PASS)
+      - value_map(shop_status): 49 行 `2 → active`
+      - field_format: F/G/I 整数化，H 百分比无小数
+  - RAW 回捞 A1:K3 通过
+  - QA report → output/qa_report_20260810_162341.json (status=PASS)
   ```
 
 ## 更新日志 (Changelog)
 
+- **1.4（2026-08-11）**：Aeolus 单图表 xlsx 直出修复；`scripts/sources/aeolus_source.py` 改走 `--chart-id <rid>` 单图表下载链路，绕开 dashboard 403 与 `url_query` 对 pivot cells 的误展开；pivot_table 数据抽取结果从 49 行恢复到 542 行；xlsx 异步下载增加 3 次幂等重试（5s 间隔）；继续保留 `server_total > fetched_rows` 熔断。
+- **1.3（2026-08-10）**：去重 + 数值格式清洗 + J1 表头写入授权；`scripts/sync_main.py` 新增 `dedup`（按 `shop_id` 去重 + 剔 Sum/空行）与 `apply_field_format()`（`int_round` / `percent_no_decimal`）；`resources/example_weekly_friday.json` 新增 `dedup`、`field_format`、`target.columns` 中 J 列 = `shop_status`；QA 报告扩展 `dedup_applied` / `field_format_applied`。
 - **1.2（2026-08-10）**：数据源热更新 + `value_map` 支持；首个实例 URL 切换到 `id=2507297138`；新增源级值转写（示例：`shop_status: {"2": "active"}`）；`scripts/sync_main.py` 在归一化后应用 `value_map`；Aeolus 下载结果缺字段时自动回退 `url_query` 继续取数。
 - **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker；首个实例：每周五 VA dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb（sheet=d85fa5）。

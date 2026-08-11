@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4 (2026-08-11)
+- fix: aeolus_source._fetch_via_download 改走单图表 xlsx 直出 (--chart-id <rid>)，绕开 dashboard 路由 403 与 url_query pivot cells 误展开 bug
+- fix: 修复 pivot_table 数据抽取错误，行数从 49 → 542
+- feat: xlsx 异步下载增加 3 次幂等重试（5s 间隔），应对 aeolus/unknown 偶发
+- safe: 保留 server_total > fetched_rows 熔断
+
+## 1.3 — 去重 + 数值格式清洗 + J1 表头写入授权
+
+- scripts/sync_main.py: 新增 dedup（按 shop_id 去重 + 剔 Sum 行）与 apply_field_format()（int_round / percent_no_decimal）
+- scripts/qa_check.py: records_vs_rows 支持以转换后目标行数作为 expected_after_transform，避免 dedup 后误报
+- resources/example_weekly_friday.json: 新增 dedup、field_format、target.columns 中 J 列 = shop_status
+- QA 报告扩展：dedup_applied / field_format_applied
+- 真跑结果：records_fetched=350 → rows_written=49，J1=shop_status，K2=2026-08-10，QA status=PASS
+
 ## 1.2 — 数据源热更新 + value_map 支持
 
 - resources/example_weekly_friday.json: id 2503254957 → 2507297138

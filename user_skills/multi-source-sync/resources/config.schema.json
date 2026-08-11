@@ -17,6 +17,13 @@
       }
     },
     "target": { "$ref": "#/definitions/sheetTarget" },
+    "field_format": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["int_round", "percent_no_decimal"]
+      }
+    },
     "merge_strategy": {
       "type": "string",
       "enum": ["union_append", "union_dedup"],
@@ -61,6 +68,14 @@
           "type": "object",
           "additionalProperties": { "type": "string" }
         },
+        "dedup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "key": { "type": "string" },
+            "drop_sum_rows": { "type": "boolean", "default": true }
+          }
+        },
         "value_map": {
           "type": "object",
           "additionalProperties": {
@@ -88,6 +103,14 @@
         "field_map": {
           "type": "object",
           "additionalProperties": { "type": "string" }
+        },
+        "dedup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "key": { "type": "string" },
+            "drop_sum_rows": { "type": "boolean", "default": true }
+          }
         },
         "value_map": {
           "type": "object",
