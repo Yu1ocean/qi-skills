@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Sheet writer with header lock, idempotent range clear, csv-put, updated-at anchor and RAW readback.
+"""Sheet writer helpers for multi-source-sync.
 
-Physical guarantees:
-1. 表头第一行只读锁死：写入前只读 A1:<最右列>1，校验列数匹配 target.columns；不匹配 → raise。
-2. 幂等 range clear：+cells-clear --scope content --range data_range（严格从 data_start_row 起，不触 row 1）。
-3. csv-put 平铺：+csv-put --start-cell A<data_start_row>。
-4. Updated-at anchor：+csv-put --start-cell <updated_at_cell> 写 YYYY-MM-DD。
-5. RAW readback：sleep 2s → +csv-get 读回 A1:<最右列>3 + updated_at_cell，逐字段比对。
-6. 硬拒绝 +values-append（assert）。
+v2.0 adds dual-sheet + diff-patch helpers while keeping v1.x full-overwrite APIs.
+Hard constraints kept:
+1. row 1 header lock
+2. never use +values-append
+3. RAW readback after write
 """
 
 from __future__ import annotations
@@ -27,8 +25,10 @@ class SheetWriterError(RuntimeError):
     """Raised on sheet contract violation or write/readback mismatch."""
 
 
+MAX_DEFAULT_ROWS = 10000
+
+
 def _col_letter(index: int) -> str:
-    """0-based column index → A/B/.../Z/AA/AB..."""
     if index < 0:
         raise ValueError(f"Negative column index: {index}")
     result = ""
@@ -48,13 +48,12 @@ def _extract_json_object(stdout: str) -> Dict[str, Any]:
     if start < 0 or end < start:
         raise SheetWriterError(f"No JSON object in lark-cli stdout: {stdout[:500]}")
     try:
-        return json.loads(text[start:end + 1])
+        return json.loads(text[start : end + 1])
     except json.JSONDecodeError as exc:
         raise SheetWriterError(f"Failed to parse lark-cli JSON: {exc}\nstdout={stdout[:800]}")
 
 
 def _run_lark_cli(args: Sequence[str], stdin_text: Optional[str] = None) -> str:
-    # Anti-values-append hard block
     args_str = " ".join(str(a) for a in args)
     assert "values-append" not in args_str, (
         "Illegal shortcut: +values-append is banned by multi-source-sync contract."
@@ -77,93 +76,10 @@ def _run_lark_cli_json(args: Sequence[str], stdin_text: Optional[str] = None) ->
     return payload
 
 
-def validate_target_contract(target: Dict[str, Any]) -> None:
-    """L3 runtime physical assertion before any write."""
-    if not isinstance(target, dict):
-        raise SheetWriterError(f"target must be dict, got {type(target).__name__}")
-    required = ["sheet_url", "sheet_id", "columns", "data_range", "readback_range", "updated_at_cell"]
-    missing = [k for k in required if not target.get(k)]
-    if missing:
-        raise SheetWriterError(f"target missing required keys: {missing}")
-    if not isinstance(target["columns"], list) or not target["columns"]:
-        raise SheetWriterError("target.columns must be a non-empty list")
-    # header_row / data_start_row consistency
-    header_row = int(target.get("header_row", 1))
-    data_start_row = int(target.get("data_start_row", 2))
-    if header_row != 1:
-        raise SheetWriterError(f"header_row must be 1 (header lock invariant), got {header_row}")
-    if data_start_row < 2:
-        raise SheetWriterError(f"data_start_row must be >= 2, got {data_start_row}")
-    # data_range must not start from row 1
-    m = re.match(r"^([A-Z]+)(\d+):([A-Z]+)(\d+)$", target["data_range"].strip().upper())
-    if not m:
-        raise SheetWriterError(f"data_range must match pattern 'A2:J10000', got {target['data_range']!r}")
-    start_row = int(m.group(2))
-    if start_row < 2:
-        raise SheetWriterError(
-            f"data_range must NOT include row 1 (header lock). got start_row={start_row}"
-        )
-    # updated_at_cell format
-    if not re.match(r"^[A-Z]+\d+$", target["updated_at_cell"].strip().upper()):
-        raise SheetWriterError(f"updated_at_cell must be an A1 reference, got {target['updated_at_cell']!r}")
-
-
-def validate_header_lock(sheet_url: str, sheet_id: str, columns: List[str]) -> List[str]:
-    """Read A1:<最右列>1 and validate it matches expected columns length.
-
-    Returns the actual header row read from sheet.
-    """
-    last_col = _col_letter(len(columns) - 1)
-    header_range = f"A1:{last_col}1"
-    payload = _run_lark_cli_json(
-        [
-            "sheets",
-            "+csv-get",
-            "--url",
-            sheet_url,
-            "--sheet-id",
-            sheet_id,
-            "--range",
-            header_range,
-            "--include-row-prefix=false",
-        ]
-    )
-    data = payload.get("data", {}) or {}
-    annotated_csv = data.get("annotated_csv") or data.get("csv") or ""
-    if not annotated_csv.strip():
-        raise SheetWriterError(
-            f"Header row {header_range} is empty. Header lock requires a non-empty first row."
-        )
-    # Parse first CSV line as header
-    reader = csv.reader(io.StringIO(annotated_csv))
-    rows = list(reader)
-    if not rows:
-        raise SheetWriterError(f"Header row {header_range} parsed to zero rows.")
-    header = [cell.strip() for cell in rows[0]]
-    if len(header) != len(columns):
-        raise SheetWriterError(
-            f"Header column count mismatch: sheet has {len(header)} cells, "
-            f"target.columns expects {len(columns)}. sheet_header={header!r}, expected={columns!r}"
-        )
-    return header
-
-
-def clear_data_range(sheet_url: str, sheet_id: str, data_range: str) -> None:
-    _run_lark_cli(
-        [
-            "sheets",
-            "+cells-clear",
-            "--url",
-            sheet_url,
-            "--sheet-id",
-            sheet_id,
-            "--range",
-            data_range,
-            "--scope",
-            "content",
-            "--yes",
-        ]
-    )
+def _parse_csv_text(text: str) -> List[List[str]]:
+    if not (text or "").strip():
+        return []
+    return list(csv.reader(io.StringIO(text)))
 
 
 def _values_to_csv(rows: List[List[Any]]) -> str:
@@ -174,9 +90,33 @@ def _values_to_csv(rows: List[List[Any]]) -> str:
     return buffer.getvalue()
 
 
-def write_data_rows(
-    sheet_url: str, sheet_id: str, start_cell: str, rows: List[List[Any]]
-) -> None:
+def read_range_matrix(sheet_url: str, sheet_id: str, range_str: str) -> List[List[str]]:
+    payload = _run_lark_cli_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--url",
+            sheet_url,
+            "--sheet-id",
+            sheet_id,
+            "--range",
+            range_str,
+            "--include-row-prefix=false",
+        ]
+    )
+    data = payload.get("data", {}) or {}
+    annotated_csv = data.get("annotated_csv") or data.get("csv") or ""
+    return _parse_csv_text(annotated_csv)
+
+
+def read_cell(sheet_url: str, sheet_id: str, cell: str) -> str:
+    rows = read_range_matrix(sheet_url, sheet_id, f"{cell}:{cell}")
+    if not rows or not rows[0]:
+        return ""
+    return (rows[0][0] or "").strip()
+
+
+def write_matrix(sheet_url: str, sheet_id: str, start_cell: str, rows: List[List[Any]]) -> None:
     if not rows:
         return
     csv_text = _values_to_csv(rows)
@@ -197,30 +137,25 @@ def write_data_rows(
     )
 
 
-def write_updated_at(
-    sheet_url: str, sheet_id: str, cell: str, updated_at: str
-) -> None:
-    csv_text = f"{updated_at}\n"
+def clear_data_range(sheet_url: str, sheet_id: str, data_range: str) -> None:
     _run_lark_cli(
         [
             "sheets",
-            "+csv-put",
+            "+cells-clear",
             "--url",
             sheet_url,
             "--sheet-id",
             sheet_id,
-            "--start-cell",
-            cell,
-            "--csv",
-            "-",
-        ],
-        stdin_text=csv_text,
+            "--range",
+            data_range,
+            "--scope",
+            "content",
+            "--yes",
+        ]
     )
 
 
-def raw_readback(
-    sheet_url: str, sheet_id: str, readback_range: str
-) -> Dict[str, Any]:
+def raw_readback(sheet_url: str, sheet_id: str, readback_range: str) -> Dict[str, Any]:
     payload = _run_lark_cli_json(
         [
             "sheets",
@@ -237,30 +172,96 @@ def raw_readback(
     return payload.get("data", {}) or {}
 
 
-def read_cell(sheet_url: str, sheet_id: str, cell: str) -> str:
-    range_str = f"{cell}:{cell}"
-    payload = _run_lark_cli_json(
-        [
-            "sheets",
-            "+csv-get",
-            "--url",
-            sheet_url,
-            "--sheet-id",
-            sheet_id,
-            "--range",
-            range_str,
-            "--include-row-prefix=false",
-        ]
-    )
-    data = payload.get("data", {}) or {}
-    annotated_csv = data.get("annotated_csv") or data.get("csv") or ""
-    if not annotated_csv.strip():
-        return ""
-    reader = csv.reader(io.StringIO(annotated_csv))
-    rows = list(reader)
-    if not rows or not rows[0]:
-        return ""
-    return (rows[0][0] or "").strip()
+def validate_target_contract(target: Dict[str, Any]) -> None:
+    if not isinstance(target, dict):
+        raise SheetWriterError(f"target must be dict, got {type(target).__name__}")
+    if not target.get("sheet_url"):
+        raise SheetWriterError("target.sheet_url is required")
+    if not isinstance(target.get("columns"), list) or not target.get("columns"):
+        raise SheetWriterError("target.columns must be a non-empty list")
+
+
+def validate_header_lock(sheet_url: str, sheet_id: str, columns: List[str]) -> List[str]:
+    last_col = _col_letter(len(columns) - 1)
+    header = read_range_matrix(sheet_url, sheet_id, f"A1:{last_col}1")
+    if not header:
+        raise SheetWriterError("Header row is empty")
+    first_row = [cell.strip() for cell in header[0]]
+    if len(first_row) != len(columns):
+        raise SheetWriterError(
+            f"Header column count mismatch: sheet has {len(first_row)} cells, expected {len(columns)}"
+        )
+    return first_row
+
+
+def ensure_header_cells(sheet_url: str, sheet_id: str, expected: Dict[str, str]) -> Dict[str, Any]:
+    written = []
+    for cell, value in expected.items():
+        current = read_cell(sheet_url, sheet_id, cell)
+        if current == value:
+            continue
+        write_matrix(sheet_url, sheet_id, cell, [[value]])
+        written.append({"cell": cell, "old": current, "new": value})
+    return {"written": written, "ok": True}
+
+
+def get_last_non_empty_row(
+    sheet_url: str,
+    sheet_id: str,
+    start_col: str,
+    end_col: str,
+    max_rows: int = MAX_DEFAULT_ROWS,
+) -> int:
+    rows = read_range_matrix(sheet_url, sheet_id, f"{start_col}1:{end_col}{max_rows}")
+    last = 0
+    for idx, row in enumerate(rows, start=1):
+        if any(str(cell).strip() for cell in row):
+            last = idx
+    return last
+
+
+def group_consecutive_rows(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not records:
+        return []
+    ordered = sorted(records, key=lambda item: int(item["row_index"]))
+    groups: List[Dict[str, Any]] = []
+    current_group = {
+        "start_row": int(ordered[0]["row_index"]),
+        "end_row": int(ordered[0]["row_index"]),
+        "rows": [ordered[0]["values"]],
+    }
+    for item in ordered[1:]:
+        row_index = int(item["row_index"])
+        if row_index == current_group["end_row"] + 1:
+            current_group["end_row"] = row_index
+            current_group["rows"].append(item["values"])
+        else:
+            groups.append(current_group)
+            current_group = {
+                "start_row": row_index,
+                "end_row": row_index,
+                "rows": [item["values"]],
+            }
+    groups.append(current_group)
+    return groups
+
+
+def write_updated_at(sheet_url: str, sheet_id: str, cell: str, updated_at: str) -> None:
+    write_matrix(sheet_url, sheet_id, cell, [[updated_at]])
+
+
+def wait_and_verify_cell(sheet_url: str, sheet_id: str, cell: str, expected: str, sleep_seconds: int = 2) -> str:
+    time.sleep(sleep_seconds)
+    actual = read_cell(sheet_url, sheet_id, cell)
+    if actual != expected:
+        raise SheetWriterError(
+            f"Cell mismatch: cell={cell}, expected={expected!r}, actual={actual!r}"
+        )
+    return actual
+
+
+def write_data_rows(sheet_url: str, sheet_id: str, start_cell: str, rows: List[List[Any]]) -> None:
+    write_matrix(sheet_url, sheet_id, start_cell, rows)
 
 
 def write_all(
@@ -268,47 +269,35 @@ def write_all(
     data_rows: List[List[Any]],
     updated_at: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """End-to-end idempotent write with header lock + data clear + csv-put + updated_at + RAW readback.
-
-    Returns a report dict including rows_written, updated_at, readback samples.
-    """
     validate_target_contract(target)
+    required = ["sheet_id", "data_range", "readback_range", "updated_at_cell"]
+    missing = [k for k in required if not target.get(k)]
+    if missing:
+        raise SheetWriterError(f"target missing required keys: {missing}")
+
     sheet_url = target["sheet_url"]
     sheet_id = target["sheet_id"]
     columns = target["columns"]
     data_range = target["data_range"]
     readback_range = target["readback_range"]
     updated_at_cell = target["updated_at_cell"]
-    updated_at_format = target.get("updated_at_format", "YYYY-MM-DD")
     data_start_row = int(target.get("data_start_row", 2))
 
     header_read = validate_header_lock(sheet_url, sheet_id, columns)
     clear_data_range(sheet_url, sheet_id, data_range)
-
     start_cell = f"A{data_start_row}"
     write_data_rows(sheet_url, sheet_id, start_cell, data_rows)
 
-    # Compute updated_at
     if not updated_at:
-        # YYYY-MM-DD default
-        if updated_at_format == "YYYY-MM-DD":
-            updated_at = datetime.now().strftime("%Y-%m-%d")
-        else:
-            # crude formatter mapping (extend as needed)
-            updated_at = datetime.now().strftime("%Y-%m-%d")
-
+        updated_at = datetime.now().strftime("%Y-%m-%d")
     write_updated_at(sheet_url, sheet_id, updated_at_cell, updated_at)
-
-    # Wait for sheet propagation
     time.sleep(2)
 
     readback_data = raw_readback(sheet_url, sheet_id, readback_range)
     updated_at_readback = read_cell(sheet_url, sheet_id, updated_at_cell)
-
     if updated_at_readback != updated_at:
         raise SheetWriterError(
-            f"Updated-at anchor mismatch: expected={updated_at!r}, "
-            f"readback={updated_at_readback!r}, cell={updated_at_cell}"
+            f"Updated-at anchor mismatch: expected={updated_at!r}, readback={updated_at_readback!r}, cell={updated_at_cell}"
         )
 
     return {

@@ -1,14 +1,14 @@
-<title>multi-source-sync (v1.1) 技能说明</title>
+<title>multi-source-sync (v2.0) 技能说明</title>
 
 # Multi Source Sync (multi-source-sync)
 
 <!-- SSOT version marker (read by skill-forge-pipeline-v4 register_skill.py) -->
 
-version: 1.1
+version: 2.0
 
 ## 📌 技能简介
 
-`multi-source-sync` 是一个**配置驱动**的多数据源到飞书电子表格的同步基础设施。一份 JSON/YAML 配置声明多个上游（风神 Aeolus / 飞书 Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、字段归一化、行拼接、幂等物理写入、更新日期锚点、RAW 回捞与轻量交叉质检。适用于每周定时同步、多源联合刷新、跨系统台账更新等场景。
+`multi-source-sync` 是一个**配置驱动**的多数据源到飞书电子表格的同步基础设施。一份 JSON/YAML 配置声明多个上游（风神 Aeolus / 飞书 Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、字段归一化、增量 diff、Sheet1 patch 写入、Sheet2 快照全量覆盖、更新日期锚点、RAW 回捞与轻量交叉质检。适用于每周定时同步、多源联合刷新、跨系统台账更新等场景。
 
 ## 🔑 触发词
 
@@ -73,7 +73,7 @@ python3 scripts/sync_main.py --config <path> --dry-run
   - 支持 dataQuery / dashboard / chart / historyId 四种 URL。
   - Region 从 URL 自动推断（CN / SG / VA / MYBD）。
   - 支持 `filters`（`aeolus_url_query --filters` 语法）。
-  - 支持 `download_full=true`：走 `download_dashboard_data.py` 拿完整 CSV，规避 1000 行 hard limit。
+  - 支持 `download_full=true`：优先走单图表 `--chart-id <rid>` 的 xlsx 直出链路，绕开 dashboard 路由 403 与 `url_query` 对 pivot cells 的误展开；xlsx 异步下载内置 3 次幂等重试（每次间隔 5s）。若下载失败或返回结果缺少 `field_map` 所需字段，则自动回退 `url_query.py`。
 - **type=bitable**：底层调用 `lark-cli base +record-list`。
 
   - 支持 `base_url` / `base_token + table_id`（自动解析）。
@@ -88,6 +88,14 @@ python3 scripts/sync_main.py --config <path> --dry-run
 4. **更新日期锚点**：写完数据后写入 `updated_at_cell`（默认 K2）为 `YYYY-MM-DD`。
 5. **RAW 回捞**：`sleep 2s` → 读回 `A1:<最右列>3` + 更新日期单元格，逐字段与预期比对。
 6. **严禁 `+values-append`**：代码里通过 `assert` 硬拒绝。
+
+### v2.0 双 Sheet + 增量 Diff 规则
+
+- **Sheet1 主库**：`d85fa5`，只做 patch / append；A:K 为业务列，L=`is_new`，M=`入库时间`。
+- **Sheet2 快照**：`05FUQ4`，每轮全量覆盖 A:K，用于下轮 diff 基线。
+- **Diff 计算**：读取 Sheet2 上轮快照与 Sheet1 当前主库，输出 `new_shops` / `removed_shops` / `status_changes`。
+- **写入顺序**：先 patch Sheet1 existing/new/removed，再写 `Sheet1!K2=today`，最后全量覆盖 Sheet2。
+- **M 列保护**：已有 `入库时间` 永不覆盖；首次进入 v2.0 主库时回填今日日期。
 
 ### 质检方案（QA）
 
@@ -137,8 +145,12 @@ python3 scripts/sync_main.py --config <path> --dry-run
 
 ## 更新日志 (Changelog)
 
+- **2.0（2026-08-11）**：双 Sheet 架构、增量 diff、状态追踪、`is_new`/`入库时间` 新列、Sheet1 patch-only、Sheet2 snapshot overwrite、QA diff 摘要。
+- **1.4（2026-08-11）**：`scripts/sources/aeolus_source.py` 改走 `--chart-id <rid>` 单图表 xlsx 直出链路，绕开 dashboard 路由 403 与 `url_query` 对 pivot cells 的误展开；pivot_table 数据抽取结果从 49 行恢复到 542 行；xlsx 异步下载增加 3 次幂等重试（5s 间隔）；继续保留 `server_total > fetched_rows` 熔断。
 - **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker；首个实例：每周五 VA dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb（sheet=d85fa5）。
 
 <figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NmJiOWI5YTViMGQ5YTk4ZTI3NjU3ZGZlYzA5NzYzZWJfMGIxYzk0MjAxNjMwZjM3OGUwYjMwYjRhYmRjZmNjMzBfSUQ6NzY3MTE4MTg2ODQ3MDk5NzA0N18xNzg2NDMwNzEyOjE3ODY0MzQzMTJfVjM" mime="application/zip" size="29694" token="QwRMbVaGDoO0osxRXWkmG6MCydc"/></figure>
 
 <figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NmRlZDcyNzYwOGUyY2FjODFlNzE1MGZmMzkzNmY2YzJfNTNhYmY0MDU4ZWNhM2NmNDFjMjllNTYyOTE4M2UyMmFfSUQ6NzY3MjY2MTcxMjcwODg4MjAzNl8xNzg2NDMwNzcwOjE3ODY0MzQzNzBfVjM" mime="application/zip" size="46891" token="QV8sbnu8iol4Xyxbx0Lm16GRyNe"/></figure>
+
+<figure view-type="Card"><source name="multi-source-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OWYyZmU0YzJjZTljNGQ1MWQ1YmU3NDkyOTJmMjQyMzZfNjE3ODhjNjJiMDczZGU2MTAxYTdmMjcxYTg3YmJjYTZfSUQ6NzY3MjY2ODYzMjY4OTY3NTg5Nl8xNzg2NDMyMzgxOjE3ODY0MzU5ODFfVjM" mime="application/zip" size="52188" token="H8kpbdwzAov19PxoTs6mJqegy3e"/></figure>

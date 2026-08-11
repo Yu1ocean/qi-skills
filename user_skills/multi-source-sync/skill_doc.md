@@ -1,11 +1,11 @@
 # Multi Source Sync (multi-source-sync)
 
 <!-- SSOT version marker (read by skill-forge-pipeline-v4 register_skill.py) -->
-version: 1.1
+version: 2.0
 
 ## 📌 技能简介
 
-`multi-source-sync` 是一个**配置驱动**的多数据源到飞书电子表格的同步基础设施。一份 JSON/YAML 配置声明多个上游（风神 Aeolus / 飞书 Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、字段归一化、行拼接、幂等物理写入、更新日期锚点、RAW 回捞与轻量交叉质检。适用于每周定时同步、多源联合刷新、跨系统台账更新等场景。
+`multi-source-sync` 是一个**配置驱动**的多数据源到飞书电子表格的同步基础设施。一份 JSON/YAML 配置声明多个上游（风神 Aeolus / 飞书 Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、字段归一化、增量 diff、Sheet1 patch 写入、Sheet2 快照全量覆盖、更新日期锚点、RAW 回捞与轻量交叉质检。适用于每周定时同步、多源联合刷新、跨系统台账更新等场景。
 
 ## 🔑 触发词
 
@@ -73,14 +73,22 @@ python3 scripts/sync_main.py --config <path> --dry-run
   - 支持 `view_id`、`filter`（DSL）。
   - 分页 100 条一批。
 
+### 双 Sheet / 增量 Diff（v2.0）
+
+- **Sheet1 主库** `d85fa5`：只做 patch / append，不做全表覆盖。
+- **Sheet2 快照** `05FUQ4`：每轮全量覆盖 A:K，作为下轮 diff 基线。
+- `L=is_new`：每轮全表清零，仅本轮新增行写 `1`。
+- `M=入库时间`：首次进入 v2.0 主库时写今日日期，后续永久保留。
+- `removed_shops`：不删行，只把 `shop_status` 标记为 `removed`。
+
 ### 写入安全规范（强制实现）
 
-1. **表头第一行锁死**：`A1:<最右列>1` 只读，非空且列数匹配 `target.columns` 长度；不匹配熔断。
-2. **范围清空**：`+cells-clear --scope content --range data_range`，范围严格从 `data_start_row`（默认 2）开始。
-3. **幂等 csv-put**：`+csv-put --start-cell A2` 一次性平铺全部数据行。
-4. **更新日期锚点**：写完数据后写入 `updated_at_cell`（默认 K2）为 `YYYY-MM-DD`。
-5. **RAW 回捞**：`sleep 2s` → 读回 `A1:<最右列>3` + 更新日期单元格，逐字段与预期比对。
-6. **严禁 `+values-append`**：代码里通过 `assert` 硬拒绝。
+1. **Sheet1 禁止全表覆盖**：仅允许 patch 既有行 / append 新行。
+2. **Sheet2 允许全量覆盖**：`A2:K10000` clear 后重写。
+3. **M 列永久保护**：已有值绝不覆盖。
+4. **更新日期锚点**：`Sheet1!K2 = YYYY-MM-DD`。
+5. **RAW 回捞**：回读 `Sheet1 A1:M3`、`Sheet2 A1:K3` 与 `K2`，并在验收时再核 `A1:M600` / `A1:K600`。
+6. **严禁 `+values-append`**：代码级 assert 硬拒绝。
 
 ### 质检方案（QA）
 
@@ -127,4 +135,6 @@ python3 scripts/sync_main.py --config <path> --dry-run
 
 ## 更新日志 (Changelog)
 
-- **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker；首个实例：每周五 VA dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb（sheet=d85fa5）。
+- **2.0（2026-08-11）**：双 Sheet 架构、增量 diff、状态追踪、`is_new` / `入库时间` 新列、Sheet1 patch-only、Sheet2 snapshot overwrite、QA diff 摘要。
+- **1.4（2026-08-11）**：Aeolus 单图表 xlsx 直出修复，行数恢复到 542。
+- **1.1（首发）**：多数据源（Aeolus + Bitable）配置驱动同步基础设施；表头锁死 / data_range 幂等清空 / K2 日期锚点 / RAW 回捞 / 轻量交叉质检 + 可选复用 zero-trust-qa-checker。

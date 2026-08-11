@@ -1,5 +1,5 @@
 {
-  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb (sheet=d85fa5)。2026-08-10 v1.3 热更新：source id=2507297138，新增 shop_status 值映射 2→active、shop_id 去重/Sum 行剔除、数值格式清洗。",
+  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice 双 Sheet（Sheet1=d85fa5 主库 patch，Sheet2=05FUQ4 快照 overwrite）。v2.0：双 Sheet + diff patch + 状态追踪。",
   "sources": [
     {
       "id": "va_dq_2507297138",
@@ -27,17 +27,17 @@
         "shop_status": {
           "2": "active"
         }
-      },
-      "$note": "字段映射说明：目标 Sheet A:J 表头为 shop_id / shop_name / US行业 / US AM / US Live AM / 直播日均GMV / 竞拍日均GMV / 竞拍渗透 / 竞拍日均UV / shop_status。"
+      }
     }
   ],
   "target": {
-    "sheet_url": "https://bytedance.my.larkoffice.com/sheets/KRIUslDgdh7WvYtXK8ZmhOCcyOb?sheet=d85fa5",
-    "sheet_id": "d85fa5",
+    "sheet_url": "https://bytedance.my.larkoffice.com/sheets/KRIUslDgdh7WvYtXK8ZmhOCcyOb",
+    "sheet1_id": "d85fa5",
+    "sheet2_id": "05FUQ4",
     "header_row": 1,
     "data_start_row": 2,
-    "data_range": "A2:J10000",
-    "readback_range": "A1:K3",
+    "sheet2_data_range": "A2:K10000",
+    "sheet2_readback_range": "A1:K3",
     "updated_at_cell": "K2",
     "updated_at_format": "YYYY-MM-DD",
     "columns": [
@@ -50,9 +50,14 @@
       "竞拍日均GMV",
       "竞拍渗透",
       "竞拍日均UV",
-      "shop_status"
+      "shop_status",
+      "更新时间"
     ],
-    "$note": "target.columns 与目标 Sheet A1:J1 物理对齐；J1 已授权写入 shop_status。"
+    "extra_columns": {
+      "L": "is_new",
+      "M": "入库时间"
+    },
+    "mode": "diff_patch_v2"
   },
   "field_format": {
     "直播日均GMV": "int_round",
@@ -63,6 +68,10 @@
   "merge_strategy": "union_append",
   "qa": {
     "engine": "builtin",
-    "cross_checks": ["records_vs_rows", "field_map_zero_loss", "updated_at_anchor"]
+    "cross_checks": [
+      "records_vs_rows",
+      "field_map_zero_loss",
+      "updated_at_anchor"
+    ]
   }
 }

@@ -1,13 +1,13 @@
 ---
 name: multi-source-sync
-description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动合并写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、行拼接、表头锁死、幂等物理插入、更新日期锚点、RAW 回捞、源级 value_map 值转写、按 key 去重/Sum 行剔除、field_format 数值格式清洗与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
+description: 多数据源（风神 Aeolus / 飞书多维表格 Bitable）配置驱动写入飞书电子表格的可复用同步基础设施。支持 JSON 配置声明多个上游、字段归一化、双 Sheet（主库 + 快照）架构、增量 diff、patch 式安全写入、状态追踪、表头锁死、RAW 回捞、源级 value_map 值转写、按 key 去重/Sum 行剔除、field_format 数值格式清洗与轻量交叉质检。适用于把风神 dataQuery/dashboard 链接与 Bitable 表联合刷新到目标 Sheet 的定时或手动任务。
 author: yuqinan
-version: 1.4
+version: 2.0
 ---
 
-# Multi Source Sync (v1.4)
+# Multi Source Sync (v2.0)
 
-多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、合并、去重/Sum 行剔除、数值格式清洗、幂等写入、更新日期锚点、RAW 回捞、源级 `value_map` 值转写与轻量质检。
+多数据源到飞书电子表格的**配置驱动同步基础设施**。一份 JSON/YAML 配置声明数据源（Aeolus/Bitable）+ 字段映射 + 目标 Sheet，脚本负责拉取、去重/Sum 行剔除、数值格式清洗、增量 diff 计算、Sheet1 patch 写入、Sheet2 快照全量覆盖、更新日期锚点、RAW 回捞、源级 `value_map` 值转写与轻量质检。
 
 ## Common Rationalizations（常见借口库 - L1）
 
@@ -124,15 +124,18 @@ user_skills/multi-source-sync/
     }
   ],
   "target": {
-    "sheet_url": "https://<lark>/sheets/xxx?sheet=yyy",
-    "sheet_id": "yyy",
+    "sheet_url": "https://<lark>/sheets/xxx",
+    "sheet1_id": "d85fa5",
+    "sheet2_id": "05FUQ4",
     "header_row": 1,
     "data_start_row": 2,
-    "data_range": "A2:J10000",
-    "readback_range": "A1:J3",
+    "sheet2_data_range": "A2:K10000",
+    "sheet2_readback_range": "A1:K3",
     "updated_at_cell": "K2",
     "updated_at_format": "YYYY-MM-DD",
-    "columns": ["A列","B列","C列","D列","E列","F列","G列","H列","I列","J列"]
+    "columns": ["shop_id","shop_name","US行业","US AM","US Live AM","直播日均GMV","竞拍日均GMV","竞拍渗透","竞拍日均UV","shop_status","更新时间"],
+    "extra_columns": {"L": "is_new", "M": "入库时间"},
+    "mode": "diff_patch_v2"
   },
   "field_format": {
     "直播日均GMV": "int_round",
@@ -180,16 +183,31 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 - 多源结果按 `field_map` 归一化到 `target.columns` 后**行拼接**（默认 `union_append`），可在源级 `dedup` 后再合并。
 - 缺失字段以空字符串填充；额外字段丢弃并记录警告到 QA 报告。
 
+### 双 Sheet 架构与 Diff 流程（v2.0）
+
+- **Sheet1 主库**：`d85fa5`，append-only + row patch。
+  - A:K = 业务列（含 `shop_status` / `更新时间`）
+  - L = `is_new`（每轮重置，仅本轮新增行为 `1`）
+  - M = `入库时间`（首次进入主库日期，已有值永不覆盖）
+- **Sheet2 快照**：`05FUQ4`，每轮全量覆盖 A:K，仅用于与上轮结果做 diff。
+- **执行顺序**：
+  1. 拉 Aeolus 全量
+  2. 读 Sheet2 快照（上轮 `shop_id + shop_status`）
+  3. 读 Sheet1 主库（当前 `shop_id + row_index + M列入库时间`）
+  4. 计算 `new_shops / removed_shops / status_changes`
+  5. patch Sheet1：existing 更新 B:L；new append A:M；removed 仅改 `J=removed`、`L=0`
+  6. `Sheet1!K2 = today`
+  7. 全量覆盖 Sheet2 A:K
+  8. RAW 回捞 + QA diff 摘要落盘
+
 ### 写入安全规范（强制实现）
 
-`scripts/sheet_writer.py` 必须实现：
-
-1. **表头第一行锁死**：写入前只读 `A1:<最右列>1`，验证其非空且列数匹配 `target.columns` 长度。不匹配 → 熔断，不写入任何数据。
-2. **范围清空**：`+cells-clear --scope content --range data_range`，范围严格从 `data_start_row` 开始。
-3. **幂等 csv-put**：`+csv-put --start-cell A2` 一次性平铺全部数据行。
-4. **更新日期锚点**：写完数据后，`+csv-put --start-cell <updated_at_cell>` 写入 `YYYY-MM-DD`。
-5. **RAW 回捞**：`sleep 2s` → `+csv-get --range A1:<最右列>3` + 读回 `updated_at_cell`，逐字段与预期比对。
-6. **禁用 `+values-append`**：代码里通过 `assert "values-append" not in ...` 硬拒绝。
+1. **Sheet1 禁止全表覆盖**：只允许单行 / 连续行块 patch 与末尾 append，A1:M1 表头只允许补齐空表头，不允许改写既有表头值。
+2. **Sheet2 允许全量覆盖**：`A2:K10000` 先 clear 再一次性写入本轮快照。
+3. **`M` 列永久保护**：已有值绝不覆盖；仅当主库已有 shop 的 `M` 为空时，才在首次进入 v2.0 时回填今日日期。
+4. **更新日期锚点**：`Sheet1!K2` 每轮强制写入 `YYYY-MM-DD`。
+5. **RAW 回捞**：至少回读 `Sheet1 A1:M3`、`Sheet2 A1:K3`、`K2`，且用户验收时再额外回读 `A1:M600` / `A1:K600` 核对总行数。
+6. **严禁 `+values-append`**：代码里通过 `assert` 硬拒绝。
 
 ### 质检方案（QA）
 
@@ -232,6 +250,7 @@ python3 scripts/sync_main.py --config <path> --dry-run   # 仅打印执行计划
 
 ## 更新日志 (Changelog)
 
+- **2.0（2026-08-11）**：双 Sheet 架构 + 增量 diff + 状态追踪；Sheet1 改为 patch/append，Sheet2 改为全量快照；新增 `is_new` / `入库时间` 两列；`removed_shops` 不删行，仅将 `shop_status` 标为 `removed`；QA 报告新增 diff 摘要。
 - **1.4（2026-08-11）**：Aeolus 单图表 xlsx 直出修复；`scripts/sources/aeolus_source.py` 改走 `--chart-id <rid>` 单图表下载链路，绕开 dashboard 403 与 `url_query` 对 pivot cells 的误展开；pivot_table 数据抽取结果从 49 行恢复到 542 行；xlsx 异步下载增加 3 次幂等重试（5s 间隔）；继续保留 `server_total > fetched_rows` 熔断。
 - **1.3（2026-08-10）**：去重 + 数值格式清洗 + J1 表头写入授权；`scripts/sync_main.py` 新增 `dedup`（按 `shop_id` 去重 + 剔 Sum/空行）与 `apply_field_format()`（`int_round` / `percent_no_decimal`）；`resources/example_weekly_friday.json` 新增 `dedup`、`field_format`、`target.columns` 中 J 列 = `shop_status`；QA 报告扩展 `dedup_applied` / `field_format_applied`。
 - **1.2（2026-08-10）**：数据源热更新 + `value_map` 支持；首个实例 URL 切换到 `id=2507297138`；新增源级值转写（示例：`shop_status: {"2": "active"}`）；`scripts/sync_main.py` 在归一化后应用 `value_map`；Aeolus 下载结果缺字段时自动回退 `url_query` 继续取数。
