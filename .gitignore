@@ -9,3 +9,20 @@ projects/
 # Keep every file under user_skills/ tracked for qi-skills sync
 !user_skills/
 !user_skills/**
+
+# 下载类技能产物 - 禁止入 Git
+user_skills/yt-dlp-media-downloader/downloads/
+user_skills/*/downloads/
+user_skills/*/output/*.mp4
+user_skills/*/output/*.mp4.part
+user_skills/*/output/*.webm
+user_skills/*/output/*.m4a
+user_skills/*/output/*.mp3
+*.mp4.part
+*.ytdl
+
+# 允许保留目录占位文件
+!user_skills/yt-dlp-media-downloader/downloads/.gitkeep
+!user_skills/*/downloads/.gitkeep
+!user_skills/yt-dlp-media-downloader/downloads/
+!user_skills/*/downloads/
