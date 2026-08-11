@@ -1,0 +1,68 @@
+{
+  "$comment": "首个实例：每周五 VA 风神 dataQuery → my.larkoffice Sheet KRIUslDgdh7WvYtXK8ZmhOCcyOb (sheet=d85fa5)。2026-08-10 v1.3 热更新：source id=2507297138，新增 shop_status 值映射 2→active、shop_id 去重/Sum 行剔除、数值格式清洗。",
+  "sources": [
+    {
+      "id": "va_dq_2507297138",
+      "type": "aeolus",
+      "url": "https://aeolus-va.tiktok-row.net/pages/dataQuery?appId=555771&dashboardId=727928&id=2507297138&isDefault=1&reportQuerySchemaKey=58976a47-26c9-444e-bff9-ab7d213b0ee6&rid=6081878&sid=3377819&waitForDataReady=0",
+      "region": "VA",
+      "download_full": true,
+      "filters": [],
+      "field_map": {
+        "shop_id": "shop_id",
+        "shop_name": "shop_name",
+        "pop_industry_name[shopdim_latest]": "US行业",
+        "pop_am_email[shopdim_latest]": "US AM",
+        "live_am[shopdim_latest]": "US Live AM",
+        "直播日均GMV": "直播日均GMV",
+        "竞拍日均GMV": "竞拍日均GMV",
+        "竞拍渗透": "竞拍渗透",
+        "竞拍日均UV": "竞拍日均UV",
+        "shop_status": "shop_status"
+      },
+      "dedup": {
+        "drop_sum_rows": true
+      },
+      "value_map": {
+        "shop_status": {
+          "2": "active"
+        }
+      },
+      "$note": "字段映射说明：目标 Sheet A:J 表头为 shop_id / shop_name / US行业 / US AM / US Live AM / 直播日均GMV / 竞拍日均GMV / 竞拍渗透 / 竞拍日均UV / shop_status。"
+    }
+  ],
+  "target": {
+    "sheet_url": "https://bytedance.my.larkoffice.com/sheets/KRIUslDgdh7WvYtXK8ZmhOCcyOb?sheet=d85fa5",
+    "sheet_id": "d85fa5",
+    "header_row": 1,
+    "data_start_row": 2,
+    "data_range": "A2:J10000",
+    "readback_range": "A1:K3",
+    "updated_at_cell": "K2",
+    "updated_at_format": "YYYY-MM-DD",
+    "columns": [
+      "shop_id",
+      "shop_name",
+      "US行业",
+      "US AM",
+      "US Live AM",
+      "直播日均GMV",
+      "竞拍日均GMV",
+      "竞拍渗透",
+      "竞拍日均UV",
+      "shop_status"
+    ],
+    "$note": "target.columns 与目标 Sheet A1:J1 物理对齐；J1 已授权写入 shop_status。"
+  },
+  "field_format": {
+    "直播日均GMV": "int_round",
+    "竞拍日均GMV": "int_round",
+    "竞拍日均UV": "int_round",
+    "竞拍渗透": "percent_no_decimal"
+  },
+  "merge_strategy": "union_append",
+  "qa": {
+    "engine": "builtin",
+    "cross_checks": ["records_vs_rows", "field_map_zero_loss", "updated_at_anchor"]
+  }
+}

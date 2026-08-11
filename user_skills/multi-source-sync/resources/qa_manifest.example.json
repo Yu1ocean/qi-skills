@@ -1,0 +1,20 @@
+{
+  "$comment": "可选：接入 zero-trust-qa-checker v3.5 的 QA Manifest 样例。适用于对目标 Sheet 做前置契约断言 + 物理回捞。",
+  "dataset": {
+    "source": "lark_sheet",
+    "spreadsheet_token": "KRIUslDgdh7WvYtXK8ZmhOCcyOb",
+    "sheet_id": "d85fa5",
+    "range": "A1:K3",
+    "primary_key": "column_1"
+  },
+  "contracts": [
+    { "column": "column_1", "assertions": ["non_null"] }
+  ],
+  "physical_probe": {
+    "$note": "此处保留由 sync_main.py 运行时注入的 updated_at_expected 与 updated_at_cell 值。手动质检时可以填写 expected_value 为写入的 YYYY-MM-DD。",
+    "target": "sheet_cell",
+    "match_rules": [
+      { "regex": "^\\d{4}-\\d{2}-\\d{2}$", "expected_value": null }
+    ]
+  }
+}

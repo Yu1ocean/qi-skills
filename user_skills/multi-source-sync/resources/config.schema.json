@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "multi-source-sync/config.schema.json",
+  "title": "MultiSourceSync Config",
+  "type": "object",
+  "required": ["sources", "target"],
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/aeolusSource" },
+          { "$ref": "#/definitions/bitableSource" }
+        ]
+      }
+    },
+    "target": { "$ref": "#/definitions/sheetTarget" },
+    "field_format": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["int_round", "percent_no_decimal"]
+      }
+    },
+    "merge_strategy": {
+      "type": "string",
+      "enum": ["union_append", "union_dedup"],
+      "default": "union_append"
+    },
+    "qa": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": ["builtin", "zero_trust", "both"],
+          "default": "builtin"
+        },
+        "cross_checks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "aeolusSource": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "aeolus" },
+        "url": { "type": "string" },
+        "region": {
+          "type": "string",
+          "enum": ["CN", "SG", "VA", "MYBD"]
+        },
+        "report_id": { "type": ["integer", "string"] },
+        "chart_id": { "type": ["integer", "string"] },
+        "history_id": { "type": ["integer", "string"] },
+        "filters": { "type": "array", "items": { "type": "string" } },
+        "download_full": { "type": "boolean", "default": false },
+        "limit": { "type": "integer", "minimum": 1 },
+        "field_map": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "dedup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "key": { "type": "string" },
+            "drop_sum_rows": { "type": "boolean", "default": true }
+          }
+        },
+        "value_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "number", "integer", "boolean", "null"]
+            }
+          }
+        }
+      }
+    },
+    "bitableSource": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "bitable" },
+        "base_url": { "type": "string" },
+        "base_token": { "type": "string" },
+        "table_id": { "type": "string" },
+        "view_id": { "type": "string" },
+        "filter": { "type": "string" },
+        "page_size": { "type": "integer", "minimum": 1, "maximum": 500, "default": 100 },
+        "field_map": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "dedup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "key": { "type": "string" },
+            "drop_sum_rows": { "type": "boolean", "default": true }
+          }
+        },
+        "value_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "number", "integer", "boolean", "null"]
+            }
+          }
+        }
+      }
+    },
+    "sheetTarget": {
+      "type": "object",
+      "required": ["sheet_url", "columns", "data_range", "updated_at_cell"],
+      "additionalProperties": true,
+      "properties": {
+        "sheet_url": { "type": "string" },
+        "sheet_id": { "type": "string" },
+        "header_row": { "type": "integer", "const": 1, "default": 1 },
+        "data_start_row": { "type": "integer", "minimum": 2, "default": 2 },
+        "data_range": {
+          "type": "string",
+          "pattern": "^[A-Z]+[2-9][0-9]*:[A-Z]+[0-9]+$",
+          "$comment": "起始行必须 >= 2，禁止覆盖表头第一行"
+        },
+        "readback_range": { "type": "string" },
+        "updated_at_cell": {
+          "type": "string",
+          "pattern": "^[A-Z]+[0-9]+$"
+        },
+        "updated_at_format": {
+          "type": "string",
+          "enum": ["YYYY-MM-DD", "YYYY-MM-DD HH:MM", "YYYY-MM-DD HH:MM:SS"],
+          "default": "YYYY-MM-DD"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
