@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.9 · 2026-08-12
+- **发卡前 HTML 回捞防呆**：`build_travel_card_payload.py` 新增 `--deploy-html` 参数，默认检查 `output/travel_dashboard.html`，确保即将发送的 `daily_new_alerts` 与即将部署的大屏 HTML 同源。
+- **错位熔断**：每条新增预警按“人员姓名 + 预警类型/出行类型 + 日期区间”回捞；任一未命中即输出 `[ALERT_MISMATCH] card alert not found in deploy HTML: {person} {date_range}` 并中止，不再生成/发送错位卡片。
+- **部署链路对齐**：配套保留 `publish_dashboard_prod.py --source-html output/travel_dashboard.html` 的生产覆盖路径，避免卡片已更新但大屏仍展示旧 HTML。
+
 ## V3.8 · 2026-08-07
 - **NEW 标签兼容降级**：`build_travel_card_payload.py` 保留 V3.7 原生 `tag` 首选逻辑，同时新增 `--new-label-style lark_md` 降级模式；当卡片服务返回 `not support tag` 时，可把 NEW 渲染为 `**🆕 NEW**` 加粗文本。
 - **结构不降级**：降级后仍保持每条新增预警独立 element，不回退到整段混排 post，避免再次触发 `230001 invalid message content`。

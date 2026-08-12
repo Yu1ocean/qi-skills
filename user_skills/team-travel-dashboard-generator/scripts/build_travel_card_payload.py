@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -52,6 +53,32 @@ def collect_daily_new_alerts(payload: dict[str, Any], *, limit: int = 5) -> tupl
         )
     remaining = max(len(alerts) - len(rows), 0)
     return rows, remaining
+
+
+def normalize_text_for_match(value: Any) -> str:
+    text = str(value or "")
+    text = re.sub(r"\\s+", "", text)
+    return text.replace("—", "-").replace("–", "-").replace("至", "~")
+
+
+def iter_daily_new_alerts(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    daily = (payload.get("compliance") or {}).get("daily_new_alerts")
+    if isinstance(daily, dict) and isinstance(daily.get("alerts"), list):
+        return [item for item in daily["alerts"] if isinstance(item, dict)]
+    return []
+
+
+def validate_daily_new_alerts_in_deploy_html(payload: dict[str, Any], deploy_html: Path) -> None:
+    if not deploy_html.exists():
+        raise FileNotFoundError(f"deploy HTML not found: {deploy_html}")
+    html_text = normalize_text_for_match(deploy_html.read_text(encoding="utf-8"))
+    for alert in iter_daily_new_alerts(payload):
+        person = str(alert.get("person") or "--")
+        date_range = str(alert.get("date_range") or alert.get("date") or "--")
+        trip_type = str(alert.get("rule_type") or alert.get("trip_type") or alert.get("type") or "--")
+        required_tokens = [person, date_range, trip_type]
+        if not all(normalize_text_for_match(token) in html_text for token in required_tokens):
+            raise ValueError(f"[ALERT_MISMATCH] card alert not found in deploy HTML: {person} {date_range}")
 
 
 def build_daily_new_alert_elements(
@@ -184,10 +211,13 @@ def main() -> int:
     parser.add_argument("--dashboard-url", default=DEFAULT_DASHBOARD_URL)
     parser.add_argument("--chat-registry-usage", default=DEFAULT_CHAT_REGISTRY_USAGE)
     parser.add_argument("--new-label-style", choices=("tag", "lark_md"), default="tag", help="NEW label renderer: native tag first, lark_md fallback when card service rejects tag component")
+    parser.add_argument("--deploy-html", default="output/travel_dashboard.html", help="HTML file that will be deployed to the production dashboard; daily_new_alerts must be traceable in this file before card payload generation")
     args = parser.parse_args()
 
     skill_root = Path(__file__).resolve().parents[1]
     snapshot = load_json((skill_root / args.snapshot).resolve())
+    deploy_html = (skill_root / args.deploy_html).resolve()
+    validate_daily_new_alerts_in_deploy_html(snapshot, deploy_html)
     template = load_json((skill_root / args.template).resolve())
     card = build_card(
         snapshot,

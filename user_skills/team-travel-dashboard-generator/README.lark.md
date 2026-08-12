@@ -1,9 +1,9 @@
 ## 📌 技能简介
-将 UK/EU/JP POP BD 团队的差旅审批邮件与商旅预订通知自动沉淀为结构化差旅资产：默认全量抓取可识别姓名的邮件，兼容单程票 / 多段链式行程，输出带【合规健康度雷达】、【今日新增预警】、飞书原生 NEW 标签优先展示与 lark_md 降级兜底、费用主卡常驻展示与强提醒特效的差旅大屏 V3.8，并补充 `output/mail_ledger.json` 作为 Email Logger 零信任 QA 审计台账。适用于团队差旅巡检、周会大屏、跨区域拜访排期复盘与合规风险扫描场景。
+将 UK/EU/JP POP BD 团队的差旅审批邮件与商旅预订通知自动沉淀为结构化差旅资产：默认全量抓取可识别姓名的邮件，兼容单程票 / 多段链式行程，输出带【合规健康度雷达】、【今日新增预警】、飞书原生 NEW 标签优先展示与 lark_md 降级兜底、发卡前 HTML 回捞防呆、费用主卡常驻展示与强提醒特效的差旅大屏 V3.9，并补充 `output/mail_ledger.json` 作为 Email Logger 零信任 QA 审计台账。适用于团队差旅巡检、周会大屏、跨区域拜访排期复盘与合规风险扫描场景。
 
 ## 🔑 触发词
 - 核心关键词：
-  - 差旅大屏 V3.8
+  - 差旅大屏 V3.9
   - 今日新增预警
   - 差旅审批邮件
   - booking 差旅大屏
@@ -22,7 +22,7 @@
 - **时间格式约束**：`departure_time / return_time / booking_time / approval_time / source_sent_at` 统一归一为 `YYYY-MM-DD` 文本格式，减少前端与 QA 侧的二次解析歧义。
 - **合规字段**：除 `booking_lead_days / is_booked_before_approval / is_over_cabin_policy / is_hotel_over_policy / over_policy_reason / duplicate_booking_flag / is_first_time_destination` 外，新增 `contains_weekend` 进入合规健康度雷达与 `compliance_alerts` 汇总口径。
 - **今日新增预警**：每次生成 JSON 后写入 `output/snapshots/YYYY-MM-DD.json`，并基于昨日快照对 `compliance.alerts` 做集合差；唯一键为“人员姓名 + 预警类型 + 日期区间”三元组，新增项会写入 `is_new=true`。静态 HTML / Dynamic UI 继续使用 `🆕 NEW` 文案高亮，飞书卡片优先使用原生 `tag` NEW 标签展示；若卡片服务返回 `not support tag`，则用 `--new-label-style lark_md` 降级为 `**🆕 NEW**` 加粗文本。
-- **飞书卡片模板**：`assets/team_travel_dashboard_card_template.json` 为官方兜底卡片模板，必须使用 `schema: 2.0` 与 `body.elements`；通过 `scripts/build_travel_card_payload.py` 从快照生成 `.ephemeral_pool/[task_id]_team_travel_dashboard.card.json` 后，再交由 `centralized-transmitter` 创建与发送。V3.8 起新增预警会被拆成逐条独立 element：默认左侧使用原生 `tag` 组件展示 NEW，兼容降级时改为 `lark_md` 加粗文本。
+- **飞书卡片模板**：`assets/team_travel_dashboard_card_template.json` 为官方兜底卡片模板，必须使用 `schema: 2.0` 与 `body.elements`；通过 `scripts/build_travel_card_payload.py` 从快照生成 `.ephemeral_pool/[task_id]_team_travel_dashboard.card.json` 后，再交由 `centralized-transmitter` 创建与发送。V3.8 起新增预警会被拆成逐条独立 element：默认左侧使用原生 `tag` 组件展示 NEW，兼容降级时改为 `lark_md` 加粗文本。V3.9 起发卡前必须通过 `--deploy-html` 回捞即将部署的 HTML，确保每条新增预警按 person + rule_type/trip type + date_range 命中，否则以 `[ALERT_MISMATCH]` 熔断。
 - **发送目标约束**：差旅大屏卡片默认走 `CHAT_REGISTRY.json -> travel_dashboard_report`，即 `yuqinan` 的 p2p 私聊；禁止复用 `task_patrol_broadcast` 向群聊广播。
 - **QA 审计链路**：`scripts/build_mail_ledger.py` 会额外输出 `output/mail_ledger.json`，保留 `message_id / thread_id / sent_at / primary_category / classification_evidence / travel_record_count` 等字段，供 travel parser 命中复核与跨技能零信任 QA。
 - **模板约束**：大屏必须包含数据总览、飞线总览、目的地热度、合规健康度雷达、今日新增预警、Gantt 时间轴、明细表；首次差旅地需在地图 / 时间轴上做红色强提醒；V3.4 起静态 HTML 与 Dynamic UI 卡片均展示【今日新增预警】；V3.3 起行程详情中的原始 `\\n` 必须转为正常换行，`Message ID` 调试字段禁止继续出现在用户侧，费用金额需进入主卡常驻展示区。

@@ -3,7 +3,7 @@ name: team-travel-dashboard-generator
 description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.7 修复飞书卡片 NEW 标签原生展示，输出团队差旅大屏。
 ---
 
-version: 3.8
+version: 3.9
 
 ## Config（运行配置）
 
@@ -11,7 +11,7 @@ version: 3.8
 fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 ```
 
-# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.8
+# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.9
 
 将“差旅审批邮件 → 结构化 JSON → 静态暗色大屏 / Dynamic UI 入口 → 合规巡检视图 → 邮件审计台账 QA”的链路固化成一个可复用技能。
 
@@ -85,6 +85,7 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - `compliance.alerts`：按“人员姓名 + 预警类型 + 日期区间”三元组生成稳定 `alert_key / alert_id` 的合规预警明细。
 - `compliance.daily_new_alerts`：基于昨日快照对比得出的今日新增预警；diff key 固定为“人员姓名 + 预警类型 + 日期区间”三元组；新增项必须写入 `is_new=true`，用于 HTML / Dynamic UI 高亮，以及飞书卡片中的原生 `tag` NEW 标签展示；首次运行显示无历史基线。
 - **发送目标**：差旅大屏卡片发送目标固定为 `CHAT_REGISTRY.json -> travel_dashboard_report`，即用户 `yuqinan` 私聊；**禁止发到群聊**。
+- **发卡前回捞防呆**：生成飞书卡片 Payload 前，`compliance.daily_new_alerts.alerts` 中每条新增预警必须按“人员姓名 + 预警类型/出行类型 + 日期区间”在即将部署的 HTML 中回捞命中；任一命中失败必须熔断，不发卡，并输出 `[ALERT_MISMATCH] card alert not found in deploy HTML: {person} {date_range}`。
 - JSON 默认输出：`output/travel_dashboard.json`。
 - 快照默认输出：`output/snapshots/YYYY-MM-DD.json`，同日重跑覆盖，供次日 diff 使用。
 - HTML 默认输出：`output/travel_dashboard.html`。
@@ -358,6 +359,10 @@ python3 scripts/build_travel_dashboard.py materialize-dynamic-ui \
 
 ## 更新日志
 
+- **V3.9**：新增飞书卡片发卡前 HTML 回捞防呆校验。
+  - `build_travel_card_payload.py` 新增 `--deploy-html` 参数，默认回捞 `output/travel_dashboard.html`。
+  - 卡片 `daily_new_alerts` 中每条新增预警必须能在即将部署的 HTML 中按“person + rule_type/trip type + date_range”命中。
+  - 任一命中失败时输出 `[ALERT_MISMATCH] card alert not found in deploy HTML: {person} {date_range}` 并熔断，不生成/发送错位卡片。
 - **V3.8**：新增飞书卡片 NEW 标签 lark_md 兼容降级。
   - V3.7 仍优先构造飞书原生 `tag` 组件，保持新版客户端的视觉表达。
   - 当创建卡片链路返回 `not support tag` 等组件兼容错误时，可用 `--new-label-style lark_md` 生成兼容 payload，把 NEW 渲染为 `**🆕 NEW**` 加粗文本。
