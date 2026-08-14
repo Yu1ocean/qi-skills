@@ -1,7 +1,7 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.6
+version: 1.7
 description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIF 公式化改造、趋势计算与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
@@ -37,10 +37,10 @@ author: yuqinan
 2. 已知漂移处理：`历史入驻新增可售` 优先读取上游现存字段 `可售数`；若 `可售数` 也已删除或不可见，则作为可选字段写入 `NULL` 兜底；`USAM` 上游已删除或不可见，作为可选字段写入 `NULL` 兜底。
 3. 明细表必须先读取现有 `A1:J10000`，以 `更新日期` 作为逻辑 `sync_date` 字段检查当日幂等；若已有当日行则跳过，若无当日行则仅追加数据行，不覆盖表头和历史行。
 4. 每次成功拉取 Bitable 后必须写入 `output/snapshots/bitable_snapshot_YYYYMMDD.json`，JSON 结构固定为 `{"sync_date":"YYYY-MM-DD","records":[...]}`。
-5. 汇总表 `B2:F9` 如需写公式，必须写入 `SUMIF` / `SUM` 公式；如已存在 `SUMIF`，仅刷新 `K1:K2` 更新日期。
-6. 汇总表写入后回读 `B2` 公式，确认包含 `SUMIF`。
-7. 使用 `sheets +formula-verify` 校验 `2unp6l!B2:I9`，状态必须为 `success`。
-8. 脚本输出 JSON 审计日志，包含 records_fetched、snapshot_path、rows_appended、skipped_existing_sync_date、raw_readback 与 formula_verify。
+5. 汇总表 `2unp6l` 的公式区域由用户维护，脚本**禁止**覆盖写入（只允许写 `N2`）。
+6. 更新日期必须写入 `2unp6l!N2`，且写入内容为公式：`=MAX(VM2reD!J:J)`。
+7. 明细表需在 `O` 列起维护“按同步日期横向追加”的辅助区（幂等追加：若当日列已存在则跳过）。
+8. `sync_bitable_to_sheet.py` 对所有写入函数入口做硬熔断断言：只允许写入明细表 `VM2reD`；断言失败必须抛异常并写入本地 audit log。
 
 ## 使用场景
 
@@ -67,8 +67,8 @@ author: yuqinan
 - 默认明细写入范围：`A:J`，表头固定在第 1 行；每日同步按逻辑 `sync_date` 幂等追加到表尾，禁止清空或全量覆盖历史行
 - 默认每日快照目录：`output/snapshots/bitable_snapshot_YYYYMMDD.json`，结构为 `{"sync_date":"YYYY-MM-DD","records":[...]}`
 - 默认 RAW 回捞范围：明细 `A1:J3`，汇总 `A1:K14`
-- 默认公式校验范围：`2unp6l!B2:I9`
-- 默认趋势写入范围：汇总工作表 `2unp6l!A17:I30`，固定写在现有 `A1:K15` 汇总公式与参数区下方，禁止覆盖既有公式。
+- 默认唯一允许的汇总写入单元格：`2unp6l!N2`（写入公式 `=MAX(VM2reD!J:J)`）
+- 默认明细辅助区起始列：`VM2reD!O1`（按日期横向追加，写第 1 行日期表头、第 2~8 行 7 个行业入驻数、第 9 行总计）
 - 默认执行权限：必须通过 `bash` 工具设置 `include_secrets=true`
 
 ## ⚙️ 核心架构 / SOP / 约束条件
@@ -83,10 +83,9 @@ python3 scripts/daily_sync.py
 
 1. `validate_sync_contract()`：在副作用发生前校验 Bitable token、表 ID、目标电子表格、工作表 ID 与输出列契约。
 2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文；成功拉取后先写入 `output/snapshots/bitable_snapshot_YYYYMMDD.json` 原始快照，再读取 `VM2reD!A:J` 检查当日逻辑 `sync_date` 是否已存在；若存在则跳过明细写入，若不存在则仅把本次数据行追加到表尾，表头第 1 行和历史行保持不动。
-3. `step2_update_formulas()`：读取 `2unp6l` 当前内容；如果 `B2` 还不是 `SUMIF` 公式，则把 `B2:F9` 改为从「明细」表汇总的公式；如果已是 `SUMIF`，则跳过公式重写，仅刷新 `K1:K2` 的更新日期。
-4. 写入后回读 `VM2reD!A1:J3`、`2unp6l!A1:K14`，并使用 `+formula-verify` 校验 `2unp6l!B2:I9` 为 zero-error。
-5. `step3_write_trends()`：读取明细表 `A1:J10000`，调用 `compute_7day_trend()` 与 `compute_4week_trend()`，把近 7 天每日趋势与近 4 个自然周（周一到周日）趋势写入 `2unp6l!A17:I30`，并回读校验。
-6. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
+3. `step2_update_formulas()`：只允许写入 `2unp6l!N2` 更新日期公式 `=MAX(VM2reD!J:J)`，其余区域（含 `B2:F9`、趋势区等）全部由用户手工维护，脚本不得覆盖。
+4. `step3_write_detail_aux_area()`：在 `VM2reD` 的 `O` 列起建立横向辅助区（每列一个同步日期），幂等追加今日列：第 1 行写日期 `YYYY-MM-DD`，第 2~8 行写 7 个行业的新增入驻数（行业顺序与 `2unp6l!A2:A8` 一致），第 9 行写总计。
+5. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
 
 ## 字段与映射
 
@@ -123,6 +122,7 @@ python3 scripts/sync_bitable_to_sheet.py
 
 ## 更新日志 (Changelog)
 
+- 1.7：收紧写入边界：汇总表只允许写 `2unp6l!N2`（公式 `=MAX(VM2reD!J:J)`），删除对 `B2:F9` 与趋势辅助区的覆盖写入；在 `VM2reD` 的 `O` 列起新增“按同步日期横向追加”的辅助区；`sync_bitable_to_sheet.py` 增加写入边界硬熔断断言并落本地 audit log。
 - 1.6：明细表从“清空后全量覆盖”改为按逻辑 `sync_date` 幂等追加；同步前读取 `VM2reD!A:J` 检查当日是否已存在，存在则跳过写入，不重复追加；每次成功拉取 Bitable 后落盘 `output/snapshots/bitable_snapshot_YYYYMMDD.json` 原始快照；趋势计算不足 7 天 / 4 周时仅展示已有日期 / 自然周。
 - 1.5：新增近 7 天每日趋势与近 4 个自然周趋势计算，基于明细表 `更新日期` 聚合 7 个关键指标，并固定写入汇总表 `2unp6l!A17:I30`，避开现有 `A1:K15` 公式与参数区。
 - 1.4：修复 2026-08-10 至 2026-08-13 连续熔断的字段漂移：`新增入驻数` 改读上游别名 `7月后新增入驻数`，schema drift 命中别名后仅记录 `use_alias` 不再硬熔断；新增 `--date` 历史补跑参数与 `output/audit_logs/` 审计日志。

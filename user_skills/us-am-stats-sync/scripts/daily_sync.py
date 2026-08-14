@@ -13,6 +13,7 @@ Run with AIME lark-cli credentials injected, e.g. bash include_secrets=true:
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import sys
@@ -26,17 +27,13 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from sync_bitable_to_sheet import (  # noqa: E402
     DETAIL_SHEET_ID,
+    OUTPUT_COLUMNS,
     SHEET_TOKEN,
-    TREND_OUTPUT_START_CELL,
-    TREND_READBACK_RANGE,
     _extract_json_object,
     _run_lark_cli,
-    build_trend_values,
-    raw_readback,
     read_detail_rows_from_sheet,
     sync_bitable_to_sheet,
-    today_m_d,
-    write_trend_values_to_summary,
+    today_iso,
 )
 
 SUMMARY_SHEET_ID = "2unp6l"
@@ -125,39 +122,25 @@ def _write_summary_formulas() -> Dict[str, Any]:
     )
 
 
-def _write_summary_update_date() -> Dict[str, Any]:
-    # Use +csv-put instead of +cells-set here. The summary sheet has hidden G:H columns,
-    # and +cells-set may offset the physical write target around K; +csv-put writes K1:K2 exactly.
-    # Pre-set K2 as text so 7/29 stays M/D instead of being formatted as 29-Jul.
-    _run_json(
+def _write_summary_update_date_formula() -> Dict[str, Any]:
+    """Only allow writing the update-date formula to N2.
+
+    Per contract, the summary sheet (2unp6l) is user-maintained except N2.
+    """
+    return _run_json(
         [
             "sheets",
-            "+cells-set-style",
+            "+cells-set",
             "--spreadsheet-token",
             SHEET_TOKEN,
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            "K2",
-            "--number-format",
-            "@",
-        ]
-    )
-    csv_text = f"更新日期\n{today_m_d()}\n"
-    return _run_json(
-        [
-            "sheets",
-            "+csv-put",
-            "--spreadsheet-token",
-            SHEET_TOKEN,
-            "--sheet-id",
-            SUMMARY_SHEET_ID,
-            "--start-cell",
-            "K1",
-            "--csv",
+            "N2",
+            "--cells",
             "-",
         ],
-        stdin_text=csv_text,
+        stdin_text=json.dumps([[{"formula": "=MAX(VM2reD!J:J)"}]], ensure_ascii=False),
     )
 
 
@@ -181,52 +164,199 @@ def step1_sync_detail() -> Dict[str, Any]:
     return sync_bitable_to_sheet()
 
 
+def _read_n2_formula() -> str:
+    payload = _run_json(
+        [
+            "sheets",
+            "+cells-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            SUMMARY_SHEET_ID,
+            "--range",
+            "N2",
+            "--include",
+            "value,formula",
+        ]
+    )
+    try:
+        cell = payload["data"]["ranges"][0]["cells"][0][0]
+    except (KeyError, IndexError, TypeError):
+        return ""
+    return str(cell.get("formula") or "")
+
+
 def step2_update_formulas() -> Dict[str, Any]:
-    """一次性写公式：若 B2 已包含 SUMIF，则跳过 B2:F9，仅刷新 K1:K2 更新日期。"""
+    """只写入 2unp6l!N2 更新日期公式，不允许覆盖其他任何区域。"""
     before = _read_summary_snapshot()
-    b2_before = _read_b2_formula()
-    formulas_skipped = "SUMIF" in b2_before.upper()
-
-    formula_write_result: Dict[str, Any] | None = None
-    if not formulas_skipped:
-        formula_write_result = _write_summary_formulas()
-
-    date_write_result = _write_summary_update_date()
+    write_result = _write_summary_update_date_formula()
     time.sleep(2)
 
-    b2_after = _read_b2_formula()
-    verify = _verify_formulas()
+    n2_formula = _read_n2_formula()
+    if "MAX" not in n2_formula.upper():
+        raise RuntimeError(f"N2 formula verification failed: {n2_formula!r}")
+
     after = _read_summary_snapshot()
 
-    if "SUMIF" not in b2_after.upper():
-        raise RuntimeError(f"B2 formula verification failed: {b2_after!r}")
-    verify_status = verify.get("data", {}).get("status")
-    if verify_status != "success":
-        raise RuntimeError(f"Formula verify did not pass: {json.dumps(verify, ensure_ascii=False)}")
-
     return {
-        "formulas_skipped": formulas_skipped,
-        "b2_formula_before": b2_before,
-        "b2_formula_after": b2_after,
-        "formula_write_result": formula_write_result,
-        "date_write_result": date_write_result,
-        "formula_verify": verify,
+        "write_result": write_result,
+        "n2_formula": n2_formula,
         "raw_before_A1_K14": before,
         "raw_after_A1_K14": after,
     }
 
 
-def step3_write_trends() -> Dict[str, Any]:
-    """在汇总表 A17:I30 空白区写入近 7 天与近 4 周趋势，避开 A1:K15 现有公式/参数。"""
+def _read_industry_order_from_summary() -> List[str]:
+    payload = _run_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            SUMMARY_SHEET_ID,
+            "--range",
+            "A2:A8",
+            "--include-row-prefix=false",
+        ]
+    )
+    csv_text = payload.get("data", {}).get("annotated_csv", "")
+    lines = [line.strip() for line in csv_text.splitlines() if line.strip()]
+    industries = [line for line in lines if line]
+    if len(industries) != 7:
+        raise RuntimeError(f"Expected 7 industries in 2unp6l!A2:A8, got {len(industries)}: {industries}")
+    return industries
+
+
+def _col_index_to_a1(col_index_1_based: int) -> str:
+    """Convert 1-based column index to Excel-style letters (A, B, ..., Z, AA, ...)."""
+    if col_index_1_based <= 0:
+        raise ValueError(f"Invalid column index: {col_index_1_based}")
+    letters: List[str] = []
+    n = col_index_1_based
+    while n > 0:
+        n, rem = divmod(n - 1, 26)
+        letters.append(chr(ord("A") + rem))
+    return "".join(reversed(letters))
+
+
+def _find_or_append_aux_date_column(sync_date: str) -> str | None:
+    """Return start cell (e.g. O1) for today's aux column; None if already exists."""
+    payload = _run_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            DETAIL_SHEET_ID,
+            "--range",
+            "O1:ZZ9",
+            "--include-row-prefix=false",
+        ]
+    )
+    csv_text = payload.get("data", {}).get("annotated_csv", "")
+    reader = csv.reader(csv_text.splitlines())
+    rows = list(reader)
+    if not rows:
+        rows = [[]]
+    header = [cell.strip() for cell in rows[0]]
+
+    for idx, cell in enumerate(header):
+        if cell == sync_date:
+            return None
+
+    last_used = -1
+    for idx, cell in enumerate(header):
+        if cell.strip():
+            last_used = idx
+
+    target_offset = last_used + 1
+    start_col_1_based = 15  # O
+    target_col_1_based = start_col_1_based + target_offset
+    return f"{_col_index_to_a1(target_col_1_based)}1"
+
+
+def _compute_today_onboard_by_industry(detail_rows: List[Dict[str, Any]], industries: List[str], sync_date: str) -> List[int]:
+    metric_col = "新增入驻数"
+    if metric_col not in OUTPUT_COLUMNS:
+        raise RuntimeError(f"Unexpected OUTPUT_COLUMNS contract, missing {metric_col}")
+
+    totals = {industry: 0.0 for industry in industries}
+    for row in detail_rows:
+        if str(row.get("更新日期", "")).strip() != sync_date:
+            continue
+        industry = str(row.get("US行业", "")).strip()
+        if industry not in totals:
+            continue
+        raw = str(row.get(metric_col, "") or "").strip().replace(",", "")
+        try:
+            value = float(raw) if raw else 0.0
+        except ValueError:
+            value = 0.0
+        totals[industry] += value
+
+    return [int(totals[industry]) for industry in industries]
+
+
+def step3_write_detail_aux_area() -> Dict[str, Any]:
+    """在 VM2reD 的 O 列起写入横向辅助区（幂等追加一列）。"""
+    sync_date = today_iso()
+    industries = _read_industry_order_from_summary()
+
+    start_cell = _find_or_append_aux_date_column(sync_date)
+    if start_cell is None:
+        return {"skipped_existing_sync_date": True, "sync_date": sync_date}
+
     detail_rows = read_detail_rows_from_sheet(SHEET_TOKEN, DETAIL_SHEET_ID)
-    trend_values = build_trend_values(detail_rows)
-    readback = write_trend_values_to_summary(SHEET_TOKEN, SUMMARY_SHEET_ID, trend_values)
+    counts = _compute_today_onboard_by_industry(detail_rows, industries, sync_date)
+    total = sum(counts)
+
+    csv_lines = [sync_date, *[str(v) for v in counts], str(total)]
+    csv_text = "\n".join(csv_lines) + "\n"
+
+    write_result = _run_json(
+        [
+            "sheets",
+            "+csv-put",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            DETAIL_SHEET_ID,
+            "--start-cell",
+            start_cell,
+            "--csv",
+            "-",
+        ],
+        stdin_text=csv_text,
+    )
+    time.sleep(2)
+
+    col_letters = "".join([ch for ch in start_cell if ch.isalpha()])
+    readback_range = f"{col_letters}1:{col_letters}9"
+    readback = _run_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            DETAIL_SHEET_ID,
+            "--range",
+            readback_range,
+            "--include-row-prefix=false",
+        ]
+    )
+
     return {
-        "trend_output_start_cell": TREND_OUTPUT_START_CELL,
-        "trend_readback_range": TREND_READBACK_RANGE,
-        "detail_rows_used": len(detail_rows),
-        "trend_rows_written_including_header": len(trend_values),
-        "trend_preview_rows": trend_values[:4],
+        "skipped_existing_sync_date": False,
+        "sync_date": sync_date,
+        "start_cell": start_cell,
+        "readback_range": readback_range,
+        "industries": industries,
+        "counts": counts,
+        "total": total,
+        "write_result": write_result,
         "raw_readback": readback,
     }
 
@@ -234,13 +364,13 @@ def step3_write_trends() -> Dict[str, Any]:
 def main() -> None:
     detail_result = step1_sync_detail()
     summary_result = step2_update_formulas()
-    trend_result = step3_write_trends()
+    aux_result = step3_write_detail_aux_area()
     print(
         json.dumps(
             {
                 "detail": detail_result,
                 "summary": summary_result,
-                "trends": trend_result,
+                "detail_aux": aux_result,
                 "links": {
                     "detail_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={DETAIL_SHEET_ID}",
                     "summary_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={SUMMARY_SHEET_ID}",

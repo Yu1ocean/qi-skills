@@ -38,6 +38,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 DRIFT_LOG_DIR = SKILL_DIR / "output" / "schema_drift"
 SNAPSHOT_DIR = SKILL_DIR / "output" / "snapshots"
+AUDIT_LOG_DIR = SKILL_DIR / "output" / "audit_logs"
+AUDIT_LOG_PATH = AUDIT_LOG_DIR / "write_audit.jsonl"
 
 FIELD_ALIASES: Dict[str, List[str]] = {
     # Upstream renamed the post-July onboarded count in v1.4.
@@ -210,54 +212,19 @@ def read_detail_rows_from_sheet(sheet_token: str = SHEET_TOKEN, sheet_id: str = 
 
 
 def write_trend_values_to_summary(sheet_token: str, summary_sheet_id: str, values: List[List[Any]]) -> Dict[str, Any]:
-    validate_trend_contract(values)
-    csv_text = values_to_csv(values)
-    _run_lark_cli(
-        [
-            "sheets",
-            "+cells-clear",
-            "--spreadsheet-token",
-            sheet_token,
-            "--sheet-id",
-            summary_sheet_id,
-            "--range",
-            TREND_READBACK_RANGE,
-            "--scope",
-            "content",
-            "--yes",
-        ]
+    """Deprecated: writing to summary sheets is no longer allowed in this module.
+
+    Keep the symbol to avoid breaking historical imports, but fail fast if called.
+    """
+    _append_audit_log(
+        {
+            "level": "error",
+            "op": "write_trend_values_to_summary",
+            "reason": "deprecated_write_to_summary",
+            "target_sheet_id": summary_sheet_id,
+        }
     )
-    _run_lark_cli(
-        [
-            "sheets",
-            "+cells-set-style",
-            "--spreadsheet-token",
-            sheet_token,
-            "--sheet-id",
-            summary_sheet_id,
-            "--range",
-            TREND_READBACK_RANGE,
-            "--number-format",
-            "0",
-        ]
-    )
-    _run_lark_cli(
-        [
-            "sheets",
-            "+csv-put",
-            "--spreadsheet-token",
-            sheet_token,
-            "--sheet-id",
-            summary_sheet_id,
-            "--start-cell",
-            TREND_OUTPUT_START_CELL,
-            "--csv",
-            "-",
-        ],
-        stdin_text=csv_text,
-    )
-    time.sleep(2)
-    return raw_readback(sheet_token, summary_sheet_id, TREND_READBACK_RANGE)
+    raise RuntimeError("[硬熔断] sync_bitable_to_sheet.py 不允许写入汇总表；请在 daily_sync.py 中实现汇总写入")
 
 
 def validate_sync_contract(
@@ -342,6 +309,35 @@ def _run_lark_cli_json(args: Sequence[str], *, stdin_text: str | None = None) ->
     if not payload.get("ok", False):
         raise RuntimeError(f"lark-cli returned non-ok envelope: {json.dumps(payload, ensure_ascii=False)}")
     return payload
+
+
+def _append_audit_log(event: Dict[str, Any]) -> None:
+    """Append a JSONL audit log record under output/audit_logs/.
+
+    This file is intentionally local-only and should not affect Feishu writes.
+    """
+    AUDIT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    record = {
+        "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        **event,
+    }
+    with AUDIT_LOG_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def assert_detail_sheet_id(sheet_id: str, *, op: str) -> None:
+    """Hard guardrail: this module is only allowed to write to the detail tab."""
+    if sheet_id != DETAIL_SHEET_ID:
+        _append_audit_log(
+            {
+                "level": "error",
+                "op": op,
+                "reason": "write_target_out_of_boundary",
+                "expected_sheet_id": DETAIL_SHEET_ID,
+                "actual_sheet_id": sheet_id,
+            }
+        )
+        raise AssertionError(f"[硬熔断] 禁止向非明细表写入！目标: {sheet_id}")
 
 
 def _normalize_cell(value: Any) -> Any:
@@ -448,6 +444,7 @@ def values_to_csv(values: List[List[Any]]) -> str:
 
 def clear_sheet_range(sheet_token: str, sheet_id: str, clear_range: str = "A1:J10000") -> None:
     """Clear the target Sheet range before overwriting values."""
+    assert_detail_sheet_id(sheet_id, op="clear_sheet_range")
     _run_lark_cli(
         [
             "sheets",
@@ -519,6 +516,7 @@ def write_bitable_snapshot(records: List[Dict[str, Any]], sync_date: str) -> str
 
 def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[Any]], start_row: int) -> None:
     """Append data rows at the first empty row without touching the fixed header or historical rows."""
+    assert_detail_sheet_id(sheet_id, op="append_values_to_sheet")
     if not values:
         return
     csv_text = values_to_csv(values)
@@ -540,6 +538,7 @@ def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[An
 
 
 def write_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[Any]]) -> None:
+    assert_detail_sheet_id(sheet_id, op="write_values_to_sheet")
     csv_text = values_to_csv(values)
     _run_lark_cli(
         [
