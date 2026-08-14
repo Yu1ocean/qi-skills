@@ -1,5 +1,10 @@
 # Changelog
 
+## V3.10 · 2026-08-14
+- **快照基线自动回溯**：新增 `find_baseline_snapshot()`，`daily_new_alerts` 不再只认严格昨日快照；当 T-1 缺失时，最多向前 14 天寻找最近可用历史快照。
+- **文案分支修复**：完全无历史快照时才展示“首次运行，暂无历史对比”；有历史但昨日缺失时，新增 / 无新增文案会追加“（基线为 YYYY-MM-DD，非昨日）”。
+- **快照审计补齐**：`snapshot` 增加 `baseline_gap_days`，并临时补齐 `output/snapshots/2026-08-13.json` 作为 synthetic 止血基线，避免 2026-08-14 重跑误入首次运行分支。
+
 ## V3.9 · 2026-08-12
 - **发卡前 HTML 回捞防呆**：`build_travel_card_payload.py` 新增 `--deploy-html` 参数，默认检查 `output/travel_dashboard.html`，确保即将发送的 `daily_new_alerts` 与即将部署的大屏 HTML 同源。
 - **错位熔断**：每条新增预警按“人员姓名 + 预警类型/出行类型 + 日期区间”回捞；任一未命中即输出 `[ALERT_MISMATCH] card alert not found in deploy HTML: {person} {date_range}` 并中止，不再生成/发送错位卡片。

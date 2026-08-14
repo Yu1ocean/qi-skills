@@ -1736,16 +1736,26 @@ def compute_daily_alert_diff(today_payload: Dict[str, Any], yesterday_payload: O
     }
 
 
+def find_baseline_snapshot(snapshot_dir: Path, current_date: dt.datetime, *, max_lookback_days: int = 14):
+    for gap_days in range(1, max_lookback_days + 1):
+        baseline_date = (current_date - dt.timedelta(days=gap_days)).strftime("%Y-%m-%d")
+        baseline_path = snapshot_dir / f"{baseline_date}.json"
+        if baseline_path.exists():
+            return baseline_date, baseline_path, load_json(baseline_path, default=None), gap_days
+    yesterday = (current_date - dt.timedelta(days=1)).strftime("%Y-%m-%d")
+    return yesterday, snapshot_dir / f"{yesterday}.json", None, 1
+
+
 def enrich_daily_alert_diff(payload: Dict[str, Any], *, snapshot_dir: Path) -> Dict[str, Any]:
     generated_at = str(payload.get("generated_at") or dt.datetime.now().strftime("%Y-%m-%d"))[:10]
     current_date = dt.datetime.strptime(generated_at, "%Y-%m-%d")
-    yesterday = (current_date - dt.timedelta(days=1)).strftime("%Y-%m-%d")
-    yesterday_path = snapshot_dir / f"{yesterday}.json"
-    yesterday_payload = load_json(yesterday_path, default=None) if yesterday_path.exists() else None
+    baseline_date, baseline_path, baseline_payload, baseline_gap_days = find_baseline_snapshot(snapshot_dir, current_date)
     enriched = dict(payload)
     compliance = dict(enriched.get("compliance") or {})
     compliance["alerts"] = build_compliance_alert_details(enriched.get("trips") or [])
-    compliance["daily_new_alerts"] = compute_daily_alert_diff({**enriched, "compliance": compliance}, yesterday_payload)
+    compliance["daily_new_alerts"] = compute_daily_alert_diff({**enriched, "compliance": compliance}, baseline_payload)
+    if baseline_payload and baseline_gap_days > 1:
+        compliance["daily_new_alerts"]["message"] = f'{compliance["daily_new_alerts"].get("message", "")}（基线为 {baseline_date}，非昨日）'
     marked_alerts = compliance["daily_new_alerts"].pop("all_alerts", None)
     if isinstance(marked_alerts, list):
         compliance["alerts"] = marked_alerts
@@ -1756,8 +1766,9 @@ def enrich_daily_alert_diff(payload: Dict[str, Any], *, snapshot_dir: Path) -> D
     enriched["snapshot"] = {
         "snapshot_date": generated_at,
         "snapshot_path": str(snapshot_dir / f"{generated_at}.json"),
-        "baseline_date": yesterday,
-        "baseline_path": str(yesterday_path) if yesterday_path.exists() else "",
+        "baseline_date": baseline_date,
+        "baseline_path": str(baseline_path) if baseline_path.exists() else "",
+        "baseline_gap_days": baseline_gap_days,
     }
     return enriched
 
