@@ -10,7 +10,8 @@ Default source/target:
 Design notes:
 - All Feishu reads/writes go through AIME's customized lark-cli path.
 - Bitable pagination is handled explicitly by offset + limit.
-- Sheet overwrite is implemented as: clear target range -> CSV write -> RAW read-back.
+- Detail writes are append-only by sync date: read existing rows -> skip if today's rows exist -> append new rows -> RAW read-back.
+- A full raw Bitable snapshot is persisted to output/snapshots/bitable_snapshot_YYYYMMDD.json after each successful upstream fetch.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ DETAIL_SHEET_ID = "VM2reD"
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 DRIFT_LOG_DIR = SKILL_DIR / "output" / "schema_drift"
+SNAPSHOT_DIR = SKILL_DIR / "output" / "snapshots"
 
 FIELD_ALIASES: Dict[str, List[str]] = {
     # Upstream renamed the post-July onboarded count in v1.4.
@@ -139,7 +141,7 @@ def _aggregate_rows_by_date(rows: Iterable[Dict[str, Any]]) -> Dict[date, Dict[s
 
 def _records_to_detail_rows(records: List[Dict[str, Any]], update_date: str | None = None) -> List[Dict[str, Any]]:
     """Convert current Bitable records to detail-shaped dict rows for trend fallback on same-day sync."""
-    date_value = update_date or today_m_d()
+    date_value = update_date or today_iso()
     rows: List[Dict[str, Any]] = []
     for record in records:
         row: Dict[str, Any] = {}
@@ -150,36 +152,31 @@ def _records_to_detail_rows(records: List[Dict[str, Any]], update_date: str | No
 
 
 def compute_7day_trend(detail_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Compute daily metric totals for the latest 7 calendar days present in historical detail rows."""
+    """Compute daily metric totals for up to the latest 7 dates present in historical detail rows."""
     aggregated = _aggregate_rows_by_date(detail_rows)
     if not aggregated:
         return []
-    end_day = max(aggregated)
-    start_day = end_day - timedelta(days=6)
     result: List[Dict[str, Any]] = []
-    for offset in range(7):
-        day = start_day + timedelta(days=offset)
-        metrics = aggregated.get(day, {metric: 0.0 for metric in TREND_METRICS})
+    for day in sorted(aggregated)[-7:]:
+        metrics = aggregated[day]
         result.append({"日期": f"{day.month}/{day.day}", **{metric: metrics[metric] for metric in TREND_METRICS}})
     return result
 
 
 def compute_4week_trend(detail_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Compute Monday-Sunday natural-week metric totals for the latest 4 weeks in historical detail rows."""
+    """Compute up to the latest 4 Monday-Sunday natural weeks that have historical detail rows."""
     aggregated = _aggregate_rows_by_date(detail_rows)
     if not aggregated:
         return []
-    latest = max(aggregated)
-    latest_week_start = latest - timedelta(days=latest.weekday())
+    week_totals: Dict[date, Dict[str, float]] = defaultdict(lambda: {metric: 0.0 for metric in TREND_METRICS})
+    for day, metrics in aggregated.items():
+        week_start = day - timedelta(days=day.weekday())
+        for metric in TREND_METRICS:
+            week_totals[week_start][metric] += metrics[metric]
     result: List[Dict[str, Any]] = []
-    for week_offset in range(3, -1, -1):
-        week_start = latest_week_start - timedelta(days=7 * week_offset)
+    for week_start in sorted(week_totals)[-4:]:
         week_end = week_start + timedelta(days=6)
-        totals = {metric: 0.0 for metric in TREND_METRICS}
-        for day, metrics in aggregated.items():
-            if week_start <= day <= week_end:
-                for metric in TREND_METRICS:
-                    totals[metric] += metrics[metric]
+        totals = week_totals[week_start]
         result.append({"自然周": f"{week_start.month}/{week_start.day}-{week_end.month}/{week_end.day}", **totals})
     return result
 
@@ -301,6 +298,11 @@ def today_m_d() -> str:
     return f"{now.month}/{now.day}"
 
 
+def today_iso() -> str:
+    """Return today's sync date in YYYY-MM-DD format for append-only detail rows and snapshots."""
+    return datetime.now().strftime("%Y-%m-%d")
+
+
 def _run_lark_cli(args: Sequence[str], *, stdin_text: str | None = None) -> str:
     """Run lark-cli and return stdout, raising a readable error on failure."""
     cmd = ["lark-cli", *args]
@@ -419,7 +421,7 @@ def resolve_source_value(record: Dict[str, Any], output_column: str) -> Any:
 
 def build_sheet_values(records: List[Dict[str, Any]], update_date: str | None = None) -> List[List[Any]]:
     """Reorder Bitable records into the exact Sheet output order, including header row and update date."""
-    date_value = update_date or today_m_d()
+    date_value = update_date or today_iso()
     values: List[List[Any]] = [OUTPUT_COLUMNS]
     for record in records:
         values.append([
@@ -460,6 +462,80 @@ def clear_sheet_range(sheet_token: str, sheet_id: str, clear_range: str = "A1:J1
             "content",
             "--yes",
         ]
+    )
+
+
+def _normalize_sync_date(value: Any) -> str:
+    """Normalize supported detail date formats to YYYY-MM-DD for idempotency checks."""
+    parsed = _parse_m_d(value, default_year=datetime.now().year)
+    if parsed is None:
+        return str(value).strip()
+    return parsed.strftime("%Y-%m-%d")
+
+
+def _detail_rows_from_readback(payload: Dict[str, Any]) -> Tuple[List[str], List[List[str]]]:
+    csv_text = payload.get("data", {}).get("annotated_csv", "")
+    if not csv_text.strip():
+        return [], []
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    if not rows:
+        return [], []
+    header = [cell.strip() for cell in rows[0]]
+    body = [[cell.strip() for cell in row] for row in rows[1:] if any(str(cell).strip() for cell in row)]
+    return header, body
+
+
+def read_detail_sheet_state(sheet_token: str = SHEET_TOKEN, sheet_id: str = DETAIL_SHEET_ID) -> Tuple[List[str], List[List[str]], Dict[str, Any]]:
+    payload = raw_readback(sheet_token, sheet_id, "A1:J10000")
+    header, body = _detail_rows_from_readback(payload)
+    return header, body, payload
+
+
+def detail_has_sync_date(header: List[str], body: List[List[str]], sync_date: str) -> bool:
+    """Check whether the detail sheet already contains rows for sync_date.
+
+    The physical column is currently named 更新日期; sync_date is the logical contract name.
+    """
+    date_col_name = "sync_date" if "sync_date" in header else "更新日期"
+    if date_col_name not in header:
+        raise ValueError(f"Detail sheet must contain sync_date or 更新日期 column; header={header}")
+    date_idx = header.index(date_col_name)
+    normalized_target = _normalize_sync_date(sync_date)
+    for row in body:
+        if date_idx < len(row) and _normalize_sync_date(row[date_idx]) == normalized_target:
+            return True
+    return False
+
+
+def write_bitable_snapshot(records: List[Dict[str, Any]], sync_date: str) -> str:
+    """Persist the raw full Bitable rows for the current sync date."""
+    normalized = _normalize_sync_date(sync_date)
+    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    path = SNAPSHOT_DIR / f"bitable_snapshot_{normalized.replace('-', '')}.json"
+    payload = {"sync_date": normalized, "records": records}
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(path)
+
+
+def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[Any]], start_row: int) -> None:
+    """Append data rows at the first empty row without touching the fixed header or historical rows."""
+    if not values:
+        return
+    csv_text = values_to_csv(values)
+    _run_lark_cli(
+        [
+            "sheets",
+            "+csv-put",
+            "--spreadsheet-token",
+            sheet_token,
+            "--sheet-id",
+            sheet_id,
+            "--start-cell",
+            f"A{start_row}",
+            "--csv",
+            "-",
+        ],
+        stdin_text=csv_text,
     )
 
 
@@ -562,10 +638,13 @@ def sync_bitable_to_sheet(
     table_id: str = TABLE_ID,
     sheet_token: str = SHEET_TOKEN,
     sheet_id: str = DETAIL_SHEET_ID,
+    sync_date: str | None = None,
 ) -> Dict[str, Any]:
-    """Pull all Bitable records, translate industry names, overwrite VM2reD, then RAW-read A1:J3."""
+    """Pull Bitable records, snapshot raw rows, append VM2reD once per sync date, then RAW-read A1:J3."""
     validate_sync_contract(bitable_token, table_id, sheet_token, sheet_id)
+    effective_sync_date = sync_date or today_iso()
     records, source_fields = fetch_all_bitable_records(bitable_token, table_id)
+    snapshot_path = write_bitable_snapshot(records, effective_sync_date)
 
     schema_drift = inspect_schema_drift(source_fields)
     schema_drift_log = write_schema_drift_log(schema_drift)
@@ -576,22 +655,39 @@ def sync_bitable_to_sheet(
             f"schema_drift_log={schema_drift_log}"
         )
 
-    values = build_sheet_values(records)
-    trend_values = build_trend_values(_records_to_detail_rows(records))
-    clear_sheet_range(sheet_token, sheet_id)
-    write_values_to_sheet(sheet_token, sheet_id, values)
+    values = build_sheet_values(records, effective_sync_date)
+    header, existing_rows, before_state = read_detail_sheet_state(sheet_token, sheet_id)
+    existing_header = header or OUTPUT_COLUMNS
+    if existing_header != OUTPUT_COLUMNS:
+        raise ValueError(f"Unexpected detail header: {existing_header}; expected={OUTPUT_COLUMNS}")
+
+    skipped_existing_sync_date = detail_has_sync_date(existing_header, existing_rows, effective_sync_date)
+    rows_appended = 0
+    append_start_row = len(existing_rows) + 2
+    if not skipped_existing_sync_date:
+        append_values_to_sheet(sheet_token, sheet_id, values[1:], append_start_row)
+        rows_appended = max(len(values) - 1, 0)
 
     time.sleep(2)
     readback = raw_readback(sheet_token, sheet_id, "A1:J3")
+    _, latest_rows, _ = read_detail_sheet_state(sheet_token, sheet_id)
+    trend_values = build_trend_values(read_detail_rows_from_sheet(sheet_token, sheet_id))
 
     return {
+        "sync_date": _normalize_sync_date(effective_sync_date),
         "records_fetched": len(records),
-        "rows_written_including_header": len(values),
-        "data_rows_written": max(len(values) - 1, 0),
+        "snapshot_path": snapshot_path,
+        "rows_appended": rows_appended,
+        "skipped_existing_sync_date": skipped_existing_sync_date,
+        "append_start_row": None if skipped_existing_sync_date else append_start_row,
+        "detail_existing_rows_before": len(existing_rows),
+        "detail_rows_after": len(latest_rows),
         "source_fields": source_fields,
         "schema_drift": schema_drift,
         "schema_drift_log": schema_drift_log,
         "output_columns": OUTPUT_COLUMNS,
+        "sync_date_column": "更新日期",
+        "raw_before_current_region": before_state.get("data", {}).get("current_region"),
         "trend_preview_rows": trend_values[:4],
         "trend_output_start_cell": TREND_OUTPUT_START_CELL,
         "raw_readback_A1_J3": readback,
@@ -604,12 +700,13 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--table-id", default=TABLE_ID, help="Bitable table id")
     parser.add_argument("--sheet-token", default=SHEET_TOKEN, help="Target Sheet spreadsheet token")
     parser.add_argument("--sheet-id", default=DETAIL_SHEET_ID, help="Target worksheet id")
+    parser.add_argument("--date", dest="sync_date", default=None, help="Logical sync date in YYYY-MM-DD; defaults to today")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str]) -> int:
     args = parse_args(argv)
-    result = sync_bitable_to_sheet(args.bitable_token, args.table_id, args.sheet_token, args.sheet_id)
+    result = sync_bitable_to_sheet(args.bitable_token, args.table_id, args.sheet_token, args.sheet_id, args.sync_date)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

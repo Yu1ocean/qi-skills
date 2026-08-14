@@ -1,16 +1,16 @@
 {
-    "skill_id": "29f99b61-e50d-47eb-a086-f101aad58241",
-    "name": "team-travel-dashboard-generator",
-    "description": "自动抓取近30天差旅审批 / 预订邮件，生成团队差旅大屏；V3.10 修复昨日快照缺失时误报首次运行，支持向前回溯最近历史基线并补充 baseline_gap_days。",
-    "version": "3.10",
-    "doc_link": "https://bytedance.larkoffice.com/docx/OJ4Xd5utOoVJbzxYgOEcQxycnHf",
+    "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
+    "name": "us-am-stats-sync",
+    "description": "将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、明细表按日期追加、每日 Bitable 原始快照、趋势计算、RAW 回捞与公式校验。",
+    "version": "1.6",
+    "doc_link": "https://bytedance.larkoffice.com/docx/WdlLdXvmqoeSPSx14BjmDxvky1g",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-14",
-    "updated_at": "2026-08-14 08:59",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator.zip",
-    "zip_name": "team-travel-dashboard-generator.zip",
-    "drive_file_token": "FUCZb9rM9omxGAxAxn2cOZQanQd",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/FUCZb9rM9omxGAxAxn2cOZQanQd"
+    "updated_at": "2026-08-14 09:53",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
+    "zip_name": "us-am-stats-sync.zip",
+    "drive_file_token": "E3xpbX4AHonbTXxfM5bmEw2Eyfd",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/E3xpbX4AHonbTXxfM5bmEw2Eyfd"
 }
