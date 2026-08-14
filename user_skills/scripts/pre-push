@@ -1,0 +1,80 @@
+#!/bin/bash
+# qi-skills pre-push guard: block files larger than 50MB.
+# Tracked template. Install with: bash user_skills/scripts/install_hooks.sh
+
+set -u
+
+THRESHOLD_KB=51200
+THRESHOLD_BYTES=$((THRESHOLD_KB * 1024))
+violations=""
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$repo_root" || exit 0
+
+tmp_files="$(mktemp)"
+trap 'rm -f "$tmp_files"' EXIT
+
+add_paths_from_diff() {
+  local range="$1"
+  git diff --name-only --diff-filter=AM "$range" 2>/dev/null >> "$tmp_files" || true
+}
+
+# Prefer the refs that Git passes to pre-push via stdin.
+# Format: <local ref> <local sha1> <remote ref> <remote sha1>
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "${local_ref:-}" ] && continue
+  case "$local_sha" in
+    0000000000000000000000000000000000000000) continue ;;
+  esac
+  if [ "${remote_sha:-}" = "0000000000000000000000000000000000000000" ] || [ -z "${remote_sha:-}" ]; then
+    git diff-tree --no-commit-id --name-only --diff-filter=AM -r "$local_sha" 2>/dev/null >> "$tmp_files" || true
+  else
+    add_paths_from_diff "$remote_sha..$local_sha"
+  fi
+done
+
+# Fallback for direct dry-run/manual execution where stdin may be empty.
+if [ ! -s "$tmp_files" ]; then
+  if git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1; then
+    add_paths_from_diff "@{upstream}..HEAD"
+  fi
+fi
+
+# Fallback for first push/no upstream or pre-commit verification.
+if [ ! -s "$tmp_files" ]; then
+  git diff --cached --name-only --diff-filter=AM 2>/dev/null >> "$tmp_files" || true
+fi
+
+sort -u "$tmp_files" | while IFS= read -r file; do
+  [ -z "$file" ] && continue
+
+  size_bytes=""
+  if git rev-parse --verify ":$file" >/dev/null 2>&1; then
+    size_bytes="$(git cat-file -s ":$file" 2>/dev/null || true)"
+  fi
+  if [ -z "$size_bytes" ] && [ -f "$file" ]; then
+    size_bytes="$(wc -c < "$file" | tr -d ' ')"
+  fi
+  [ -z "$size_bytes" ] && continue
+
+  if [ "$size_bytes" -gt "$THRESHOLD_BYTES" ]; then
+    size_kb=$(( (size_bytes + 1023) / 1024 ))
+    printf '%s\t%s KB\n' "$file" "$size_kb" >> "${tmp_files}.violations"
+  fi
+done
+
+if [ -f "${tmp_files}.violations" ] && [ -s "${tmp_files}.violations" ]; then
+  echo "❌ pre-push blocked: files larger than 50MB (${THRESHOLD_KB} KB) detected."
+  echo ""
+  while IFS=$'\t' read -r file size; do
+    echo "- ${file} (${size})"
+    echo "  fix: git rm --cached \"${file}\""
+  done < "${tmp_files}.violations"
+  echo ""
+  echo "Please remove oversized files from Git history/staging before pushing."
+  rm -f "${tmp_files}.violations"
+  exit 1
+fi
+
+rm -f "${tmp_files}.violations"
+exit 0

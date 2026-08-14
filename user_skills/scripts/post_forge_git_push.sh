@@ -18,3 +18,4 @@ Auto-pushed by post_forge_git_push hook.
 Co-Authored-By: Aime aime@bytedance.com"
 git push origin main
 echo "✅ ${SKILL_NAME} pushed to qi-skills"
+echo "💡 如果尚未安装 >50MB pre-push 熔断 hook，可运行：bash user_skills/scripts/install_hooks.sh"
