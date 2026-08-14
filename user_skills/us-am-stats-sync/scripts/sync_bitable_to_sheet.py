@@ -35,10 +35,13 @@ DETAIL_SHEET_ID = "VM2reD"
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 DRIFT_LOG_DIR = SKILL_DIR / "output" / "schema_drift"
+AUDIT_LOG_DIR = SKILL_DIR / "output" / "audit_logs"
 
 FIELD_ALIASES: Dict[str, List[str]] = {
     # Upstream renamed the historical salable metric to the shorter current-stock label.
     "历史入驻新增可售": ["可售数"],
+    # 2026-08-14: upstream phase-cumulative onboarding metric renamed after July.
+    "新增入驻数": ["7月后新增入驻数"],
 }
 OPTIONAL_SOURCE_COLUMNS = {"USAM", "历史入驻新增可售"}
 NULL_FALLBACK = "NULL"
@@ -106,6 +109,18 @@ def today_m_d() -> str:
     """Return today's date in M/D format, e.g. 7/29."""
     now = datetime.now()
     return f"{now.month}/{now.day}"
+
+
+def parse_m_d(date_text: str) -> str:
+    """Convert YYYY-MM-DD or M/D into the Sheet update-date format."""
+    text = date_text.strip()
+    if not text:
+        raise ValueError("date cannot be empty")
+    if "/" in text:
+        month, day = text.split("/", 1)
+        return f"{int(month)}/{int(day)}"
+    parsed = datetime.strptime(text, "%Y-%m-%d")
+    return f"{parsed.month}/{parsed.day}"
 
 
 def _run_lark_cli(args: Sequence[str], *, stdin_text: str | None = None) -> str:
@@ -364,11 +379,27 @@ def write_schema_drift_log(drift_report: Dict[str, Any]) -> str | None:
     return str(path)
 
 
+def write_audit_log(event: str, payload: Dict[str, Any], update_date: str | None = None) -> str:
+    """Persist a structured audit log for each manual or scheduled run."""
+    AUDIT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    suffix = update_date.replace("/", "-") if update_date else "current"
+    path = AUDIT_LOG_DIR / f"{event}_{suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    audit_payload = {
+        "event": event,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "update_date": update_date,
+        **payload,
+    }
+    path.write_text(json.dumps(audit_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(path)
+
+
 def sync_bitable_to_sheet(
     bitable_token: str = BITABLE_TOKEN,
     table_id: str = TABLE_ID,
     sheet_token: str = SHEET_TOKEN,
     sheet_id: str = DETAIL_SHEET_ID,
+    update_date: str | None = None,
 ) -> Dict[str, Any]:
     """Pull all Bitable records, translate industry names, overwrite VM2reD, then RAW-read A1:J3."""
     validate_sync_contract(bitable_token, table_id, sheet_token, sheet_id)
@@ -383,14 +414,15 @@ def sync_bitable_to_sheet(
             f"schema_drift_log={schema_drift_log}"
         )
 
-    values = build_sheet_values(records)
+    effective_update_date = parse_m_d(update_date) if update_date else today_m_d()
+    values = build_sheet_values(records, effective_update_date)
     clear_sheet_range(sheet_token, sheet_id)
     write_values_to_sheet(sheet_token, sheet_id, values)
 
     time.sleep(2)
     readback = raw_readback(sheet_token, sheet_id, "A1:J3")
 
-    return {
+    result = {
         "records_fetched": len(records),
         "rows_written_including_header": len(values),
         "data_rows_written": max(len(values) - 1, 0),
@@ -398,8 +430,11 @@ def sync_bitable_to_sheet(
         "schema_drift": schema_drift,
         "schema_drift_log": schema_drift_log,
         "output_columns": OUTPUT_COLUMNS,
+        "update_date": effective_update_date,
         "raw_readback_A1_J3": readback,
     }
+    write_audit_log("detail_sync", result, effective_update_date)
+    return result
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
@@ -408,12 +443,13 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--table-id", default=TABLE_ID, help="Bitable table id")
     parser.add_argument("--sheet-token", default=SHEET_TOKEN, help="Target Sheet spreadsheet token")
     parser.add_argument("--sheet-id", default=DETAIL_SHEET_ID, help="Target worksheet id")
+    parser.add_argument("--date", default=None, help="Override 更新日期, accepts YYYY-MM-DD or M/D")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str]) -> int:
     args = parse_args(argv)
-    result = sync_bitable_to_sheet(args.bitable_token, args.table_id, args.sheet_token, args.sheet_id)
+    result = sync_bitable_to_sheet(args.bitable_token, args.table_id, args.sheet_token, args.sheet_id, args.date)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

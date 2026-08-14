@@ -13,6 +13,7 @@ Run with AIME lark-cli credentials injected, e.g. bash include_secrets=true:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -29,9 +30,11 @@ from sync_bitable_to_sheet import (  # noqa: E402
     SHEET_TOKEN,
     _extract_json_object,
     _run_lark_cli,
+    parse_m_d,
     raw_readback,
     sync_bitable_to_sheet,
     today_m_d,
+    write_audit_log,
 )
 
 SUMMARY_SHEET_ID = "2unp6l"
@@ -120,7 +123,7 @@ def _write_summary_formulas() -> Dict[str, Any]:
     )
 
 
-def _write_summary_update_date() -> Dict[str, Any]:
+def _write_summary_update_date(update_date: str | None = None) -> Dict[str, Any]:
     # Use +csv-put instead of +cells-set here. The summary sheet has hidden G:H columns,
     # and +cells-set may offset the physical write target around K; +csv-put writes K1:K2 exactly.
     # Pre-set K2 as text so 7/29 stays M/D instead of being formatted as 29-Jul.
@@ -138,7 +141,8 @@ def _write_summary_update_date() -> Dict[str, Any]:
             "@",
         ]
     )
-    csv_text = f"更新日期\n{today_m_d()}\n"
+    effective_update_date = parse_m_d(update_date) if update_date else today_m_d()
+    csv_text = f"更新日期\n{effective_update_date}\n"
     return _run_json(
         [
             "sheets",
@@ -171,12 +175,12 @@ def _verify_formulas() -> Dict[str, Any]:
     )
 
 
-def step1_sync_detail() -> Dict[str, Any]:
+def step1_sync_detail(update_date: str | None = None) -> Dict[str, Any]:
     """同步明细：分页拉取 Bitable，全量覆盖写入 VM2reD，并 RAW 回捞 A1:J3。"""
-    return sync_bitable_to_sheet()
+    return sync_bitable_to_sheet(update_date=update_date)
 
 
-def step2_update_formulas() -> Dict[str, Any]:
+def step2_update_formulas(update_date: str | None = None) -> Dict[str, Any]:
     """一次性写公式：若 B2 已包含 SUMIF，则跳过 B2:F9，仅刷新 K1:K2 更新日期。"""
     before = _read_summary_snapshot()
     b2_before = _read_b2_formula()
@@ -186,7 +190,7 @@ def step2_update_formulas() -> Dict[str, Any]:
     if not formulas_skipped:
         formula_write_result = _write_summary_formulas()
 
-    date_write_result = _write_summary_update_date()
+    date_write_result = _write_summary_update_date(update_date)
     time.sleep(2)
 
     b2_after = _read_b2_formula()
@@ -211,23 +215,28 @@ def step2_update_formulas() -> Dict[str, Any]:
     }
 
 
-def main() -> None:
-    detail_result = step1_sync_detail()
-    summary_result = step2_update_formulas()
-    print(
-        json.dumps(
-            {
-                "detail": detail_result,
-                "summary": summary_result,
-                "links": {
-                    "detail_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={DETAIL_SHEET_ID}",
-                    "summary_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={SUMMARY_SHEET_ID}",
-                },
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
+def parse_args(argv: List[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Daily sync US AM stats detail and summary Sheet.")
+    parser.add_argument("--date", default=None, help="Override 更新日期, accepts YYYY-MM-DD or M/D")
+    return parser.parse_args(argv)
+
+
+def main(argv: List[str] | None = None) -> None:
+    args = parse_args(argv or sys.argv[1:])
+    update_date = parse_m_d(args.date) if args.date else None
+    detail_result = step1_sync_detail(update_date)
+    summary_result = step2_update_formulas(update_date)
+    audit_payload = {
+        "detail": detail_result,
+        "summary": summary_result,
+        "links": {
+            "detail_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={DETAIL_SHEET_ID}",
+            "summary_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={SUMMARY_SHEET_ID}",
+        },
+    }
+    audit_log = write_audit_log("daily_sync", audit_payload, detail_result.get("update_date"))
+    audit_payload["audit_log"] = audit_log
+    print(json.dumps(audit_payload, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
