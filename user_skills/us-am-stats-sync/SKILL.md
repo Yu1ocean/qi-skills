@@ -1,7 +1,7 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.3
+version: 1.5
 description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表全量覆盖写入、更新日期落列、US行业统计表 SUMIF 公式化改造与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
@@ -64,6 +64,7 @@ author: yuqinan
 - 默认明细写入范围：`A:J`，清理上限 `A1:J10000`
 - 默认 RAW 回捞范围：明细 `A1:J3`，汇总 `A1:K14`
 - 默认公式校验范围：`2unp6l!B2:I9`
+- 默认趋势写入范围：汇总工作表 `2unp6l!A17:I30`，固定写在现有 `A1:K15` 汇总公式与参数区下方，禁止覆盖既有公式。
 - 默认执行权限：必须通过 `bash` 工具设置 `include_secrets=true`
 
 ## ⚙️ 核心架构 / SOP / 约束条件
@@ -80,13 +81,16 @@ python3 scripts/daily_sync.py
 2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文，按固定列序写入 `VM2reD!A:J`，并在 J 列写入当天 `M/D` 格式更新日期。
 3. `step2_update_formulas()`：读取 `2unp6l` 当前内容；如果 `B2` 还不是 `SUMIF` 公式，则把 `B2:F9` 改为从「明细」表汇总的公式；如果已是 `SUMIF`，则跳过公式重写，仅刷新 `K1:K2` 的更新日期。
 4. 写入后回读 `VM2reD!A1:J3`、`2unp6l!A1:K14`，并使用 `+formula-verify` 校验 `2unp6l!B2:I9` 为 zero-error。
-5. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
+5. `step3_write_trends()`：读取明细表 `A1:J10000`，调用 `compute_7day_trend()` 与 `compute_4week_trend()`，把近 7 天每日趋势与近 4 个自然周（周一到周日）趋势写入 `2unp6l!A17:I30`，并回读校验。
+6. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
 
 ## 字段与映射
 
 明细输出列固定为：`US行业 / USAM / 线索数 / 可联系 / 已触达 / 有意愿 / 新增入驻数 / 新增入驻可售 / 历史入驻新增可售 / 更新日期`。`SourceID` 与 `序号` 不写入。
 
-字段漂移契约：`历史入驻新增可售` 优先从上游字段 `可售数` 读取；若 canonical 字段与 `可售数` 均已删除或不可见，则保留输出列并写入 `NULL`，避免废弃指标阻断每日同步；`USAM` 当前上游字段已删除或当前权限不可见，输出列保留但写入 `NULL`，用于保证目标 Sheet 结构稳定。
+字段漂移契约：`新增入驻数` 优先从上游字段 `7月后新增入驻数` 读取，作为阶段累计入驻口径；`历史入驻新增可售` 优先从上游字段 `可售数` 读取；若 canonical 字段与 `可售数` 均已删除或不可见，则保留输出列并写入 `NULL`，避免废弃指标阻断每日同步；`USAM` 当前上游字段已删除或当前权限不可见，输出列保留但写入 `NULL`，用于保证目标 Sheet 结构稳定。
+
+趋势计算基于明细表历史行的 `更新日期` 字段；脚本支持 `M/D`、`YYYY/M/D`、`YYYY-MM-DD` 解析。若明细当前仅保留当日全量覆盖结果，则近 7 天/近 4 周中无历史日期的区间会写入 0，直到历史补跑或保留多日快照后自然形成趋势。
 
 行业映射为：`Fashion → 服饰服配`，`FMCG → 快消生活`，`Sports & Lifestyle → 运动潮奢`，`Electronics → 3C家电`，`Home & Textiles → 日用家纺`，`Automotive & Tools → 汽摩工具`，`Furniture & Home Improvements → 家具家装`。
 
@@ -115,6 +119,8 @@ python3 scripts/sync_bitable_to_sheet.py
 
 ## 更新日志 (Changelog)
 
+- 1.5：新增近 7 天每日趋势与近 4 个自然周趋势计算，基于明细表 `更新日期` 聚合 7 个关键指标，并固定写入汇总表 `2unp6l!A17:I30`，避开现有 `A1:K15` 公式与参数区。
+- 1.4：修复 2026-08-10 至 2026-08-13 连续熔断的字段漂移：`新增入驻数` 改读上游别名 `7月后新增入驻数`，schema drift 命中别名后仅记录 `use_alias` 不再硬熔断；新增 `--date` 历史补跑参数与 `output/audit_logs/` 审计日志。
 - 1.3：修复 2026-08-07 上游再次漂移导致的字段断链：确认 `可售数` 已从 Bitable 当前字段列表消失，`历史入驻新增可售` 改为“优先别名、缺失则 NULL 兜底”的可选字段，保留目标 Sheet A:J 结构并恢复每日 19:00 定时同步。
 - 1.2：修复源 Bitable 字段漂移导致连续熔断的问题：`历史入驻新增可售` 改读 `可售数` 别名，`USAM` 改为可选字段并写入 `NULL` 兜底；新增每次运行的 Schema 漂移主动巡检与结构化告警日志。
 - 0.1：补齐 Forge 规范字段、CDA 三层护栏说明与副作用前契约校验入口，为正式锻造 Upsert 做准备。

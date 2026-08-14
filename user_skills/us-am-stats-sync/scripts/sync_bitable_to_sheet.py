@@ -22,9 +22,10 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime
+from collections import defaultdict
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 
 BITABLE_TOKEN = "MPN9bUhBTaUsgcsrN92m2Oq0yde"
@@ -37,6 +38,8 @@ SKILL_DIR = SCRIPT_DIR.parent
 DRIFT_LOG_DIR = SKILL_DIR / "output" / "schema_drift"
 
 FIELD_ALIASES: Dict[str, List[str]] = {
+    # Upstream renamed the post-July onboarded count in v1.4.
+    "新增入驻数": ["7月后新增入驻数"],
     # Upstream renamed the historical salable metric to the shorter current-stock label.
     "历史入驻新增可售": ["可售数"],
 }
@@ -68,6 +71,196 @@ OUTPUT_COLUMNS: List[str] = [
 ]
 
 PAGE_SIZE = 100
+
+TREND_METRICS: List[str] = [
+    "线索数",
+    "可联系",
+    "已触达",
+    "有意愿",
+    "新增入驻数",
+    "新增入驻可售",
+    "历史入驻新增可售",
+]
+TREND_OUTPUT_START_CELL = "A17"
+TREND_READBACK_RANGE = "A17:I30"
+
+
+def validate_trend_contract(values: List[List[Any]]) -> None:
+    """Runtime gate before trend side effects: fixed headers, non-overlap with A1:K15 summary formulas."""
+    if not values or len(values[0]) != 9:
+        raise ValueError("Trend payload must have exactly 9 columns")
+    expected_prefix = ["趋势类型", "日期/周", *TREND_METRICS]
+    if values[0] != expected_prefix:
+        raise ValueError(f"Unexpected trend header: {values[0]}")
+    if TREND_OUTPUT_START_CELL != "A17":
+        raise ValueError("Trend output start must stay at A17 to avoid existing A1:K15 formulas/parameters")
+
+
+def _coerce_number(value: Any) -> float:
+    if value in (None, "", NULL_FALLBACK):
+        return 0.0
+    text = str(value).strip().replace(",", "")
+    if not text or text.upper() == NULL_FALLBACK:
+        return 0.0
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+def _parse_m_d(value: Any, *, default_year: int | None = None) -> date | None:
+    """Parse M/D, YYYY/M/D or YYYY-MM-DD update dates used by historical backfills."""
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    year = default_year or datetime.now().year
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d", "%m-%d"):
+        try:
+            parsed = datetime.strptime(text, fmt)
+            if "%Y" not in fmt:
+                return date(year, parsed.month, parsed.day)
+            return parsed.date()
+        except ValueError:
+            continue
+    return None
+
+
+def _aggregate_rows_by_date(rows: Iterable[Dict[str, Any]]) -> Dict[date, Dict[str, float]]:
+    aggregated: Dict[date, Dict[str, float]] = defaultdict(lambda: {metric: 0.0 for metric in TREND_METRICS})
+    current_year = datetime.now().year
+    for row in rows:
+        day = _parse_m_d(row.get("更新日期"), default_year=current_year)
+        if day is None:
+            continue
+        for metric in TREND_METRICS:
+            aggregated[day][metric] += _coerce_number(row.get(metric))
+    return aggregated
+
+
+def _records_to_detail_rows(records: List[Dict[str, Any]], update_date: str | None = None) -> List[Dict[str, Any]]:
+    """Convert current Bitable records to detail-shaped dict rows for trend fallback on same-day sync."""
+    date_value = update_date or today_m_d()
+    rows: List[Dict[str, Any]] = []
+    for record in records:
+        row: Dict[str, Any] = {}
+        for column in OUTPUT_COLUMNS:
+            row[column] = date_value if column == "更新日期" else resolve_source_value(record, column)
+        rows.append(row)
+    return rows
+
+
+def compute_7day_trend(detail_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Compute daily metric totals for the latest 7 calendar days present in historical detail rows."""
+    aggregated = _aggregate_rows_by_date(detail_rows)
+    if not aggregated:
+        return []
+    end_day = max(aggregated)
+    start_day = end_day - timedelta(days=6)
+    result: List[Dict[str, Any]] = []
+    for offset in range(7):
+        day = start_day + timedelta(days=offset)
+        metrics = aggregated.get(day, {metric: 0.0 for metric in TREND_METRICS})
+        result.append({"日期": f"{day.month}/{day.day}", **{metric: metrics[metric] for metric in TREND_METRICS}})
+    return result
+
+
+def compute_4week_trend(detail_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Compute Monday-Sunday natural-week metric totals for the latest 4 weeks in historical detail rows."""
+    aggregated = _aggregate_rows_by_date(detail_rows)
+    if not aggregated:
+        return []
+    latest = max(aggregated)
+    latest_week_start = latest - timedelta(days=latest.weekday())
+    result: List[Dict[str, Any]] = []
+    for week_offset in range(3, -1, -1):
+        week_start = latest_week_start - timedelta(days=7 * week_offset)
+        week_end = week_start + timedelta(days=6)
+        totals = {metric: 0.0 for metric in TREND_METRICS}
+        for day, metrics in aggregated.items():
+            if week_start <= day <= week_end:
+                for metric in TREND_METRICS:
+                    totals[metric] += metrics[metric]
+        result.append({"自然周": f"{week_start.month}/{week_start.day}-{week_end.month}/{week_end.day}", **totals})
+    return result
+
+
+def build_trend_values(detail_rows: List[Dict[str, Any]]) -> List[List[Any]]:
+    values: List[List[Any]] = [["趋势类型", "日期/周", *TREND_METRICS]]
+    for item in compute_7day_trend(detail_rows):
+        values.append(["近7天", item["日期"], *[item[metric] for metric in TREND_METRICS]])
+    for item in compute_4week_trend(detail_rows):
+        values.append(["近4周", item["自然周"], *[item[metric] for metric in TREND_METRICS]])
+    validate_trend_contract(values)
+    return values
+
+
+def read_detail_rows_from_sheet(sheet_token: str = SHEET_TOKEN, sheet_id: str = DETAIL_SHEET_ID) -> List[Dict[str, Any]]:
+    payload = raw_readback(sheet_token, sheet_id, "A1:J10000")
+    csv_text = payload.get("data", {}).get("annotated_csv", "")
+    if not csv_text.strip():
+        return []
+    reader = csv.reader(io.StringIO(csv_text))
+    rows = list(reader)
+    if not rows:
+        return []
+    header = [cell.strip() for cell in rows[0]]
+    result: List[Dict[str, Any]] = []
+    for raw in rows[1:]:
+        if not any(str(cell).strip() for cell in raw):
+            continue
+        result.append({header[idx]: raw[idx].strip() if idx < len(raw) else "" for idx in range(len(header))})
+    return result
+
+
+def write_trend_values_to_summary(sheet_token: str, summary_sheet_id: str, values: List[List[Any]]) -> Dict[str, Any]:
+    validate_trend_contract(values)
+    csv_text = values_to_csv(values)
+    _run_lark_cli(
+        [
+            "sheets",
+            "+cells-clear",
+            "--spreadsheet-token",
+            sheet_token,
+            "--sheet-id",
+            summary_sheet_id,
+            "--range",
+            TREND_READBACK_RANGE,
+            "--scope",
+            "content",
+            "--yes",
+        ]
+    )
+    _run_lark_cli(
+        [
+            "sheets",
+            "+cells-set-style",
+            "--spreadsheet-token",
+            sheet_token,
+            "--sheet-id",
+            summary_sheet_id,
+            "--range",
+            TREND_READBACK_RANGE,
+            "--number-format",
+            "0",
+        ]
+    )
+    _run_lark_cli(
+        [
+            "sheets",
+            "+csv-put",
+            "--spreadsheet-token",
+            sheet_token,
+            "--sheet-id",
+            summary_sheet_id,
+            "--start-cell",
+            TREND_OUTPUT_START_CELL,
+            "--csv",
+            "-",
+        ],
+        stdin_text=csv_text,
+    )
+    time.sleep(2)
+    return raw_readback(sheet_token, summary_sheet_id, TREND_READBACK_RANGE)
 
 
 def validate_sync_contract(
@@ -384,6 +577,7 @@ def sync_bitable_to_sheet(
         )
 
     values = build_sheet_values(records)
+    trend_values = build_trend_values(_records_to_detail_rows(records))
     clear_sheet_range(sheet_token, sheet_id)
     write_values_to_sheet(sheet_token, sheet_id, values)
 
@@ -398,6 +592,8 @@ def sync_bitable_to_sheet(
         "schema_drift": schema_drift,
         "schema_drift_log": schema_drift_log,
         "output_columns": OUTPUT_COLUMNS,
+        "trend_preview_rows": trend_values[:4],
+        "trend_output_start_cell": TREND_OUTPUT_START_CELL,
         "raw_readback_A1_J3": readback,
     }
 

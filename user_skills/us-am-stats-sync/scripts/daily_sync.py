@@ -27,11 +27,16 @@ if str(SCRIPT_DIR) not in sys.path:
 from sync_bitable_to_sheet import (  # noqa: E402
     DETAIL_SHEET_ID,
     SHEET_TOKEN,
+    TREND_OUTPUT_START_CELL,
+    TREND_READBACK_RANGE,
     _extract_json_object,
     _run_lark_cli,
+    build_trend_values,
     raw_readback,
+    read_detail_rows_from_sheet,
     sync_bitable_to_sheet,
     today_m_d,
+    write_trend_values_to_summary,
 )
 
 SUMMARY_SHEET_ID = "2unp6l"
@@ -211,14 +216,31 @@ def step2_update_formulas() -> Dict[str, Any]:
     }
 
 
+def step3_write_trends() -> Dict[str, Any]:
+    """在汇总表 A17:I30 空白区写入近 7 天与近 4 周趋势，避开 A1:K15 现有公式/参数。"""
+    detail_rows = read_detail_rows_from_sheet(SHEET_TOKEN, DETAIL_SHEET_ID)
+    trend_values = build_trend_values(detail_rows)
+    readback = write_trend_values_to_summary(SHEET_TOKEN, SUMMARY_SHEET_ID, trend_values)
+    return {
+        "trend_output_start_cell": TREND_OUTPUT_START_CELL,
+        "trend_readback_range": TREND_READBACK_RANGE,
+        "detail_rows_used": len(detail_rows),
+        "trend_rows_written_including_header": len(trend_values),
+        "trend_preview_rows": trend_values[:4],
+        "raw_readback": readback,
+    }
+
+
 def main() -> None:
     detail_result = step1_sync_detail()
     summary_result = step2_update_formulas()
+    trend_result = step3_write_trends()
     print(
         json.dumps(
             {
                 "detail": detail_result,
                 "summary": summary_result,
+                "trends": trend_result,
                 "links": {
                     "detail_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={DETAIL_SHEET_ID}",
                     "summary_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={SUMMARY_SHEET_ID}",
