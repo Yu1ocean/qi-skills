@@ -1,7 +1,7 @@
 ---
 name: info-miner
 id: 95b1248a-7aaa-42fa-b9ef-f58492536e09
-version: 1.9.1
+version: 1.10
 description: 从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。
 ---
 
@@ -13,7 +13,9 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - **非中文信息源**：输出英中双语逐段对照（左英文右中文），用于高保真对照阅读。
 - **新增闭环归档**：生成飞书文档后，必须把资产写入指定 Wiki 分类节点的「已归档资产」表格；归档失败即明确 raise error 并阻断执行。
 
-**当前版本：1.9（2026-07-29）**
+**当前版本：1.9.2（2026-08-15）**
+
+> **v1.9.2 变更要点**：修复 Wiki 归档脚本对历史 `inner_skills/lark/mcp_lark_lark_download.py` 与 `mcp_lark_update_lark_doc.py` 的硬编码依赖。`scripts/wiki_archive_guard.py` 现在在 info-miner 侧执行多候选 MCP/shortcut resolver：下载优先兼容旧脚本，缺失时切换当前可用的 `inner_skills/lark_download/lark_download.py`；更新链路保留旧脚本优先并探测可用的 lark-doc update shortcut，若本地脚本候选缺失则切换 `lark-cli docs +update --as user`，候选均缺失才明确熔断且禁止退回 OpenAPI。根因是 inner skill 目录结构演进后历史 wrapper 缺失，导致归档阶段在下载/更新前 P1 熔断。验收要求：`wiki_archive_guard.py --selftest` 与 CDA Guardrails 自检必须通过；远端归档仍必须 MCP-only、用户身份、`include_secrets=true`。
 
 > **v1.9 变更要点**：微博 Visitor System 场景将“浏览器模拟访问”从规则层补齐为可执行锚点。命中微博（`weibo.com` / `m.weibo.cn` / `weibo.cn`）的 `Visitor System / 403 / anti-bot / 需登录` 拦截时，**必须先触发** `user_skills/yt-dlp-media-downloader` 做物理探针；若 `yt-dlp probe` 仍失败，则**自动调用** `user_skills/info-miner/weibo_headless_fetcher.py`，在容器内启动 Playwright Chromium Headless/CDP，尝试获取访客 cookie、渲染页面、提取标题/作者/发布时间/正文/HTML，并在退出前写入 `/workspace/.ephemeral_pool/browser_gc.log`。只有该脚本也失败，才允许请求用户介入或要求补充 cookies/登录态。
 
@@ -406,8 +408,8 @@ python3 scripts/inspiration_archiver.py \
 - 承载 `CATEGORY_NODE_MAP`
 - 规范化 / 校验分类
 - 构造归档行与固定表头
-- 通过 `inner_skills/lark/mcp_lark_lark_download.py` 下载目标文档 Markdown
-- 通过 `inner_skills/lark/mcp_lark_update_lark_doc.py` 执行 block update / insert
+- 在 info-miner 侧解析可用的 Lark MCP/shortcut 脚本：下载链路优先 `inner_skills/lark/mcp_lark_lark_download.py`，缺失时使用当前 `inner_skills/lark_download/lark_download.py`
+- 更新链路优先历史 `inner_skills/lark/mcp_lark_update_lark_doc.py`，并探测当前 lark-doc update shortcut；本地脚本候选缺失时切换 `lark-cli docs +update --as user` 执行 `block_replace` / `block_insert_after`；全部候选缺失时必须显式熔断，禁止退回 OpenAPI/JWT 直调
 - 写后重新下载目标文档并做 RAW 回读验收
 - 任一步失败都 `raise WikiArchiveError`，阻断主流程
 
@@ -431,6 +433,10 @@ python3 user_skills/info-miner/scripts/wiki_archive_guard.py --selftest
 - 归档写入失败：重新下载目标 Wiki 文档并核查 `## 📂 已归档资产` 区块；若仍失败，必须报错中断，不得只交付文档链接
 
 ## 更新日志 (Changelog)
+- 1.9.2（2026-08-15）：修复 Wiki 归档脚本因历史 Lark MCP wrapper 缺失导致的 P1 熔断。
+  - 根因：`wiki_archive_guard.py` 硬编码依赖 `inner_skills/lark/mcp_lark_lark_download.py` 与 `inner_skills/lark/mcp_lark_update_lark_doc.py`，但当前 `inner_skills` 已演进为 `inner_skills/lark_download/lark_download.py` 等 shortcut 目录，旧 wrapper 不存在。
+  - 修复：在 info-miner 侧新增多候选 resolver 与下载输出解析器；下载链路兼容旧脚本并 fallback 到当前 `lark_download` shortcut；更新链路保留 MCP-only 候选解析，本地脚本缺失时通过 `lark-cli docs +update --as user` 执行块替换/插入，全部候选缺失时明确熔断，禁止 OpenAPI/JWT 直调。
+  - 验收：`scripts/wiki_archive_guard.py --selftest` 覆盖本地归档补丁构造；CDA Guardrails 自检继续要求 L1/L2/L3 护栏齐备。
 - 1.9.1（2026-07-29）：优化 `weibo_headless_fetcher.py` 抽取质量与误报控制。
   - `ttarticle` 长文：新增正文容器 selector + iframe 兜底，并在正文过短时触发二次提取。
   - `m.weibo.cn/detail`：新增 `window.$render_data` / `window.$data` 结构化抽取兜底，强化 title/author 规则。

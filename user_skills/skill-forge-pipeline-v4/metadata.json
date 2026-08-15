@@ -1,16 +1,16 @@
 {
-    "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
-    "name": "us-am-stats-sync",
-    "description": "将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、明细表按日期追加、每日 Bitable 原始快照、趋势计算、RAW 回捞与公式校验。",
-    "version": "1.6",
-    "doc_link": "https://bytedance.larkoffice.com/docx/WdlLdXvmqoeSPSx14BjmDxvky1g",
+    "skill_id": "95b1248a-7aaa-42fa-b9ef-f58492536e09",
+    "name": "info-miner",
+    "description": "从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。",
+    "version": "1.10",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Q9CJdIyEUoeJMZxT5eGcnE6JnrH",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
-    "date": "2026-08-14",
-    "updated_at": "2026-08-14 09:53",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
-    "zip_name": "us-am-stats-sync.zip",
-    "drive_file_token": "E3xpbX4AHonbTXxfM5bmEw2Eyfd",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/E3xpbX4AHonbTXxfM5bmEw2Eyfd"
+    "date": "2026-08-15",
+    "updated_at": "2026-08-15 22:24",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner.zip",
+    "zip_name": "info-miner.zip",
+    "drive_file_token": "PDFsbYBIIoqFOTxztaccfIbYn4e",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/PDFsbYBIIoqFOTxztaccfIbYn4e"
 }

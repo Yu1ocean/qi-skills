@@ -31,6 +31,7 @@ import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -395,8 +396,8 @@ def get_workspace_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
-def run_subprocess(command: List[str], action: str) -> str:
-    result = subprocess.run(command, capture_output=True, text=True)
+def run_subprocess(command: List[str], action: str, *, input_text: Optional[str] = None) -> str:
+    result = subprocess.run(command, input=input_text, capture_output=True, text=True)
     if result.returncode != 0:
         raise WikiArchiveError(
             f"{action} failed with exit code {result.returncode}\n"
@@ -416,41 +417,136 @@ def require_secrets() -> None:
         )
 
 
+def resolve_existing_script(candidates: Sequence[Path], action: str) -> Path:
+    """Resolve a usable local MCP/shortcut script without modifying inner_skills.
+
+    The resolver keeps legacy paths working but no longer assumes the historical
+    inner_skills/lark wrappers are present.  All candidates are local AIME MCP
+    shortcuts or lark-cli-backed scripts; OpenAPI/JWT direct calls are forbidden.
+    """
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    formatted = "\n".join(f"- {candidate}" for candidate in candidates)
+    raise WikiArchiveError(
+        f"归档熔断：未找到可用的 Lark MCP {action} 脚本，禁止降级到 OpenAPI。候选路径：\n{formatted}"
+    )
+
+
+def parse_download_paths(output: str) -> List[str]:
+    patterns = (
+        r'file_path:\s*"([^"]+)"',
+        r'"file_path"\s*:\s*"([^"]+)"',
+        r'\[\s*"([^"]+?\.(?:lark\.md|md))"\s*\]',
+        r'([^\s"\']+\.(?:lark\.md|md))',
+    )
+    paths: List[str] = []
+    for pattern in patterns:
+        for raw_path in re.findall(pattern, output):
+            if isinstance(raw_path, tuple):
+                raw_path = next((item for item in raw_path if item), "")
+            if raw_path and raw_path not in paths:
+                paths.append(raw_path)
+    return paths
+
+
 def mcp_download(document_url: str) -> Path:
     workspace_root = get_workspace_root()
-    download_script = workspace_root / "inner_skills/lark/mcp_lark_lark_download.py"
-    if not download_script.exists():
-        raise WikiArchiveError(f"归档熔断：未找到 Lark MCP 下载脚本：{download_script}")
+    download_script = resolve_existing_script(
+        [
+            workspace_root / "inner_skills/lark/mcp_lark_lark_download.py",
+            workspace_root / "inner_skills/lark_download/lark_download.py",
+        ],
+        "下载",
+    )
 
     output = run_subprocess(
         ["python3", str(download_script), json.dumps({"document_url": document_url}, ensure_ascii=False)],
-        "lark download",
+        f"lark download via {download_script}",
     )
-    paths = re.findall(r'file_path:\s*"([^"]+)"', output)
+    paths = parse_download_paths(output)
     if not paths:
         raise WikiArchiveError(f"归档熔断：无法从 Lark 下载输出中解析文件路径。输出：{output}")
 
     for raw_path in paths:
-        path = Path(raw_path).resolve()
+        path = Path(raw_path).expanduser().resolve()
         if path.exists() and path.name.endswith(DEFAULT_ALLOWED_MARKDOWN_SUFFIXES):
             return path
     raise WikiArchiveError(f"归档熔断：Lark 下载结果中未找到可用 Markdown 文件：{paths}")
 
 
+def _run_lark_cli_update(document_url: str, modifications: List[Dict[str, str]]) -> str:
+    lark_cli = shutil.which("lark-cli")
+    if not lark_cli:
+        raise WikiArchiveError("归档熔断：未找到 lark-cli，无法执行 docs +update MCP shortcut，禁止退回 OpenAPI。")
+
+    outputs: List[str] = []
+    for modification in modifications:
+        mod_type = modification.get("modification_type")
+        block_id = modification.get("block_id")
+        content = modification.get("content", "")
+        if not block_id:
+            raise WikiArchiveError(f"归档熔断：修改补丁缺少 block_id：{modification!r}")
+        if mod_type == "update":
+            command = "block_replace"
+        elif mod_type == "insert":
+            command = "block_insert_after"
+        else:
+            raise WikiArchiveError(f"归档熔断：不支持的 modification_type：{mod_type!r}")
+
+        outputs.append(
+            run_subprocess(
+                [
+                    lark_cli,
+                    "docs",
+                    "+update",
+                    "--as",
+                    "user",
+                    "--doc",
+                    document_url,
+                    "--command",
+                    command,
+                    "--block-id",
+                    block_id,
+                    "--doc-format",
+                    "markdown",
+                    "--content",
+                    "-",
+                ],
+                f"lark-cli docs +update {command}",
+                input_text=content,
+            )
+        )
+    return "\n".join(outputs)
+
+
 def mcp_update(document_url: str, markdown_file_path: Path, modifications: List[Dict[str, str]]) -> str:
     workspace_root = get_workspace_root()
-    update_script = workspace_root / "inner_skills/lark/mcp_lark_update_lark_doc.py"
-    if not update_script.exists():
-        raise WikiArchiveError(f"归档熔断：未找到 Lark MCP 更新脚本：{update_script}")
+    script_candidates = [
+        workspace_root / "inner_skills/lark/mcp_lark_update_lark_doc.py",
+        workspace_root / "inner_skills/lark_doc_update/lark_doc_update.py",
+        workspace_root / "inner_skills/lark_update/lark_update.py",
+    ]
+    update_script = next((candidate for candidate in script_candidates if candidate.exists() and candidate.is_file()), None)
 
-    payload = {
-        "document_url": document_url,
-        "markdown_file_path": str(markdown_file_path.resolve()),
-        "modifications": modifications,
-    }
-    return run_subprocess(
-        ["python3", str(update_script), json.dumps(payload, ensure_ascii=False)],
-        "lark update",
+    if update_script is not None:
+        payload = {
+            "document_url": document_url,
+            "markdown_file_path": str(markdown_file_path.resolve()),
+            "modifications": modifications,
+        }
+        return run_subprocess(
+            ["python3", str(update_script), json.dumps(payload, ensure_ascii=False)],
+            f"lark update via {update_script}",
+        )
+
+    if shutil.which("lark-cli"):
+        return _run_lark_cli_update(document_url, modifications)
+
+    formatted = "\n".join(f"- {candidate}" for candidate in script_candidates)
+    raise WikiArchiveError(
+        "归档熔断：未找到可用的 Lark MCP 更新脚本或 lark-cli docs +update shortcut，禁止降级到 OpenAPI。"
+        f"候选路径：\n{formatted}"
     )
 
 
