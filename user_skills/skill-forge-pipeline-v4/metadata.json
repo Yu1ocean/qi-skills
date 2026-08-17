@@ -2,7 +2,7 @@
     "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
     "name": "us-am-stats-sync",
     "description": "将「美区AM招商统计」飞书多维表格每日同步到统计电子表格；v1.8 修复多日快照跨日累加导致汇总虚高，N2 改为 INDEX+COUNTA 取最新 sync_date，B2:F8 统一为 SUMIFS+日期锚点，并新增写前公式硬断言。",
-    "version": "1.9",
+    "version": "1.8",
     "doc_link": "https://bytedance.larkoffice.com/docx/TbqqdKX83oYwJbxCkxRcjdrQn4b",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
@@ -11,6 +11,6 @@
     "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
     "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
     "zip_name": "us-am-stats-sync.zip",
-    "drive_file_token": "P1dcbvwwLokDa8xNW47cl4YFnKI",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/P1dcbvwwLokDa8xNW47cl4YFnKI"
+    "drive_file_token": "O5vUbpEQ5oZrv9x5aJIcUpG8nng",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/O5vUbpEQ5oZrv9x5aJIcUpG8nng"
 }

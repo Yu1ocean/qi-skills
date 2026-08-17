@@ -1,7 +1,7 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.9
+version: 1.8
 description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIF 公式化改造、趋势计算与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
