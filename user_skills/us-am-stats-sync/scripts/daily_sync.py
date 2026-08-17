@@ -5,7 +5,13 @@ Daily sync for US AM招商统计.
 
 Workflow:
 1. Sync Bitable detail records into VM2reD (明细), including Chinese industry names and 更新日期.
-2. Update 2unp6l (US行业统计) formulas once. If B2 already contains SUMIF, formula rewrite is skipped.
+2. Update 2unp6l (US行业统计) N2 update-date formula only. Every other summary region is user-maintained.
+3. Append today's column to the detail aux area (O.. onward).
+4. Read-only guard: verify the trend matrix data source (明细!K helper column + 趋势区日期锚点) is still alive.
+
+Write boundary (v2.0):
+- 明细(VM2reD): only A:J and O.. onward. K:N is PROTECTED (K = 日期(标准化)).
+- US行业统计(2unp6l): only N2. A17:B17 / A18:H28 / A30:E40 / K:L are PROTECTED trend-matrix regions.
 
 Run with AIME lark-cli credentials injected, e.g. bash include_secrets=true:
   python3 scripts/daily_sync.py
@@ -18,6 +24,7 @@ import json
 import os
 import sys
 import time
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -28,9 +35,13 @@ if str(SCRIPT_DIR) not in sys.path:
 from sync_bitable_to_sheet import (  # noqa: E402
     DETAIL_SHEET_ID,
     OUTPUT_COLUMNS,
+    PROTECTED_RANGES,
     SHEET_TOKEN,
+    SUMMARY_ALLOWED_WRITE_CELLS,
     _extract_json_object,
     _run_lark_cli,
+    assert_detail_write_range,
+    assert_summary_write_range,
     read_detail_rows_from_sheet,
     sync_bitable_to_sheet,
     today_iso,
@@ -41,6 +52,24 @@ DETAIL_SHEET_NAME = "明细"
 SUMMARY_SHEET_NAME = "US行业统计"
 # 唯一允许写入的汇总单元格公式：取明细表最新 sync_date（文本日期，禁用 MAX）
 N2_UPDATE_DATE_FORMULA = "=INDEX('明细'!J:J,COUNTA('明细'!J:J))"
+
+# ---------------------------------------------------------------------------
+# v2.0 趋势数据区契约（Trend Matrix Contract）——全部由用户手工维护，脚本只读校验
+# ---------------------------------------------------------------------------
+# 明细 K 列：日期(标准化) 辅助列，把文本日期（8/14 与 2026-08-15 混排）统一成日期序列号
+DETAIL_DATE_NORM_COLUMN = "K"
+DETAIL_DATE_NORM_HEADER = "日期(标准化)"
+DETAIL_DATE_NORM_PROBE_RANGE = "K1:K2"
+# 趋势区唯一日期基准锚点
+TREND_ANCHOR_CELL = "B17"
+TREND_ANCHOR_FORMULA = "=IF(ISNUMBER($N$2),$N$2,DATEVALUE($N$2))"
+# 7 日趋势区（A18:H28）：B19 = $B$17-6 ... H19 = $B$17
+TREND_DAILY_RANGE = "A18:H28"
+TREND_DAILY_FIRST_DATE_CELL = "B19"
+TREND_DAILY_FIRST_DATE_FORMULA = "=$B$17-6"
+# 4 周趋势区（A30:E40）：B31..E31 = 各周周一
+TREND_WEEKLY_RANGE = "A30:E40"
+TREND_WEEKLY_FIRST_DATE_CELL = "B31"
 
 
 def assert_n2_formula_safe(formula: str) -> str:
@@ -134,6 +163,13 @@ def _build_formula_cells() -> List[List[Dict[str, str]]]:
 
 
 def _write_summary_formulas() -> Dict[str, Any]:
+    """Deprecated since v1.7 / hard-blocked since v2.0.
+
+    The summary data rows (B2:F10), the parameter block and the whole trend matrix
+    (A17:B17 / A18:H28 / A30:E40 / K:L) are user-maintained. Only N2 is writable.
+    """
+    target_range = f"B{SUMMARY_GROUP_ROWS[0]}:F{SUMMARY_TOTAL_ROW}"
+    assert_summary_write_range(target_range, op="_write_summary_formulas")
     cells = _build_formula_cells()
     return _run_json(
         [
@@ -144,7 +180,7 @@ def _write_summary_formulas() -> Dict[str, Any]:
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            f"B{SUMMARY_GROUP_ROWS[0]}:F{SUMMARY_TOTAL_ROW}",
+            target_range,
             "--cells",
             "-",
         ],
@@ -157,6 +193,7 @@ def _write_summary_update_date_formula() -> Dict[str, Any]:
 
     Per contract, the summary sheet (2unp6l) is user-maintained except N2.
     """
+    target_cell = assert_summary_write_range("N2", op="_write_summary_update_date_formula")
     return _run_json(
         [
             "sheets",
@@ -166,7 +203,7 @@ def _write_summary_update_date_formula() -> Dict[str, Any]:
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            "N2",
+            target_cell,
             "--cells",
             "-",
         ],
@@ -351,6 +388,9 @@ def step3_write_detail_aux_area() -> Dict[str, Any]:
     csv_lines = [sync_date, *[str(v) for v in counts], str(total)]
     csv_text = "\n".join(csv_lines) + "\n"
 
+    # 硬熔断：辅助区必须落在 O 列及其右侧，绝不允许回落到受保护的 K:N
+    assert_detail_write_range(start_cell, op="step3_write_detail_aux_area", width=1)
+
     write_result = _run_json(
         [
             "sheets",
@@ -397,16 +437,198 @@ def step3_write_detail_aux_area() -> Dict[str, Any]:
     }
 
 
+def _read_cell(sheet_id: str, cell_range: str) -> Dict[str, Any]:
+    """Read a single cell with both value and formula (read-only probe)."""
+    payload = _run_json(
+        [
+            "sheets",
+            "+cells-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            sheet_id,
+            "--range",
+            cell_range,
+            "--include",
+            "value,formula",
+        ]
+    )
+    try:
+        return payload["data"]["ranges"][0]["cells"][0][0] or {}
+    except (KeyError, IndexError, TypeError):
+        return {}
+
+
+def _as_date_serial(value: Any) -> float | None:
+    """Interpret a cell value as a date serial number (or a parseable ISO date)."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y", "%m/%d"):
+        try:
+            parsed = datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+        return float((parsed.date() - date(1899, 12, 30)).days)
+    return None
+
+
+def assert_detail_date_norm_column_alive() -> Dict[str, Any]:
+    """Runtime gate: 明细!K 列（日期标准化辅助列）必须存活，否则趋势区整体断链。
+
+    K 列是趋势区唯一的真日期来源（明细!J 是文本日期，8/14 与 2026-08-15 混排），
+    K2 为空或不是日期序列号即判定为辅助列断链。
+    """
+    header_cell = _read_cell(DETAIL_SHEET_ID, f"{DETAIL_DATE_NORM_COLUMN}1")
+    probe_cell = _read_cell(DETAIL_SHEET_ID, f"{DETAIL_DATE_NORM_COLUMN}2")
+    serial = _as_date_serial(probe_cell.get("value"))
+    if serial is None or serial <= 0:
+        raise RuntimeError(
+            f"[硬熔断] 明细!{DETAIL_DATE_NORM_COLUMN}2 日期标准化辅助列断链："
+            f"值={probe_cell.get('value')!r} formula={probe_cell.get('formula')!r}；"
+            f"应为 {DETAIL_DATE_NORM_HEADER} 日期序列号，公式 "
+            '=IF($J2="","",IF(ISNUMBER($J2),$J2,IFERROR(DATEVALUE($J2),"")))'
+        )
+    return {
+        "k1_header": header_cell.get("value"),
+        "k2_value": probe_cell.get("value"),
+        "k2_formula": probe_cell.get("formula"),
+        "k2_date_serial": serial,
+    }
+
+
+def assert_trend_anchor_alive() -> Dict[str, Any]:
+    """Runtime gate: 趋势区日期锚点 B17 存活，且 7 日区首日 B19 == B17-6，防止锚点漂移。"""
+    anchor = _read_cell(SUMMARY_SHEET_ID, TREND_ANCHOR_CELL)
+    first_day = _read_cell(SUMMARY_SHEET_ID, TREND_DAILY_FIRST_DATE_CELL)
+
+    anchor_serial = _as_date_serial(anchor.get("value"))
+    if anchor_serial is None or anchor_serial <= 0:
+        raise RuntimeError(
+            f"[硬熔断] {SUMMARY_SHEET_NAME}!{TREND_ANCHOR_CELL} 趋势区日期锚点失效："
+            f"值={anchor.get('value')!r} formula={anchor.get('formula')!r}；"
+            f"应为 {TREND_ANCHOR_FORMULA}"
+        )
+
+    formula = str(first_day.get("formula") or "")
+    normalized = formula.replace(" ", "").upper()
+    formula_ok = normalized == TREND_DAILY_FIRST_DATE_FORMULA.replace(" ", "").upper()
+
+    first_serial = _as_date_serial(first_day.get("value"))
+    value_ok = first_serial is not None and abs((anchor_serial - 6) - first_serial) < 1e-6
+
+    if not (formula_ok or value_ok):
+        raise RuntimeError(
+            f"[硬熔断] 趋势区日期锚点漂移：{SUMMARY_SHEET_NAME}!{TREND_DAILY_FIRST_DATE_CELL} "
+            f"应为 {TREND_DAILY_FIRST_DATE_FORMULA}（即 {TREND_ANCHOR_CELL}-6），"
+            f"实际 formula={formula!r} value={first_day.get('value')!r}"
+        )
+
+    return {
+        "b17_value": anchor.get("value"),
+        "b17_formula": anchor.get("formula"),
+        "b17_date_serial": anchor_serial,
+        "b19_value": first_day.get("value"),
+        "b19_formula": formula,
+        "b19_formula_match": formula_ok,
+        "b19_value_match": value_ok,
+    }
+
+
+def _verify_trend_formulas() -> Dict[str, Any]:
+    """Zero-error convergence check across the whole trend matrix (read-only)."""
+    results: Dict[str, Any] = {}
+    for label, rng in (
+        ("summary_core", f"B{SUMMARY_GROUP_ROWS[0]}:I{SUMMARY_TOTAL_ROW}"),
+        ("trend_daily", TREND_DAILY_RANGE),
+        ("trend_weekly", TREND_WEEKLY_RANGE),
+    ):
+        payload = _run_json(
+            [
+                "sheets",
+                "+formula-verify",
+                "--spreadsheet-token",
+                SHEET_TOKEN,
+                "--sheet-id",
+                SUMMARY_SHEET_ID,
+                "--range",
+                rng,
+            ]
+        )
+        data = payload.get("data", payload) or {}
+        status = str(data.get("status") or payload.get("status") or "")
+        total_errors = data.get("total_errors", payload.get("total_errors"))
+        if status and status != "success":
+            raise RuntimeError(f"[硬熔断] {label} ({rng}) formula-verify status={status!r}")
+        if total_errors not in (None, 0, "0"):
+            raise RuntimeError(f"[硬熔断] {label} ({rng}) formula-verify total_errors={total_errors!r}")
+        results[label] = {"range": rng, "status": status, "total_errors": total_errors}
+    return results
+
+
+def step4_verify_trend_matrix() -> Dict[str, Any]:
+    """只读验收趋势数据区：K 列辅助列存活 + B17/B19 锚点未漂移 + 公式零错误收敛。"""
+    detail_probe = assert_detail_date_norm_column_alive()
+    anchor_probe = assert_trend_anchor_alive()
+    trend_readback = _run_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            SUMMARY_SHEET_ID,
+            "--range",
+            TREND_DAILY_RANGE,
+            "--include-row-prefix=false",
+        ]
+    )
+    weekly_readback = _run_json(
+        [
+            "sheets",
+            "+csv-get",
+            "--spreadsheet-token",
+            SHEET_TOKEN,
+            "--sheet-id",
+            SUMMARY_SHEET_ID,
+            "--range",
+            TREND_WEEKLY_RANGE,
+            "--include-row-prefix=false",
+        ]
+    )
+    return {
+        "protected_ranges": PROTECTED_RANGES,
+        "summary_allowed_write_cells": list(SUMMARY_ALLOWED_WRITE_CELLS),
+        "detail_date_norm_column": detail_probe,
+        "trend_anchor": anchor_probe,
+        "formula_verify": _verify_trend_formulas(),
+        "raw_trend_daily_A18_H28": trend_readback,
+        "raw_trend_weekly_A30_E40": weekly_readback,
+    }
+
+
 def main() -> None:
     detail_result = step1_sync_detail()
     summary_result = step2_update_formulas()
     aux_result = step3_write_detail_aux_area()
+    trend_result = step4_verify_trend_matrix()
     print(
         json.dumps(
             {
                 "detail": detail_result,
                 "summary": summary_result,
                 "detail_aux": aux_result,
+                "trend_matrix": trend_result,
                 "links": {
                     "detail_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={DETAIL_SHEET_ID}",
                     "summary_sheet": f"https://bytedance.larkoffice.com/sheets/{SHEET_TOKEN}?sheet={SUMMARY_SHEET_ID}",

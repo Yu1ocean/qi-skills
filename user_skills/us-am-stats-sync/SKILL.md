@@ -1,8 +1,8 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.9
-description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIFS 公式化改造（含「育商」兜底分组）、趋势计算与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
+version: 2.0
+description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIFS 公式化改造（含「育商」兜底分组）、7 日 / 4 周趋势迷你图数据源区契约与受保护区域禁写护栏、写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板、维护趋势数据区或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
 
@@ -16,6 +16,9 @@ author: yuqinan
 - “汇总表已有公式，跳过公式校验也没关系。”
 - “字段缺失时先写空值，后面再补。”
 - “没有 include_secrets 也可以试一下。”
+- “明细 K 列看起来是空的，顺手清一下 A:N 更整齐。”
+- “趋势区日期不对，我直接把 B19 改成手填日期就好了。”
+- “直接对 明细!J 做日期区间比较也能跑，不用绕 K 列。”
 
 ## Red Flags（危险信号）
 
@@ -31,6 +34,10 @@ author: yuqinan
 - 汇总总计行公式仍为 `=SUM(B2:B8)`（未覆盖第 9 行育商分组）即判定为故障，必须改为 `=SUM(B2:B9)` 且总计行位于第 10 行。
 - `US行业统计!B2` 写后不包含 `SUMIFS` 公式，或命中不带日期条件的整列 `SUMIF(`（跨日快照累加，指标虚高）即判定为故障。
 - `US行业统计!N2` 公式中出现 `MAX(` 或 `VM2reD!`（sheet_id）即判定为故障，必须改回 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`。
+- **（v2.0）明细 `K2` 为空、非日期序列号或公式被清除，即判定为「日期标准化辅助列断链」**：K 列是趋势区唯一真日期来源，断链后 7 日 / 4 周区会整体归零或报错，必须立即熔断修复，不得继续同步。
+- **（v2.0）`US行业统计!B19` 不等于 `=$B$17-6`（或其求值结果 ≠ `B17-6`），即判定为「趋势区日期锚点漂移」**：7 日滚动窗口会整体错位，必须熔断。
+- **（v2.0）脚本触碰受保护区域**（`明细!K:K`、`US行业统计!A17:B17` / `A18:H28` / `A30:E40` / `K:L`），或向汇总表写入 `N2` 以外的任何单元格，即判定为越界，必须硬熔断并落 audit log。
+- **（v2.0）在公式里直接对 `明细!J`（文本日期）做 `>=` / `<=` 日期区间比较**，而不是走 `明细!K` 标准化列，即判定为故障。
 
 ## Verification（强制验收清单）
 
@@ -43,10 +50,13 @@ author: yuqinan
 5. 汇总表 `2unp6l` 的公式区域由用户维护，脚本**禁止**覆盖写入（只允许写 `N2`）。
 6. 更新日期必须写入 `2unp6l!N2`，且写入内容为公式：`=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（明细 J 列为文本日期，禁用 `MAX`；跨 Sheet 只能引用 sheet_name `明细`，禁止 sheet_id `VM2reD`）。
 7. 明细表需在 `O` 列起维护“按同步日期横向追加”的辅助区（幂等追加：若当日列已存在则跳过）。
-8. `sync_bitable_to_sheet.py` 对所有写入函数入口做硬熔断断言：只允许写入明细表 `VM2reD`；断言失败必须抛异常并写入本地 audit log。
+8. `sync_bitable_to_sheet.py` 对所有写入函数入口做硬熔断断言：只允许写入明细表 `VM2reD`，且列范围只允许 `A:J` 与 `O` 列起的辅助区（**禁止 `K:N`**）；断言失败必须抛异常并写入本地 audit log。
 9. 明细写入前必须通过 `assert_no_null_industry()` 断言：待写数据的 `US行业` 列不得出现空值或 `"NULL"`，违反即 `raise` 并落 audit log。
 10. 育商行（`US行业统计!` 第 9 行）回读值必须等于明细表最新 sync_date 的育商行原值（逐字段核对）。
 11. 总计行（第 10 行）回读值必须等于 8 个分组（7 大行业 + 育商）之和。
+12. **（v2.0）趋势数据区回读一致性**：`US行业统计!A18:H28` 中最新快照日那一列（即 `H19` 列，日期 == `B17`）的 8 个分组入驻数，必须与明细最新 sync_date 的分行业入驻数 1:1 相等；总计行（第 28 行）必须等于当日总计。4 周区当周列（`E31` 所在列）总计必须等于同一数值。
+13. **（v2.0）辅助列与锚点存活断言**：`assert_detail_date_norm_column_alive()`（`明细!K2` 必须是有效日期序列号）与 `assert_trend_anchor_alive()`（`B17` 有效且 `B19 == B17-6`）必须全部通过，任一失败即熔断。
+14. **（v2.0）趋势区公式零错误收敛**：`lark-cli sheets +formula-verify` 对 `B2:I10`、`A18:H28`、`A30:E40` 三个区域全部收敛到 `status=success` 且 `total_errors=0`，存在任一 `#VALUE!` / `#REF!` / `#NAME?` 即视为未完成。
 
 ## 快照语义汇总契约（Snapshot-Aware Aggregation Contract）
 
@@ -60,6 +70,74 @@ author: yuqinan
 - 育商行其他派生列：`G9==ROUND(B9*50%,0)`、`H9==H8`、`I9==IFERROR(F9/(B9*B$16*H9),0)`、`J9==D9/B9`
 - **严禁**使用 `=SUMIF('明细'!A:A,$A2,'明细'!C:C)` 一类不带日期条件的整列 SUMIF：会把全部快照日累加（3 个快照日即约 3 倍虚高，如服饰服配线索数 957 vs 当日真实 319）。
 
+## 趋势数据区契约（Trend Matrix Contract, v2.0）
+
+7 日 / 4 周迷你图的**数据源区**已在 2026-08-17 由用户手工搭建完成。以下位置、公式与语义构成强契约：脚本只做只读校验，**禁止写入**；人工维护时也必须严格保持该结构。迷你图本体由用户手动创建，脚本不生成。
+
+### 1. 日期标准化辅助列：`明细!K`（唯一日期基准来源）
+
+| 位置 | 内容 |
+|------|------|
+| `明细!K1` | `日期(标准化)` |
+| `明细!K2:K200` | `=IF($J2="","",IF(ISNUMBER($J2),$J2,IFERROR(DATEVALUE($J2),"")))` |
+| 数字格式 | `yyyy-mm-dd` |
+
+**为什么必须存在**：`明细!J`（更新日期）是**文本**列，历史值同时存在 `8/14` 与 `2026-08-15` 两种格式，无法直接参与日期区间比较（对文本列做 `>=`/`<=` 会静默返回错值，参见「陷阱5：文本型日期列不可 MAX」同类问题）。K 列把两种文本格式统一转成**真日期序列号**，供 `SUMIFS` / `MAXIFS` 按日期条件精确匹配。
+
+- **铁律**：所有趋势区的日期匹配**必须走 `明细!K`**，**严禁**直接对 `明细!J` 做日期区间比较。
+- 单值取最新快照日仍沿用 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（N2，文本口径）。
+
+### 2. 日期基准锚点：`US行业统计!B17`
+
+| 位置 | 内容 |
+|------|------|
+| `US行业统计!A17` | 标签「最新快照日(标准化)」 |
+| `US行业统计!B17` | `=IF(ISNUMBER($N$2),$N$2,DATEVALUE($N$2))` |
+
+`B17` 是**全部趋势区的唯一日期基准锚点**：把 N2 的文本快照日转为日期序列号，7 日区与 4 周区的所有日期表头都由它派生。禁止在趋势区里出现手填的硬编码日期。
+
+### 3. 7 日趋势数据区：`US行业统计!A18:H28`（日口径 → SUMIFS）
+
+| 位置 | 内容 |
+|------|------|
+| `A18:H18` | 标题行 |
+| `B19:H19` | `=$B$17-6`、`=$B$17-5` … `=$B$17`（滚动 7 天），格式 `mm/dd` |
+| `A20:A27` | `=A2` … `=A9`（8 分组，顺序与 `A2:A9` 严格一致：7 大行业 + 育商） |
+| `B20:H27` | `=SUMIFS('明细'!$G:$G,'明细'!$A:$A,$A20,'明细'!$K:$K,B$19)`（新增入驻数） |
+| `B28:H28` | 总计 `=SUM(B20:B27)` |
+
+**语义**：日口径用 `SUMIFS`，因为明细表里**每个行业每天只有一行快照**，按 `(行业, 日期)` 求和即等于当日快照值；日期条件对齐 `明细!$K`（真日期）与 `B$19`（由 `$B$17` 派生的真日期）。
+
+### 4. 4 周趋势数据区：`US行业统计!A30:E40`（周口径 → MAXIFS）
+
+| 位置 | 内容 |
+|------|------|
+| `A30:E30` | 标题行 |
+| `B31:E31` | `=$B$17-WEEKDAY($B$17,2)+1-7*n`，n 依次取 3、2、1、0（即各周周一） |
+| `A32:A39` | `=A2` … `=A9`（8 分组，顺序同上） |
+| `B32:E39` | `=IFERROR(MAXIFS('明细'!$G:$G,'明细'!$A:$A,$A32,'明细'!$K:$K,">="&B$31,'明细'!$K:$K,"<="&B$31+6),0)` |
+| `B40:E40` | 总计 |
+
+**语义**：周口径必须用 `MAXIFS` 取该周内**最新快照值**，而不是 `SUMIFS`。因为「新增入驻数」是**累计口径、单调递增**指标，同一周内若有多个快照日，求和会重复累加；取周内最大值 = 取该周最新快照 = 该周期末值。周区间通过 `>=周一` 且 `<=周一+6` 双条件锚定，同样只能引用 `明细!$K`。
+
+### 5. 迷你图批注与数据区对应关系
+
+`明细!K1` / `明细!L1`（7日趋势 / 4周趋势列）已加飞书批注，记录各行业迷你图的数据区间映射：
+
+- 7 日趋势：`K2 → B20:H20`、`K3 → B21:H21` … `K9 → B27:H27`
+- 4 周趋势：`L2 → B32:E32`、`L3 → B33:E33` … `L9 → B39:E39`
+
+迷你图（Sparkline）由用户在飞书界面手动创建，**脚本不生成、不覆盖**。
+
+### 6. 已验收基线（2026-08-17）
+
+- 7 日区 08/14~08/16 三天数值与明细快照 1:1，总计分别为 **145 / 147 / 147**。
+- 4 周区当周（本周一起算）总计 **147**。
+- `+formula-verify`：`status=success`、`total_errors=0`（覆盖 409 条公式）。
+
+后续任何人工调整或脚本变更，都必须能复现上述口径（数值随新快照更新，但「趋势区当日列 == 明细当日快照」的等式必须恒成立）。
+
+
 ## 使用场景
 
 用于把飞书 Bitable「美区AM招商统计」同步到电子表格 `XZoSsAwObh72kPtn3DLmWJ4AyWc`。核心脚本会把 Bitable 全量记录写入「明细」工作表 `VM2reD`，并确保「US行业统计」工作表 `2unp6l` 使用公式从明细表动态汇总。
@@ -71,9 +149,13 @@ author: yuqinan
   - 美区 AM Bitable 同步 Sheet
   - 刷新 VM2reD 明细
   - 更新 2unp6l 汇总公式
+  - 7 日趋势 / 4 周趋势数据区
+  - 明细 K 列日期标准化
+  - 趋势迷你图数据源
 - 典型指令示例：
   > 帮我同步 US AM 招商统计到 Sheet。
   > 刷新美区 AM 招商统计明细，并校验 US 行业统计公式。
+  > 检查一下 7 日趋势 / 4 周趋势数据区有没有断链。
 
 ## 合规默认值 / Defaults
 
@@ -92,6 +174,24 @@ author: yuqinan
 - 默认明细辅助区起始列：`VM2reD!O1`（按日期横向追加，写第 1 行日期表头、第 2~9 行 8 个分组（7 大行业 + 育商）入驻数、第 10 行总计；分组顺序与 `2unp6l!A2:A9` 一致）
 - 默认执行权限：必须通过 `bash` 工具设置 `include_secrets=true`
 
+### 受保护区域清单（脚本禁写，v2.0）
+
+以下区域全部由用户手工维护，是 7 日 / 4 周迷你图的数据源，**任何脚本一律禁止写入 / 清空 / 覆盖**；越界即由 L3 断言硬熔断并落 `output/audit_logs/write_audit.jsonl`：
+
+| 受保护区域 | 用途 |
+|-----------|------|
+| `明细!K:K` | 日期(标准化)辅助列，趋势区唯一真日期来源 |
+| `US行业统计!A17:B17` | 趋势区日期基准锚点（`B17`） |
+| `US行业统计!A18:H28` | 7 日趋势数据区（SUMIFS 日口径） |
+| `US行业统计!A30:E40` | 4 周趋势数据区（MAXIFS 周口径） |
+| `US行业统计!K:L` | 迷你图批注列（7日趋势 / 4周趋势） |
+
+写入边界总则：
+
+- **明细 `VM2reD`**：只允许写 `A:J`（同步载荷）与 `O` 列起的日期辅助区；**禁止写 `K:N`**（`K` 为标准化列，`L:N` 预留给用户批注 / 迷你图）。
+- **汇总 `2unp6l`**：唯一允许脚本写入的单元格仍然只有 **`N2`**，其余（含 `B2:F9` 数据行、第 10 行总计、参数区第 12~16 行、趋势区 A17:B17 / A18:H28 / A30:E40、批注列 K:L）全部由用户维护。
+- 代码层落点：`sync_bitable_to_sheet.PROTECTED_RANGES`、`DETAIL_WRITABLE_COLUMN_BLOCKS`、`DETAIL_FORBIDDEN_COLUMN_BLOCK`、`SUMMARY_ALLOWED_WRITE_CELLS`，断言函数 `assert_detail_write_range()` / `assert_summary_write_range()`。
+
 ## ⚙️ 核心架构 / SOP / 约束条件
 
 运行脚本时必须通过 `bash` 工具直接执行，并设置 `include_secrets=true`，确保 AIME 定制版 `lark-cli` 能拿到用户级飞书访问权限。
@@ -103,15 +203,17 @@ python3 scripts/daily_sync.py
 `daily_sync.py` 会依次执行：
 
 1. `validate_sync_contract()`：在副作用发生前校验 Bitable token、表 ID、目标电子表格、工作表 ID 与输出列契约。
-2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文；成功拉取后先写入 `output/snapshots/bitable_snapshot_YYYYMMDD.json` 原始快照，再读取 `VM2reD!A:J` 检查当日逻辑 `sync_date` 是否已存在；若存在则跳过明细写入，若不存在则仅把本次数据行追加到表尾，表头第 1 行和历史行保持不动。
-3. `step2_update_formulas()`：只允许写入 `2unp6l!N2` 更新日期公式 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（写入前经 `assert_n2_formula_safe()` 硬断言：禁含 `MAX(` / `VM2reD!`），其余区域（含 `B2:F9` 数据行、第 10 行总计、参数区第 12~16 行、趋势区等）全部由用户手工维护，脚本不得覆盖。
-4. `step3_write_detail_aux_area()`：在 `VM2reD` 的 `O` 列起建立横向辅助区（每列一个同步日期），幂等追加今日列：第 1 行写日期 `YYYY-MM-DD`，第 2~9 行写 8 个分组（7 大行业 + 育商）的新增入驻数（分组顺序与 `2unp6l!A2:A9` 一致），第 10 行写总计。
-5. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
+2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文；成功拉取后先写入 `output/snapshots/bitable_snapshot_YYYYMMDD.json` 原始快照，再读取 `VM2reD!A:J` 检查当日逻辑 `sync_date` 是否已存在；若存在则跳过明细写入，若不存在则仅把本次数据行追加到表尾，表头第 1 行和历史行保持不动。写入前经 `assert_detail_write_range()` 断言列范围落在 `A:J`（禁止溢出到受保护的 `K:N`）。
+3. `step2_update_formulas()`：只允许写入 `2unp6l!N2` 更新日期公式 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（写入前经 `assert_summary_write_range()` 断言目标必须是 `N2`，再经 `assert_n2_formula_safe()` 断言：禁含 `MAX(` / `VM2reD!`），其余区域（含 `B2:F9` 数据行、第 10 行总计、参数区第 12~16 行、趋势区 `A17:B17` / `A18:H28` / `A30:E40`、批注列 `K:L`）全部由用户手工维护，脚本不得覆盖。
+4. `step3_write_detail_aux_area()`：在 `VM2reD` 的 `O` 列起建立横向辅助区（每列一个同步日期），幂等追加今日列：第 1 行写日期 `YYYY-MM-DD`，第 2~9 行写 8 个分组（7 大行业 + 育商）的新增入驻数（分组顺序与 `2unp6l!A2:A9` 一致），第 10 行写总计。写入前经 `assert_detail_write_range()` 断言起始列 ≥ `O`，绝不回落到 `K:N`。
+5. `step4_verify_trend_matrix()`（v2.0 新增，**只读**）：趋势数据区验收。依次执行 `assert_detail_date_norm_column_alive()`（`明细!K1/K2` 探针，K2 必须是有效日期序列号，否则判定辅助列断链）、`assert_trend_anchor_alive()`（`B17` 有效且 `B19 == $B$17-6`，否则判定日期锚点漂移）、`_verify_trend_formulas()`（对 `B2:I10`、`A18:H28`、`A30:E40` 三区 `+formula-verify` 零错误收敛），并 RAW 回捞 `A18:H28` 与 `A30:E40` 原样输出。任一失败即 `raise` 熔断。
+6. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
 
 ### 汇总回读验收（补充）
 
 - 汇总区回读值必须等于明细最新 sync_date 的分行业原值，至少抽样 1 个行业逐字段核对。
-- 写公式后必须执行 `lark-cli sheets +formula-verify`，收敛到 `status=success` 且 `total_errors=0`。
+- RAW 回捞行号口径：明细 `A1:J3`；汇总核心区 `A1:K16`（数据行 2~9、总计行 10、参数区 12~16，入驻率 `B16`）；趋势区另行回捞 `A18:H28`（7 日）与 `A30:E40`（4 周），锚点单点回捞 `B17`。
+- 写公式后必须执行 `lark-cli sheets +formula-verify`，对 `B2:I10`、`A18:H28`、`A30:E40` 全部收敛到 `status=success` 且 `total_errors=0`。
 
 ## 字段与映射
 
@@ -149,10 +251,19 @@ python3 scripts/sync_bitable_to_sheet.py
   ```
 - 🤖 标准输出：
   ```text
-  已完成同步：明细写入 N 行，VM2reD!A1:J3 RAW 回捞通过，2unp6l!B2:I10 公式校验 success，育商行与总计行回读一致，更新日期已刷新为 M/D。
+  已完成同步：明细写入 N 行，VM2reD!A1:J3 RAW 回捞通过，2unp6l!B2:I10 公式校验 success，育商行与总计行回读一致，趋势区 A18:H28 / A30:E40 当日列与最新快照 1:1、formula-verify zero-error，更新日期已刷新为 M/D。
   ```
 
 ## 更新日志 (Changelog)
+
+- 2.0：固化 7 日 / 4 周趋势迷你图数据源区契约，并把受保护区域升级为脚本级物理禁写。
+  - 新增「趋势数据区契约（Trend Matrix Contract）」章节：完整记录 `明细!K`（`日期(标准化)` 辅助列，公式 `=IF($J2="","",IF(ISNUMBER($J2),$J2,IFERROR(DATEVALUE($J2),"")))`，格式 `yyyy-mm-dd`）、日期基准锚点 `US行业统计!B17`（`=IF(ISNUMBER($N$2),$N$2,DATEVALUE($N$2))`）、7 日趋势区 `A18:H28`（`B19:H19` = `$B$17-6`…`$B$17`，`B20:H27` = `SUMIFS('明细'!$G:$G,'明细'!$A:$A,$A20,'明细'!$K:$K,B$19)`，第 28 行总计）、4 周趋势区 `A30:E40`（`B31:E31` = `$B$17-WEEKDAY($B$17,2)+1-7*n`，`B32:E39` = `IFERROR(MAXIFS(...,'明细'!$K:$K,">="&B$31,'明细'!$K:$K,"<="&B$31+6),0)`，第 40 行总计）与 `K1`/`L1` 迷你图批注映射（K2→B20:H20 … K9→B27:H27；L2→B32:E32 … L9→B39:E39）。
+  - 明确日期口径铁律：**日期标准化必须走 `明细!K` 列，严禁直接对文本列 `明细!J` 做日期区间比较**；日口径用 `SUMIFS`（每日每行业仅一行快照），周口径用 `MAXIFS` 取周内最新快照（入驻数为累计单调递增指标，求和会重复累加）。
+  - 合规默认值新增「受保护区域清单（脚本禁写）」：`明细!K:K`、`US行业统计!A17:B17`、`US行业统计!A18:H28`、`US行业统计!A30:E40`、`US行业统计!K:L`；汇总表唯一允许脚本写入的单元格仍只有 `N2`。
+  - 脚本护栏（L3）升级：`sync_bitable_to_sheet.py` 新增 `PROTECTED_RANGES` / `DETAIL_WRITABLE_COLUMN_BLOCKS` / `DETAIL_FORBIDDEN_COLUMN_BLOCK` / `SUMMARY_ALLOWED_WRITE_CELLS` 与 `assert_detail_write_range()`、`assert_summary_write_range()`（含列跨度解析 `col_letters_to_index` / `col_index_to_letters`），把写入边界收紧为「明细只允许 `A:J` 与 `O` 列起辅助区，禁止 `K:N`；汇总只允许 `N2`」，并接入 `clear_sheet_range` / `append_values_to_sheet` / `write_values_to_sheet`；`daily_sync.py` 的 `_write_summary_update_date_formula()`、已废弃的 `_write_summary_formulas()` 与 `step3_write_detail_aux_area()` 全部前置断言，越界即 `raise` + `output/audit_logs/write_audit.jsonl` audit log。
+  - `daily_sync.py` 新增只读验收步骤 `step4_verify_trend_matrix()`：`assert_detail_date_norm_column_alive()`（`明细!K2` 必须为有效日期序列号，否则判定辅助列断链）、`assert_trend_anchor_alive()`（`B17` 有效且 `B19 == $B$17-6`，否则判定趋势区日期锚点漂移）、`_verify_trend_formulas()`（`B2:I10` / `A18:H28` / `A30:E40` 三区 `+formula-verify` 零错误收敛）+ 趋势区 RAW 回捞。
+  - Red Flags 新增 4 条：K2 断链、B19 锚点漂移、脚本触碰受保护区域、对 `明细!J` 直接做日期区间比较；Verification 新增 3 条：趋势区当日列与最新快照 1:1、辅助列/锚点存活断言、趋势区公式零错误收敛；RAW 回捞行号口径与新布局对齐（汇总核心区 `A1:K16` + 趋势区 `A18:H28` / `A30:E40`）。
+  - 已验收基线（2026-08-17）：7 日区 08/14~08/16 总计 145 / 147 / 147 与明细快照 1:1，4 周区当周 147，`+formula-verify` status=success、total_errors=0（409 条公式）。迷你图本体由用户手动创建，脚本不生成。
 
 - 1.9：固化「育商」兜底分组口径，杜绝每日同步回吐 `NULL`。`_translate_industry()` 对空 / `None` / 空字符串 / 字面量 `"NULL"` 统一映射为 `育商`；新增写入前硬断言 `assert_no_null_industry()`（含 audit log）；`step3_write_detail_aux_area()` 行业清单由 `A2:A8`（7 行业）扩展为 `A2:A9`（8 分组），辅助区总计行下移至第 10 行；汇总公式区扩展为 `B2:F9`，总计行改为第 10 行 `=SUM(B2:B9)`，公式校验范围改为 `B2:I10`，RAW 回捞改为 `A1:K16`（参数区第 12~16 行、入驻率 `B16`）；Red Flags / Verification 新增 NULL 行业、总计行范围、育商回读三项判定。
 

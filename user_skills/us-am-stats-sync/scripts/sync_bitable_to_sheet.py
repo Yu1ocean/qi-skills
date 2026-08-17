@@ -12,6 +12,8 @@ Design notes:
 - Bitable pagination is handled explicitly by offset + limit.
 - Detail writes are append-only by sync date: read existing rows -> skip if today's rows exist -> append new rows -> RAW read-back.
 - A full raw Bitable snapshot is persisted to output/snapshots/bitable_snapshot_YYYYMMDD.json after each successful upstream fetch.
+- v2.0 write boundary: the detail tab only accepts writes in A:J (sync payload) and O.. onward (date-wise aux area).
+  K:N is a PROTECTED user-maintained zone (K = 日期(标准化) helper column feeding the trend matrix) and is hard-blocked.
 """
 
 from __future__ import annotations
@@ -90,6 +92,128 @@ TREND_METRICS: List[str] = [
 ]
 TREND_OUTPUT_START_CELL = "A17"
 TREND_READBACK_RANGE = "A17:I30"
+
+# ---------------------------------------------------------------------------
+# v2.0 受保护区域清单（脚本禁写）——趋势迷你图数据源区，全部由用户手工维护
+# ---------------------------------------------------------------------------
+PROTECTED_RANGES: Dict[str, List[str]] = {
+    # 明细(VM2reD)：K 列 = 日期(标准化) 辅助列，供 SUMIFS/MAXIFS 按真日期匹配
+    "明细": ["K:K"],
+    # US行业统计(2unp6l)：日期锚点 + 7 日/4 周趋势数据区 + 迷你图批注列
+    "US行业统计": ["A17:B17", "A18:H28", "A30:E40", "K:L"],
+}
+
+# 明细表允许脚本写入的列区间（1-based，闭区间）：A:J 同步载荷 + O 起的日期辅助区
+DETAIL_WRITABLE_COLUMN_BLOCKS: Tuple[Tuple[int, int], ...] = ((1, 10), (15, 16384))
+# 明细表禁止脚本写入的列区间：K:N（K = 日期标准化辅助列，L:N 预留给用户批注/迷你图）
+DETAIL_FORBIDDEN_COLUMN_BLOCK: Tuple[int, int] = (11, 14)
+# 汇总表唯一允许脚本写入的单元格
+SUMMARY_ALLOWED_WRITE_CELLS: Tuple[str, ...] = ("N2",)
+
+
+def col_letters_to_index(letters: str) -> int:
+    """Convert Excel-style column letters to a 1-based index ("A" -> 1, "O" -> 15)."""
+    normalized = "".join(ch for ch in str(letters).strip().upper() if ch.isalpha())
+    if not normalized:
+        raise ValueError(f"Invalid column letters: {letters!r}")
+    index = 0
+    for ch in normalized:
+        index = index * 26 + (ord(ch) - ord("A") + 1)
+    return index
+
+
+def col_index_to_letters(col_index_1_based: int) -> str:
+    """Convert a 1-based column index to Excel-style letters (1 -> "A", 15 -> "O")."""
+    if col_index_1_based <= 0:
+        raise ValueError(f"Invalid column index: {col_index_1_based}")
+    letters: List[str] = []
+    n = col_index_1_based
+    while n > 0:
+        n, rem = divmod(n - 1, 26)
+        letters.append(chr(ord("A") + rem))
+    return "".join(reversed(letters))
+
+
+def _range_column_span(target: str, *, width: int | None = None) -> Tuple[int, int]:
+    """Resolve the 1-based inclusive column span touched by an A1 range or start cell.
+
+    Accepts "A1", "A2:J50", "K:K", "O1". When only a start cell is given, ``width``
+    (number of columns in the payload) extends the span rightwards.
+    """
+    text = str(target).strip().upper().replace("$", "")
+    if not text:
+        raise ValueError("Empty write target range")
+    parts = text.split(":")
+    start_col = col_letters_to_index(parts[0])
+    if len(parts) == 2:
+        end_col = col_letters_to_index(parts[1])
+    else:
+        end_col = start_col + max((width or 1) - 1, 0)
+    if end_col < start_col:
+        start_col, end_col = end_col, start_col
+    return start_col, end_col
+
+
+def assert_detail_write_range(target: str, *, op: str, width: int | None = None) -> Tuple[int, int]:
+    """Hard guardrail (L3): detail writes may only touch A:J or O.. onward, never K:N.
+
+    K 列是「日期(标准化)」辅助列（趋势数据区的唯一日期基准来源），一旦被脚本覆盖，
+    US行业统计 的 7 日 / 4 周趋势区会整体断链，因此这里必须在副作用前物理熔断。
+    """
+    start_col, end_col = _range_column_span(target, width=width)
+    forbidden_start, forbidden_end = DETAIL_FORBIDDEN_COLUMN_BLOCK
+    overlaps_forbidden = start_col <= forbidden_end and end_col >= forbidden_start
+    within_allowed = any(
+        start_col >= block_start and end_col <= block_end
+        for block_start, block_end in DETAIL_WRITABLE_COLUMN_BLOCKS
+    )
+    if overlaps_forbidden or not within_allowed:
+        _append_audit_log(
+            {
+                "level": "error",
+                "op": op,
+                "reason": "detail_write_range_out_of_boundary",
+                "target": target,
+                "resolved_columns": [col_index_to_letters(start_col), col_index_to_letters(end_col)],
+                "allowed_column_blocks": [
+                    f"{col_index_to_letters(s)}:{col_index_to_letters(e)}"
+                    for s, e in DETAIL_WRITABLE_COLUMN_BLOCKS
+                ],
+                "forbidden_column_block": (
+                    f"{col_index_to_letters(forbidden_start)}:{col_index_to_letters(forbidden_end)}"
+                ),
+                "protected_ranges": PROTECTED_RANGES,
+            }
+        )
+        raise AssertionError(
+            f"[硬熔断] 明细表写入越界！目标 {target} 解析为 "
+            f"{col_index_to_letters(start_col)}:{col_index_to_letters(end_col)}；"
+            f"仅允许 A:J 与 O 列起的辅助区，禁止写 "
+            f"{col_index_to_letters(forbidden_start)}:{col_index_to_letters(forbidden_end)}"
+            "（K 列为日期标准化辅助列，趋势数据区依赖它）"
+        )
+    return start_col, end_col
+
+
+def assert_summary_write_range(target: str, *, op: str) -> str:
+    """Hard guardrail (L3): the summary tab only ever accepts a write to N2."""
+    normalized = str(target).strip().upper().replace("$", "")
+    if normalized not in {cell.upper() for cell in SUMMARY_ALLOWED_WRITE_CELLS}:
+        _append_audit_log(
+            {
+                "level": "error",
+                "op": op,
+                "reason": "summary_write_range_out_of_boundary",
+                "target": target,
+                "allowed_cells": list(SUMMARY_ALLOWED_WRITE_CELLS),
+                "protected_ranges": PROTECTED_RANGES.get("US行业统计", []),
+            }
+        )
+        raise AssertionError(
+            f"[硬熔断] 汇总表 US行业统计 只允许脚本写入 {list(SUMMARY_ALLOWED_WRITE_CELLS)}，"
+            f"实际目标: {target}；趋势数据区 {PROTECTED_RANGES.get('US行业统计', [])} 由用户手工维护"
+        )
+    return normalized
 
 
 def validate_trend_contract(values: List[List[Any]]) -> None:
@@ -478,6 +602,7 @@ def values_to_csv(values: List[List[Any]]) -> str:
 def clear_sheet_range(sheet_token: str, sheet_id: str, clear_range: str = "A1:J10000") -> None:
     """Clear the target Sheet range before overwriting values."""
     assert_detail_sheet_id(sheet_id, op="clear_sheet_range")
+    assert_detail_write_range(clear_range, op="clear_sheet_range")
     _run_lark_cli(
         [
             "sheets",
@@ -552,6 +677,8 @@ def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[An
     assert_detail_sheet_id(sheet_id, op="append_values_to_sheet")
     if not values:
         return
+    payload_width = max(len(row) for row in values)
+    assert_detail_write_range(f"A{start_row}", op="append_values_to_sheet", width=payload_width)
     assert_no_null_industry(values)
     csv_text = values_to_csv(values)
     _run_lark_cli(
@@ -573,6 +700,8 @@ def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[An
 
 def write_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[Any]]) -> None:
     assert_detail_sheet_id(sheet_id, op="write_values_to_sheet")
+    payload_width = max((len(row) for row in values), default=1)
+    assert_detail_write_range("A1", op="write_values_to_sheet", width=payload_width)
     csv_text = values_to_csv(values)
     _run_lark_cli(
         [

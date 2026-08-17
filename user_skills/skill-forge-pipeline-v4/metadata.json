@@ -1,16 +1,16 @@
 {
     "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
     "name": "us-am-stats-sync",
-    "description": "美区 AM 招商统计每日同步（含「育商」兜底分组固化，禁止回吐 NULL）",
-    "version": "1.9",
+    "description": "美区 AM 招商统计每日同步；v2.0 固化 7 日 / 4 周趋势迷你图数据源区契约（明细!K 日期标准化列 + B17 日期锚点 + A18:H28 SUMIFS 日口径 + A30:E40 MAXIFS 周口径），新增受保护区域禁写护栏（明细禁写 K:N，汇总仅可写 N2）与趋势区只读验收断言。",
+    "version": "2.0",
     "doc_link": "https://bytedance.larkoffice.com/docx/TbqqdKX83oYwJbxCkxRcjdrQn4b",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-17",
-    "updated_at": "2026-08-17 11:54",
+    "updated_at": "2026-08-17 12:36",
     "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
     "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
     "zip_name": "us-am-stats-sync.zip",
-    "drive_file_token": "EgBabTG4OofAnqxIO4OcsZLfnkg",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/EgBabTG4OofAnqxIO4OcsZLfnkg"
+    "drive_file_token": "Hz3dbyb5Hos3kExWLGQcn8mBnwe",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Hz3dbyb5Hos3kExWLGQcn8mBnwe"
 }
