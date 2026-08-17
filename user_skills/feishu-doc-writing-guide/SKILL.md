@@ -1,10 +1,10 @@
 ---
 name: feishu-doc-writing-guide
 description: 飞书电子表格（Sheets）与文档（Docs）的安全写入与归属治理指南，包含执行人身份穿透法则、个人空间优先创建、MCP 迁移兜底、三级防爆破自检机制、反合理化四件套、标题去重、元数据标头及幽灵对象清除 SOP。适用于生成/更新飞书文档、写入台账、处理权限与数据安全。
-version: 7.3
+version: 7.4
 ---
 
-# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.3
+# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.4
 
 本 Skill 汇总了 Aime 系统及团队在处理飞书文档与电子表格时的血泪经验，规定了写入、更新及维护操作的权威标准。
 
@@ -105,6 +105,12 @@ version: 7.3
 8. **幽灵块验收**
    - 必须“植入信标→定位父 block→物理斩除”。
    - 删除后再次下载/读取文档，确认信标已消失且结构可持续更新。
+
+9. **公式零错误收敛（Formula Zero-Error）**
+   - 任何写入/修改公式的动作完成后，必须执行 `lark-cli sheets +formula-verify --url "<sheet_url>"`。
+   - 必须收敛到 `status=success` 且 `total_errors=0`；存在任一 `#VALUE!` / `#REF!` / `#NAME?` 即视为未完成，立刻熔断修复。
+   - 同时用 `+cells-get --include value,formula` 回读目标单元格，确认存在 `formula` 字段（防伪公式文本）。
+   - 可用本地断言脚本预检：`python3 scripts/formula_write_guard.py --formula "=INDEX('明细'!J:J,COUNTA('明细'!J:J))" --sheet-names '明细,US行业统计' --field formula`
 
 ## ⚙️ 核心架构 / SOP / 约束条件
 
@@ -217,12 +223,60 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 - **正确做法**：写公式前，先在目标 Sheet 某空格写一个临时 `=COUNTA('底表'!$XX$5:$XX$6379)` 验证公式是否引用正确；或通过用户提供的已知可执行公式反推正确列字母（如用户提供 U3 公式确认跨 Sheet 引用语法）。
 - **禁止行为**：不能仅凭 MCP 返回的列号盲目拼接公式，必须先验证列位。
 
+### 陷阱3：sheet_id 冒充 sheet_name 导致跨 Sheet 公式失效
+
+- **现象**：`=MAX('VM2reD'!J:J)` 写入后公式无效 / 报错 / 恒为 0，其中 `VM2reD` 实际是「明细」Sheet 的 `sheet_id`。
+- **根因**：飞书公式引擎只识别 **sheet_name**（如 `'明细'`），不接受 `sheet_id`。MCP/CLI 返回的 `sheet_id` 只能用于 API 定位，不能进入公式文本。
+- **正确做法**：写任何跨 Sheet 公式前，先取真实名称：
+
+  ```bash
+  lark-cli sheets +workbook-info --url "<sheet_url>"   # 读取 sheet_name
+  ```
+
+  再用 `'明细'` 这类 sheet_name 拼公式：`=INDEX('明细'!J:J,COUNTA('明细'!J:J))`。
+- **诊断命令**：`lark-cli sheets +workbook-info` 对照公式中的引用名；若引用串出现在 sheet_id 列表中即判定为误用。
+- **禁止行为**：严禁把 MCP/CLI 返回的 `sheet_id` 直接拼进公式；严禁凭记忆猜 Sheet 名。
+
+### 陷阱4：伪公式文本引发级联 #VALUE!
+
+- **现象**：N2 看似公式，实际是文本字符串 `"=MAX('VM2reD'!J:J)"`；下游 `=N2-1` 对文本做算术，报 `#VALUE!`，并沿依赖链级联扩散。
+- **根因**：写入时用了 `value` 字段（或 `+csv-put`），飞书按纯文本存储，不进公式引擎。
+- **诊断命令**：
+
+  ```bash
+  lark-cli sheets +cells-get --url "<sheet_url>" --range "US行业统计!N2" --include value,formula
+  ```
+
+  **有 `value` 无 `formula` 字段 = 伪公式文本**，必须重写。
+- **正确做法**：公式必须走 formula 字段写入：
+
+  ```bash
+  lark-cli sheets +cells-set --url "<sheet_url>" --range "US行业统计!N2" \
+    --cells '[[{"formula":"=INDEX(\u0027明细\u0027!J:J,COUNTA(\u0027明细\u0027!J:J))"}]]'
+  ```
+- **禁止行为**：禁止用 `value` 字段写公式；禁止用 `+csv-put` 批量灌公式；禁止只看单元格显示文本就断定公式生效。
+
+### 陷阱5：文本型日期列不可 MAX
+
+- **现象**：对「更新日期」列取最新值用 `=MAX('明细'!J:J)`，结果恒为 `0`。
+- **根因**：该列是文本型日期（如 `"8/14"`），并非日期序列值；`MAX` 忽略文本，返回 0。
+- **正确做法**：取“最后一条有效值”而非最大值：
+
+  ```
+  =INDEX('明细'!J:J,COUNTA('明细'!J:J))
+  ```
+- **诊断命令**：`+cells-get --include value,formula` 观察目标列样本是否为纯字符串；或临时写 `=ISTEXT('明细'!J2)` 判定类型。
+- **禁止行为**：禁止在未确认列类型前对日期列使用 MAX/MIN 聚合并直接对外交付结果。
+
 ## Defaults（合规默认值）
 
 - 新建飞书文档默认：`target_type=personal`
 - 归属修复默认：`scripts/ensure_doc_in_personal.py "<document_url>"`
 - 兼容入口默认用户：`yuqinan@bytedance.com`
 - 写后即读 RAW 校验：默认开启
+- 公式写入通道默认：`+cells-set --cells '[[{"formula":"=..."}]]'`（禁用 `value` / `+csv-put`）
+- 公式写后校验默认：`lark-cli sheets +formula-verify` 必须 `total_errors=0`
+- 取“最新日期值”默认公式：`=INDEX('<sheet_name>'!J:J,COUNTA('<sheet_name>'!J:J))`
 
 ## 脚本工具箱（可选，但遇到对应场景必须用）
 
@@ -251,6 +305,12 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
   python3 scripts/snapshot_diff_helper.py diff "<sheet_url>" "<sheet_name>" [snapshot_file]
   ```
 
+- **公式写入前置断言（L3 熔断）**：
+
+  ```bash
+  python3 scripts/formula_write_guard.py --formula "=INDEX('明细'!J:J,COUNTA('明细'!J:J))" --sheet-names '明细,US行业统计' --field formula
+  ```
+
 - **清理幽灵 Block**：
 
   ```bash
@@ -273,6 +333,12 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 
 ## 变更记录
 
+- **v7.4**: 新增公式类三大陷阱与零错误收敛护栏。
+  - 新增「陷阱3：sheet_id 冒充 sheet_name 导致跨 Sheet 公式失效」，规定写公式前必须 `lark-cli sheets +workbook-info` 拿 `sheet_name`。
+  - 新增「陷阱4：伪公式文本引发级联 #VALUE!」，明确 `+cells-get --include value,formula` 诊断法（有 value 无 formula 即伪公式），公式必须走 `+cells-set --cells '[[{"formula":"=..."}]]'`。
+  - 新增「陷阱5：文本型日期列不可 MAX」，取最新值改用 `=INDEX(列,COUNTA(列))`。
+  - Verification 新增第 9 条「公式零错误收敛」：写公式后必须 `+formula-verify` 收敛到 status=success / total_errors=0。
+  - 新增 L3 断言脚本 `scripts/formula_write_guard.py`，对 sheet_id 误用、value 字段写公式、文本列 MAX 三类违规运行时熔断。
 - **v7.3**: 新增「个人空间优先创建法则」，默认以 `target_type=personal` 创建飞书文档；新增 `scripts/ensure_doc_in_personal.py` 作为 MCP 迁移兜底；废弃 `grant_doc_permissions.py` 的 JWT 直调 Permission API 方案，并将同名脚本降级为兼容包装器。
 - **v7.2**: 新增「执行人身份穿透法则」，明确要求在所有飞书文档/表格读写前优先挂载 `bytedcli-auth`，以用户云端 JWT 作为执行人身份，通过 MCP 通道配合本 Skill 实现“无感物理级穿透写入”。
 - **v7.1**: 新增「反合理化四件套」（Common Rationalizations / Why they fail / Red Flags / Verification），用以对抗“先跳过校验/先不落用户空间/先复制一份台账/先糊一个结果”等偷懒冲动，并明确与三级防爆破、反影子克隆、幽灵块清理、归属治理等红线的联动校验。

@@ -1,16 +1,16 @@
 {
-    "skill_id": "95b1248a-7aaa-42fa-b9ef-f58492536e09",
-    "name": "info-miner",
-    "description": "从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。",
-    "version": "1.10",
-    "doc_link": "https://bytedance.larkoffice.com/docx/Q9CJdIyEUoeJMZxT5eGcnE6JnrH",
+    "skill_id": "SKL-2604-010",
+    "name": "feishu-doc-writing-guide",
+    "description": "飞书电子表格与文档的安全写入与归属治理指南；v7.4 新增公式类陷阱3/4/5（sheet_id 冒充 sheet_name、伪公式文本级联 #VALUE!、文本型日期列不可 MAX）与 formula-verify 零错误收敛护栏",
+    "version": "7.4",
+    "doc_link": "https://bytedance.larkoffice.com/docx/KIJfdUkYNoyFeTxo7E2ciApyntb",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
-    "date": "2026-08-15",
-    "updated_at": "2026-08-15 22:24",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner.zip",
-    "zip_name": "info-miner.zip",
-    "drive_file_token": "PDFsbYBIIoqFOTxztaccfIbYn4e",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/PDFsbYBIIoqFOTxztaccfIbYn4e"
+    "date": "2026-08-17",
+    "updated_at": "2026-08-17 08:36",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide.zip",
+    "zip_name": "feishu-doc-writing-guide.zip",
+    "drive_file_token": "SXvqbrTUmoxQZXxNFwycFtX3nSd",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/SXvqbrTUmoxQZXxNFwycFtX3nSd"
 }
