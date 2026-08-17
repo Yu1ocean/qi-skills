@@ -94,19 +94,37 @@ TREND_OUTPUT_START_CELL = "A17"
 TREND_READBACK_RANGE = "A17:I30"
 
 # ---------------------------------------------------------------------------
-# v2.0 受保护区域清单（脚本禁写）——趋势迷你图数据源区，全部由用户手工维护
+# v2.1 受保护区域清单（脚本禁写）
+#
+# 核心约定（最高优先级红线）：
+#   * US行业统计(2unp6l) 只允许写入 / 修改「公式」（必须以 "=" 开头），
+#     绝对禁止任何静态数据值（标题文本、行业名、「总计」、日期常量、手填数字）。
+#   * 明细(VM2reD) 是所有数据变动的唯一落点（新增行、字段值、辅助矩阵、趋势矩阵、标题行）。
+#
+# v2.0 曾把趋势矩阵建在 US行业统计!A17:B17 / A18:H28 / A30:E40，违反上述约定，
+# 已于 v2.1 整体清除并迁至 明细!AA1:AH24。
 # ---------------------------------------------------------------------------
 PROTECTED_RANGES: Dict[str, List[str]] = {
-    # 明细(VM2reD)：K 列 = 日期(标准化) 辅助列，供 SUMIFS/MAXIFS 按真日期匹配
-    "明细": ["K:K"],
-    # US行业统计(2unp6l)：日期锚点 + 7 日/4 周趋势数据区 + 迷你图批注列
-    "US行业统计": ["A17:B17", "A18:H28", "A30:E40", "K:L"],
+    # 明细(VM2reD)：K 列 = 日期(标准化) 辅助列，供 SUMIFS/MAXIFS 按真日期匹配；
+    #               AA1:AH24 = 趋势矩阵（7 日 SUMIFS 区 + 4 周 MAXIFS 区，含锚点 AB2）
+    "明细": ["K:K", "AA1:AH24"],
+    # US行业统计(2unp6l)：迷你图批注列（仅批注不含值）+ 看板参数区（入驻率 B16 等）
+    "US行业统计": ["K:L", "A12:B16"],
 }
 
-# 明细表允许脚本写入的列区间（1-based，闭区间）：A:J 同步载荷 + O 起的日期辅助区
-DETAIL_WRITABLE_COLUMN_BLOCKS: Tuple[Tuple[int, int], ...] = ((1, 10), (15, 16384))
-# 明细表禁止脚本写入的列区间：K:N（K = 日期标准化辅助列，L:N 预留给用户批注/迷你图）
-DETAIL_FORBIDDEN_COLUMN_BLOCK: Tuple[int, int] = (11, 14)
+# 明细表允许脚本写入的列区间（1-based，闭区间）：
+#   A:J  (1-10)   -> 同步载荷
+#   O:Z  (15-26)  -> 按同步日期横向追加的日期辅助区（容量 12 列 ≈ 12 个同步日）
+#   AI.. (35-)    -> 预留扩展区（趋势矩阵 AA:AH 右侧）
+# ⚠️ 容量边界：辅助区写满 Z 列后，下一列即 AA（趋势矩阵首列），断言会硬熔断而不是覆盖矩阵。
+#    届时必须人工迁移辅助区或趋势矩阵，禁止放宽本护栏。
+DETAIL_WRITABLE_COLUMN_BLOCKS: Tuple[Tuple[int, int], ...] = ((1, 10), (15, 26), (35, 16384))
+# 明细表禁止脚本写入的列区间（多段，v2.1）：
+#   K:N  (11-14)  -> K = 日期标准化辅助列，L:N 预留
+#   AA:AH (27-34) -> 趋势矩阵（7 日 / 4 周数据源），脚本只读
+DETAIL_FORBIDDEN_COLUMN_BLOCKS: Tuple[Tuple[int, int], ...] = ((11, 14), (27, 34))
+# 向后兼容别名（v2.0 只有单段 K:N）
+DETAIL_FORBIDDEN_COLUMN_BLOCK: Tuple[int, int] = DETAIL_FORBIDDEN_COLUMN_BLOCKS[0]
 # 汇总表唯一允许脚本写入的单元格
 SUMMARY_ALLOWED_WRITE_CELLS: Tuple[str, ...] = ("N2",)
 
@@ -155,19 +173,27 @@ def _range_column_span(target: str, *, width: int | None = None) -> Tuple[int, i
 
 
 def assert_detail_write_range(target: str, *, op: str, width: int | None = None) -> Tuple[int, int]:
-    """Hard guardrail (L3): detail writes may only touch A:J or O.. onward, never K:N.
+    """Hard guardrail (L3): detail writes may only touch A:J or O:Z, never K:N or AA:AH.
 
-    K 列是「日期(标准化)」辅助列（趋势数据区的唯一日期基准来源），一旦被脚本覆盖，
-    US行业统计 的 7 日 / 4 周趋势区会整体断链，因此这里必须在副作用前物理熔断。
+    K 列是「日期(标准化)」辅助列（趋势矩阵的唯一日期基准来源），AA:AH 是趋势矩阵本体
+    （7 日 SUMIFS 区 + 4 周 MAXIFS 区，含锚点 AB2）。任一被脚本覆盖，趋势迷你图会整体
+    断链，因此这里必须在副作用前物理熔断。
     """
     start_col, end_col = _range_column_span(target, width=width)
-    forbidden_start, forbidden_end = DETAIL_FORBIDDEN_COLUMN_BLOCK
-    overlaps_forbidden = start_col <= forbidden_end and end_col >= forbidden_start
+    overlapped_forbidden = [
+        (fs, fe)
+        for fs, fe in DETAIL_FORBIDDEN_COLUMN_BLOCKS
+        if start_col <= fe and end_col >= fs
+    ]
     within_allowed = any(
         start_col >= block_start and end_col <= block_end
         for block_start, block_end in DETAIL_WRITABLE_COLUMN_BLOCKS
     )
-    if overlaps_forbidden or not within_allowed:
+    if overlapped_forbidden or not within_allowed:
+        forbidden_labels = [
+            f"{col_index_to_letters(s)}:{col_index_to_letters(e)}"
+            for s, e in DETAIL_FORBIDDEN_COLUMN_BLOCKS
+        ]
         _append_audit_log(
             {
                 "level": "error",
@@ -179,24 +205,30 @@ def assert_detail_write_range(target: str, *, op: str, width: int | None = None)
                     f"{col_index_to_letters(s)}:{col_index_to_letters(e)}"
                     for s, e in DETAIL_WRITABLE_COLUMN_BLOCKS
                 ],
-                "forbidden_column_block": (
-                    f"{col_index_to_letters(forbidden_start)}:{col_index_to_letters(forbidden_end)}"
-                ),
+                "forbidden_column_blocks": forbidden_labels,
+                "overlapped_forbidden_blocks": [
+                    f"{col_index_to_letters(s)}:{col_index_to_letters(e)}"
+                    for s, e in overlapped_forbidden
+                ],
                 "protected_ranges": PROTECTED_RANGES,
             }
         )
         raise AssertionError(
             f"[硬熔断] 明细表写入越界！目标 {target} 解析为 "
             f"{col_index_to_letters(start_col)}:{col_index_to_letters(end_col)}；"
-            f"仅允许 A:J 与 O 列起的辅助区，禁止写 "
-            f"{col_index_to_letters(forbidden_start)}:{col_index_to_letters(forbidden_end)}"
-            "（K 列为日期标准化辅助列，趋势数据区依赖它）"
+            f"仅允许 A:J 与 O:Z 辅助区，禁止写 {forbidden_labels}"
+            "（K 列为日期标准化辅助列，AA:AH 为趋势矩阵，两者都是趋势迷你图的数据源）"
         )
     return start_col, end_col
 
 
-def assert_summary_write_range(target: str, *, op: str) -> str:
-    """Hard guardrail (L3): the summary tab only ever accepts a write to N2."""
+def assert_summary_write_range(target: str, *, op: str, content: Any = None) -> str:
+    """Hard guardrail (L3): 汇总表 US行业统计 只允许写 N2，且内容必须是公式。
+
+    核心约定（最高优先级红线）：US行业统计(2unp6l) 只允许写入 / 修改公式，
+    绝对禁止任何静态数据值（标题文本、行业名、「总计」、日期常量、手填数字）。
+    所有数据变动只能落在 明细(VM2reD)。
+    """
     normalized = str(target).strip().upper().replace("$", "")
     if normalized not in {cell.upper() for cell in SUMMARY_ALLOWED_WRITE_CELLS}:
         _append_audit_log(
@@ -211,8 +243,27 @@ def assert_summary_write_range(target: str, *, op: str) -> str:
         )
         raise AssertionError(
             f"[硬熔断] 汇总表 US行业统计 只允许脚本写入 {list(SUMMARY_ALLOWED_WRITE_CELLS)}，"
-            f"实际目标: {target}；趋势数据区 {PROTECTED_RANGES.get('US行业统计', [])} 由用户手工维护"
+            f"实际目标: {target}；其余区域（公式区 B2:J10、参数区 A12:B16、批注列 K:L）"
+            "全部由用户手工维护，趋势矩阵已迁至 明细!AA1:AH24"
         )
+
+    if content is not None:
+        text = str(content).strip()
+        if not text.startswith("="):
+            _append_audit_log(
+                {
+                    "level": "error",
+                    "op": op,
+                    "reason": "summary_write_content_not_formula",
+                    "target": target,
+                    "content_preview": text[:120],
+                }
+            )
+            raise AssertionError(
+                "[硬熔断] 违反核心约定：US行业统计(2unp6l) 只允许写入公式（必须以 '=' 开头），"
+                f"绝对禁止静态数据值。实际待写内容: {text[:120]!r}；"
+                "所有数据变动只能落在 明细(VM2reD)"
+            )
     return normalized
 
 
