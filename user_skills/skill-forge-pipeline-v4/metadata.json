@@ -1,16 +1,16 @@
 {
     "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
     "name": "us-am-stats-sync",
-    "description": "将美区AM招商统计 Bitable 每日同步到统计电子表格；v2.1 落实「汇总表只放公式、数据只落明细表」核心约定，趋势矩阵迁至 明细!AA1:AH24，新增汇总表 formula-only 硬断言与 AA:AH 禁写护栏",
-    "version": "2.1",
+    "description": "将美区AM招商统计 Bitable 每日同步到统计电子表格；v2.2 修复 step3 辅助区落点扫描的保护区自伤 bug（扫描范围收敛为 O1:Z1），新增 assert_aux_column_within_capacity() 容量边界硬断言，并评估标注 O:Z 辅助区为 deprecated 候选",
+    "version": "2.2",
     "doc_link": "https://bytedance.larkoffice.com/docx/TbqqdKX83oYwJbxCkxRcjdrQn4b",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-17",
-    "updated_at": "2026-08-17 12:58",
+    "updated_at": "2026-08-17 13:21",
     "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
     "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
     "zip_name": "us-am-stats-sync.zip",
-    "drive_file_token": "RN3XbRVWeoVN1GxXN4ScbEkEnEg",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/RN3XbRVWeoVN1GxXN4ScbEkEnEg"
+    "drive_file_token": "SuBwbOupaotA0wxt2xfcX8ZFn56",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/SuBwbOupaotA0wxt2xfcX8ZFn56"
 }

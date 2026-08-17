@@ -9,9 +9,10 @@ Workflow:
 3. Append today's column to the detail aux area (O.. onward).
 4. Read-only guard: verify the trend matrix data source (明细!K helper column + 趋势区日期锚点) is still alive.
 
-Write boundary (v2.0):
-- 明细(VM2reD): only A:J and O.. onward. K:N is PROTECTED (K = 日期(标准化)).
-- US行业统计(2unp6l): only N2. A17:B17 / A18:H28 / A30:E40 / K:L are PROTECTED trend-matrix regions.
+Write boundary (v2.2):
+- 明细(VM2reD): only A:J and the O:Z aux area. K:N and AA:AH are PROTECTED
+  (K = 日期(标准化), AA1:AH24 = 趋势矩阵). The aux-column scan is hard-clamped to O1:Z1.
+- US行业统计(2unp6l): only N2, and the content must be a formula (start with "=").
 
 Run with AIME lark-cli credentials injected, e.g. bash include_secrets=true:
   python3 scripts/daily_sync.py
@@ -40,6 +41,7 @@ from sync_bitable_to_sheet import (  # noqa: E402
     SUMMARY_ALLOWED_WRITE_CELLS,
     _extract_json_object,
     _run_lark_cli,
+    _append_audit_log,
     assert_detail_write_range,
     assert_summary_write_range,
     read_detail_rows_from_sheet,
@@ -86,6 +88,25 @@ TREND_WEEKLY_RANGE = "AA14:AE24"
 TREND_WEEKLY_FIRST_DATE_CELL = "AB15"
 # 趋势矩阵整体 RAW 回捞范围
 TREND_MATRIX_RANGE = "AA1:AH24"
+
+# ---------------------------------------------------------------------------
+# v2.2 每日横向辅助区（O:Z）边界契约
+#
+# 【v2.2 修复】step3 的「已用列扫描」范围必须硬性收敛为 O1:Z1。
+# v2.1 引入趋势矩阵 AA1:AH24 后，旧实现扫描 O1:ZZ10 会把 AA1 的标题文本
+# 「📊 7日趋势数据区…」当成「最后一个非空列」，算出落点 AB1，撞上 AA:AH
+# 保护区被 assert_detail_write_range() 自伤拦下（断言是对的，扫描逻辑没跟上）。
+#
+# ⚠️ 功能重叠 / DEPRECATED 候选：
+# O:Z 每日横向辅助区与 AA:AH 趋势矩阵功能重叠（都是「按日期的分行业入驻数序列」）。
+# 趋势矩阵是滚动 7 天 + 自动跟随锚点 AB2，无容量上限、无需每日写入，严格更优。
+# O:Z 辅助区仅 12 列容量（≈12 个同步日），写满即需人工决策。
+# 建议后续版本弃用 O:Z 辅助区；本版本先修 bug 不删功能。
+# ---------------------------------------------------------------------------
+AUX_AREA_START_COL = 15  # O
+AUX_AREA_END_COL = 26  # Z（下一列即 AA = 趋势矩阵首列，禁止溢出）
+AUX_AREA_SCAN_RANGE = "O1:Z1"  # 硬性收敛：只扫 O:Z，绝不扫全行
+AUX_AREA_DEPRECATED = True  # O:Z 辅助区已标记为 deprecated 候选（见上方说明）
 
 
 def assert_n2_formula_safe(formula: str) -> str:
@@ -333,8 +354,51 @@ def _col_index_to_a1(col_index_1_based: int) -> str:
     return "".join(reversed(letters))
 
 
+def assert_aux_column_within_capacity(target_col_1_based: int, *, sync_date: str) -> int:
+    """Hard guardrail (L3, v2.2): 辅助区落点必须落在 O:Z 内，禁止静默溢出到 AA。
+
+    O:Z 只有 12 列容量（≈12 个同步日）。写满 Z 之后，下一列即 AA —— 趋势矩阵
+    (AA1:AH24) 的首列。此时必须 raise 明确错误交由人工决策（扩容 / 迁移 / 改用
+    趋势矩阵），绝不允许静默溢出覆盖趋势矩阵，也绝不允许静默跳过当日辅助列。
+    """
+    if AUX_AREA_START_COL <= target_col_1_based <= AUX_AREA_END_COL:
+        return target_col_1_based
+
+    target_letters = _col_index_to_a1(target_col_1_based)
+    _append_audit_log(
+        {
+            "level": "error",
+            "op": "step3_write_detail_aux_area",
+            "reason": "aux_area_capacity_exhausted",
+            "sync_date": sync_date,
+            "computed_target_column": target_letters,
+            "aux_area": (
+                f"{_col_index_to_a1(AUX_AREA_START_COL)}:"
+                f"{_col_index_to_a1(AUX_AREA_END_COL)}"
+            ),
+            "aux_area_capacity_columns": AUX_AREA_END_COL - AUX_AREA_START_COL + 1,
+            "protected_ranges": PROTECTED_RANGES,
+        }
+    )
+    raise RuntimeError(
+        f"[硬熔断] 明细辅助区容量已耗尽！sync_date={sync_date} 算出的落点为 "
+        f"{target_letters}，已越过容量边界 "
+        f"{_col_index_to_a1(AUX_AREA_START_COL)}:{_col_index_to_a1(AUX_AREA_END_COL)}"
+        f"（共 {AUX_AREA_END_COL - AUX_AREA_START_COL + 1} 列 ≈ "
+        f"{AUX_AREA_END_COL - AUX_AREA_START_COL + 1} 个同步日）。"
+        "下一列 AA 是趋势矩阵 AA1:AH24 的首列，禁止静默溢出覆盖，也禁止静默跳过。"
+        "请人工决策：(a) 迁移/归档 O:Z 辅助区腾出空间；(b) 把辅助区迁到 AI 起的预留扩展区；"
+        "或 (c) 直接弃用 O:Z 辅助区，改用滚动 7 天的趋势矩阵（O:Z 已标记 deprecated 候选）。"
+    )
+
+
 def _find_or_append_aux_date_column(sync_date: str) -> str | None:
-    """Return start cell (e.g. O1) for today's aux column; None if already exists."""
+    """Return start cell (e.g. O1) for today's aux column; None if already exists.
+
+    v2.2 修复：扫描范围硬性收敛为 O1:Z1（AUX_AREA_SCAN_RANGE），不再扫全行。
+    旧实现扫 O1:ZZ10 会把趋势矩阵 AA1 的标题文本当成「最后一个非空列」，
+    导致落点被算到 AB1 并撞上 AA:AH 保护区断言。
+    """
     payload = _run_json(
         [
             "sheets",
@@ -344,7 +408,7 @@ def _find_or_append_aux_date_column(sync_date: str) -> str | None:
             "--sheet-id",
             DETAIL_SHEET_ID,
             "--range",
-            "O1:ZZ10",
+            AUX_AREA_SCAN_RANGE,
             "--include-row-prefix=false",
         ]
     )
@@ -353,20 +417,23 @@ def _find_or_append_aux_date_column(sync_date: str) -> str | None:
     rows = list(reader)
     if not rows:
         rows = [[]]
-    header = [cell.strip() for cell in rows[0]]
+    aux_width = AUX_AREA_END_COL - AUX_AREA_START_COL + 1
+    # 二次收敛：即使 CLI 返回超出请求范围的列，也只取 O:Z 这 12 列
+    header = [cell.strip() for cell in rows[0]][:aux_width]
 
-    for idx, cell in enumerate(header):
+    for cell in header:
         if cell == sync_date:
             return None
 
     last_used = -1
     for idx, cell in enumerate(header):
-        if cell.strip():
+        if cell:
             last_used = idx
 
     target_offset = last_used + 1
-    start_col_1_based = 15  # O
-    target_col_1_based = start_col_1_based + target_offset
+    target_col_1_based = AUX_AREA_START_COL + target_offset
+    # 硬熔断：O:Z 写满后禁止静默溢出到 AA（趋势矩阵首列）
+    assert_aux_column_within_capacity(target_col_1_based, sync_date=sync_date)
     return f"{_col_index_to_a1(target_col_1_based)}1"
 
 
