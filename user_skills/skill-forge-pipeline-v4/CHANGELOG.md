@@ -1,5 +1,16 @@
 # Changelog - skill-forge-pipeline-v4
 
+## v5.14 (2026-08-17)
+- **修复 P1 级假成功缺陷（幽灵资产）**：`user_skills/scripts/post_forge_git_push.sh` 原先执行 `git push origin main`，当工作副本 HEAD 处于特性分支（如 `aime/us-am-stats-sync-v16`）时推送的是本地陈旧的 `main` ref，退出码仍为 0，导致流水线宣称「已 push 到 qi-skills」而新版本 SKILL.md / 脚本根本没到 GitHub（今日 v1.9 / v2.0 / v2.1 / v2.2 四次发布全部靠人工 `git push origin HEAD:main` 补推）。
+- push 命令改为 `git push origin HEAD:main`，把当前 HEAD 显式推到远端 `main`。
+- **新增远端回读断言**：push 后回读 `git ls-remote origin refs/heads/main`，与 `git rev-parse HEAD` 比对 SHA；不一致即判定 push 未生效，以非 0 退出码退出并输出醒目错误。禁止仅凭 `git push` 退出码判定成功。
+- 新增 non-fast-forward 自愈链路：`git fetch origin main` → `git rebase origin/main`（冲突则回滚改 `git merge`）→ 重试 push 一次；仍失败则非 0 退出并报告「需人工介入」。
+- 新增结构化审计日志：`local_branch` / `local_head` / `remote_main` / `assert_result`(PASS|FAIL)。
+- 无 staged 变更时不再提前 `exit 0`，仍继续 push + 断言，避免历史 commit 漏同步。
+- 新增 `POST_FORGE_DRY_RUN=1` 故障注入开关（跳过真实 push、保留断言）；`SKIP_POST_FORGE_GIT_PUSH=1` 调试语义保持不变。
+- `SKILL.md` 同步升级至 V5.14：Red Flags 新增「仅凭 git push 退出码判定成功 / 未做远端 SHA 比对」，Verification 新增第 8 条远端 SHA 断言，Post-Forge Git Push Hook 与 Git 自动归档章节写明 `HEAD:main` 语义。
+- 真机验证：①「HEAD 在特性分支 + 本地 main 落后」场景 → HEAD 正确推到远端 main，assert PASS；②`POST_FORGE_DRY_RUN=1` 故障注入 → assert FAIL 且退出码 1；③ non-fast-forward 场景 → rebase 后重试成功，assert PASS。
+
 ## v5.13 (2026-07-30)
 - 正式将 Git 自动归档写入 `SKILL.md` 的 Archive 后置 SOP：明确调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`、目标仓库 `https://github.com/Yu1ocean/qi-skills`、commit message 格式与失败汇报口径。
 - 在约束条件中固化每次 forge/upsert 完成后必须触发 Git push hook，并明确 `skill-forge-pipeline-v4` 自举迭代同样需要触发 Git push。

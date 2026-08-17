@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.13
+version: 5.14
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.13)
+# 技能锻造流水线 (Forge Pipeline V5.14)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -27,6 +27,8 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 涉及“复盘报告 / 故障修复报告 / 架构演进报告 / 归档”类技能升级，但 `SKILL.md` 的 Workflow / SOP 中没有显式写入【文档生动化标准】。
 - 涉及飞书资产写入/赋权/文件块挂载但没有 `include_secrets=true`。
 - 输出中出现“应该/大概/可能/我猜/先跳过”，但没有可验证的 RAW 回读证据。
+- **仅凭 `git push` 的退出码判定成功**，没有回读远端 `refs/heads/main` 的 SHA 与本地 HEAD 做比对。
+- Post-Forge Git Push 仍在执行 `git push origin main`（依赖本地可能陈旧的 `main` ref），而非 `git push origin HEAD:main`。
 
 ## Verification（强制验收清单）
 
@@ -39,6 +41,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 5. **Wiki 归档验收**：说明文档必须已成功迁入目标 Wiki 节点；若 Wiki Mount Phase 失败，发布流程必须立刻熔断，不得继续落盘 `metadata.json` 或宣称发布成功。
 6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
+8. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
 
 ## 适用场景
 
@@ -151,13 +154,22 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **执行目标**：由 `omni-asset-archiver` 作为“唯一物理写入网关”完成向【专属技能清单】或【图书馆】台账的写入。**强制要求归档员遵循 `feishu-doc-writing-guide` 的 RAW 原子锁规范。**
 - **本技能自升级额外要求**：本次升级的版本号与变更说明必须同步写入 `CHANGELOG.md`，并追加更新到对应飞书 Wiki 说明文档。
 - **Post-Forge Git Push Hook**：`scripts/register_skill.py` 在 metadata 写入完成后必须自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`，将 `user_skills/` 最新变更 commit+push 到 `https://github.com/Yu1ocean/qi-skills`。若需要调试跳过，可显式设置 `SKIP_POST_FORGE_GIT_PUSH=1`，否则缺失 hook 或 push 失败均视为发布链路失败。
+  - **推送语义（`HEAD:main`）**：hook 必须执行 `git push origin HEAD:main`，把**当前 HEAD** 显式推到远端 `main`。**严禁** `git push origin main` —— 工作副本 HEAD 常处于特性分支（如 `aime/*`），此时该命令推送的是本地陈旧的 `main` ref，退出码仍为 0，会形成「宣称已同步、GitHub 上却没有新版本」的幽灵资产。
+  - **远端 SHA 回读断言（核心护栏）**：push 之后必须执行 `git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main`（或 `git fetch origin main` + `git rev-parse origin/main`）比对两个 commit SHA。**一致才算 PASS；不一致即判定 push 未真正生效，必须以非 0 退出码退出并输出醒目错误。** 禁止仅凭 `git push` 的退出码判定成功。
+  - **non-fast-forward 自愈**：若远端已被他人推进导致首次 push 被 reject，hook 需先 `git fetch origin main`，再 `git rebase origin/main`（rebase 冲突则回滚改用 `git merge`），随后**重试 push 一次**；仍失败则以非 0 退出并明确报告「需人工介入」，不得静默吞掉错误。
+  - **结构化审计日志**：hook 必须输出 `local_branch` / `local_head`（本地 HEAD SHA）/ `remote_main`（远端 main SHA）/ `assert_result`（PASS 或 FAIL），便于事后审计与幽灵资产追溯。
+  - **无新增变更也要断言**：若 `git add user_skills/` 后没有可提交的差异，hook 不得直接 `exit 0` 收工，仍须继续执行 push 与远端 SHA 回读断言（防止历史 commit 未同步被漏判）。
 
 ### 4. Git 自动归档（新）
 
 - 调用 `bash user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`。
-- 将本次技能变更 commit 并 push 到 `https://github.com/Yu1ocean/qi-skills`。
+- 将本次技能变更 commit 并以 `git push origin HEAD:main` 的语义推到 `https://github.com/Yu1ocean/qi-skills`（推 **HEAD**，不推本地 `main` ref）。
 - commit message 格式：`feat(skill): upsert <skill_name> <version>`。
-- 如 push 失败（网络/凭证问题），记录错误并向用户汇报；自动 hook 在正式发布链路中应视为失败熔断，手动补触发场景可作为非阻断告警处理。
+- **push 后必须做远端回读断言**：`git ls-remote origin refs/heads/main` 得到的 SHA 必须等于 `git rev-parse HEAD`；不等即 FAIL，hook 以非 0 退出码熔断，流水线不得宣称同步成功。
+- 遇到 non-fast-forward：`git fetch origin main` → `git rebase origin/main`（或 merge）→ 重试 push 一次；仍失败则非 0 退出并报告「需人工介入」。
+- 日志需包含分支名、本地 HEAD SHA、远端 main SHA 与断言结论（PASS/FAIL）。
+- 如 push 失败（网络/凭证问题/断言 FAIL），记录错误并向用户汇报；自动 hook 在正式发布链路中应视为失败熔断，手动补触发场景可作为非阻断告警处理。
+- 调试开关 `SKIP_POST_FORGE_GIT_PUSH=1` 语义保持不变：显式跳过整个 hook 并以 0 退出。
 
 ## 约束条件与护栏
 
@@ -170,7 +182,8 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **权限申明**：所有涉及飞书操作的脚本必须设置 `include_secrets=true`。
 - **高权限通道**：涉及飞书文档、云盘与文件块写入时，优先复用 `feishu-doc-writing-guide` 的权限治理规则与系统自带 `lark` MCP。
 - **Git 同步强制触发**：每次 forge/upsert 完成后必须触发 Git push hook，确保 qi-skills 仓库与本地 `user_skills/` 保持同步。
-- **自举同频**：forge 自举（对 `skill-forge-pipeline-v4` 自身迭代）时同样需要触发 Git push。
+- **自举同频**：forge 自举（对 `skill-forge-pipeline-v4` 自身迭代）时同样需要触发 Git push，并同样接受远端 SHA 回读断言。
+- **反假成功铁律（No Fake Success）**：任何“同步/写入/发布”类副作用，都必须有**独立回读证据**（Git 走远端 SHA 比对，飞书走 RAW 回读）。只看命令退出码即宣称成功，视为 P1 缺陷。
 
 ## 合规默认值（Defaults）
 
@@ -185,6 +198,13 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 更新日志 (Changelog)
 
+- **V5.14**: 修复 Post-Forge Git Push Hook 的 P1 级「假成功」缺陷（幽灵资产）。
+  - `post_forge_git_push.sh` 由 `git push origin main` 改为 `git push origin HEAD:main`，不再依赖本地可能陈旧的 `main` ref（HEAD 处于 `aime/*` 特性分支时旧实现会推空、退出码仍为 0）。
+  - **新增 push 结果的远端回读断言**：push 后回读 `git ls-remote origin refs/heads/main` 并与 `git rev-parse HEAD` 比对，SHA 不一致即以非 0 退出码熔断并输出醒目错误，杜绝仅凭退出码判定成功。
+  - 新增 non-fast-forward 自愈：`fetch` → `rebase`（冲突回滚改 `merge`）→ 重试 push 一次；仍失败则非 0 退出并报告「需人工介入」。
+  - 新增结构化审计日志（分支名 / 本地 HEAD SHA / 远端 main SHA / PASS-FAIL 断言结论）；无新增变更时也不再提前 `exit 0`，仍执行 push 与断言。
+  - 新增 `POST_FORGE_DRY_RUN=1` 故障注入开关（跳过真实 push 但保留断言，用于验证失败链路），`SKIP_POST_FORGE_GIT_PUSH=1` 语义保持不变。
+  - Red Flags 新增「仅凭 `git push` 退出码判定成功 / 未做远端 SHA 比对」；Verification 新增第 8 条「push 后远端 main SHA 必须等于本地 HEAD SHA」。
 - **V5.13**: 正式写入 Git 自动归档 SOP 与自举约束。
   - 在 Archive 后新增「Git 自动归档」步骤，明确 hook 调用命令、GitHub 仓库、commit message 格式与失败汇报口径。
   - 在约束条件中固化每次 forge/upsert 后必须触发 Git push hook，且 `skill-forge-pipeline-v4` 自举迭代同样适用。

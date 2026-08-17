@@ -1,16 +1,16 @@
 {
-    "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
-    "name": "us-am-stats-sync",
-    "description": "将美区AM招商统计 Bitable 每日同步到统计电子表格；v2.2 修复 step3 辅助区落点扫描的保护区自伤 bug（扫描范围收敛为 O1:Z1），新增 assert_aux_column_within_capacity() 容量边界硬断言，并评估标注 O:Z 辅助区为 deprecated 候选",
-    "version": "2.2",
-    "doc_link": "https://bytedance.larkoffice.com/docx/TbqqdKX83oYwJbxCkxRcjdrQn4b",
+    "skill_id": "SKILL-FORGE-PIPELINE",
+    "name": "skill-forge-pipeline-v4",
+    "description": "创建、升级、打包、发布并归档 Aime 自制技能。V5.14 修复 Post-Forge Git Push Hook 假成功缺陷：改用 git push origin HEAD:main 并新增远端 main SHA 回读断言。",
+    "version": "5.14",
+    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-17",
-    "updated_at": "2026-08-17 13:21",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
-    "zip_name": "us-am-stats-sync.zip",
-    "drive_file_token": "SuBwbOupaotA0wxt2xfcX8ZFn56",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/SuBwbOupaotA0wxt2xfcX8ZFn56"
+    "updated_at": "2026-08-17 13:44",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
+    "zip_name": "skill-forge-pipeline-v4.zip",
+    "drive_file_token": "PCyabnm5qoL7inxuCtIceK6Xnmc",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/PCyabnm5qoL7inxuCtIceK6Xnmc"
 }

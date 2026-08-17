@@ -1,14 +1,14 @@
 # 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
 
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YTBjYzliZGVlNjNmODY1MDc3NWVmZWNiNTEwZGRiNTRfNjliZTY4MTk5NWQ0MWEwY2UwYTE4YzNkMDFmODg4ZjhfSUQ6NzY1MDM3NjQxMDAwNzYyMDg1MV8xNzg1NzE4ODk4OjE3ODU3MjI0OThfVjM" mime="application/zip" size="1191362" token="I2E1bAxLbo8CaZxsvLAc0UgvnTc"/></figure>
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODZiZGE4MTVkOWQ0ODA5MjkzZmRhMDc3Nzk5YzNjNjdfODRhNzg3NThjMWM0OGIyZTgxMDQzNGY2YmUyNTc5ZWJfSUQ6NzY1MDM3NjQxMDAwNzYyMDg1MV8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="1191362" token="I2E1bAxLbo8CaZxsvLAc0UgvnTc"/></figure>
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDY4NmEwMWEwYzc3NWNmOGEzMjNhMmM5ZjhmYTBmYmZfYzE0NzRlMGY1NmQ1ZDI0MWExNGFlZDFjZTk1Yjg5YjlfSUQ6NzY0MTY2ODk5MjUxNzI2MjI2Nl8xNzg1NzE4ODk4OjE3ODU3MjI0OThfVjM" mime="application/zip" size="2894261" token="Y5G2bPYojolKSXxeWo4cIOchnP4"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDBmYjRlZmE0MzZiZWNhZGUwZmU2NTkyMWM2MzNhMjBfMDQzOGIzNTZhYmFhZGJiMGIzMGI1MGQzMTU3ZDczODhfSUQ6NzY0MTY2ODk5MjUxNzI2MjI2Nl8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="2894261" token="Y5G2bPYojolKSXxeWo4cIOchnP4"/></figure>
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWU1YTQ2NDMxYWEwMjcxMmZmY2VkYzQzNzc1MmE1ZWRfN2FmMGQzNWEwZjM4ZWEwNmVjZDNmNmExYjBmM2ZhZThfSUQ6NzYzMzM4NTg3NDA3MzYxOTQwNF8xNzg1NzE4ODk4OjE3ODU3MjI0OThfVjM" mime="application/zip" size="2884412" token="PR9wbJKIsoD82UxOvMPcveyQnNb"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZjJmZThjYzExY2NkMTUyODgyYzgzZThkN2FmMWVmZTBfOTFlYjNhNzRkOTExYjM0OTZhZTExNTdiYWQyYWViZmJfSUQ6NzYzMzM4NTg3NDA3MzYxOTQwNF8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="2884412" token="PR9wbJKIsoD82UxOvMPcveyQnNb"/></figure>
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZGY3ODAxMWMxYzdiN2RjYTk2ZmZhYzkxNmI1ZDQ0MzVfMDdmMzkzNjUxZTE0YzQwMzYzMjY2ZDhkMDU4NGMxZDRfSUQ6NzYzMjY0MDY4NTIxMjAyNzgzNV8xNzg1NzE4ODk4OjE3ODU3MjI0OThfVjM" mime="application/zip" size="10765" token="LIaXbTYCaoiF8lxjkRFcUF1rn6v"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Njc0MGYzNzQ3MjFiNGMzNmY1OTllYjE0NzAzZmY3ODdfNzkxYjM0N2RkYWE5Y2RiMDFiNjI0MjAyMjg5MjY2OGZfSUQ6NzYzMjY0MDY4NTIxMjAyNzgzNV8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="10765" token="LIaXbTYCaoiF8lxjkRFcUF1rn6v"/></figure>
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NzAyNjM1NjgxZTUxMWZhZjhlZjIyNzhiYWJmMTIyYjZfMmRjM2RlODZmNDkwNDZkOGVkODExN2U2OWQ0ZDQ0ZTJfSUQ6NzYzMjYzOTgyODQ4NzkxNjQ4Ml8xNzg1NzE4ODk4OjE3ODU3MjI0OThfVjM" mime="application/zip" size="10453" token="UHDrbkr2rov5U1xt6d6caKi3n3c"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OTA0MzU4ZmI1MmZmNDRhMzQxMTA1ZWQ3YTY0Mzk4NWVfMzFkZTc0ZmI0MjdmNTBmNGMwYzcyYTJiYjVhMjVlYTBfSUQ6NzYzMjYzOTgyODQ4NzkxNjQ4Ml8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="10453" token="UHDrbkr2rov5U1xt6d6caKi3n3c"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -92,6 +92,8 @@
   
   ```
 
-<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MTZmMDE5MGM5YzE3Njc1MWZmOWMxNzBmMGExMjczN2VfMDYwYzIyMWJlZDQ3M2Q0MGJlOGU1NDU5MmYyZDc5N2JfSUQ6NzY2OTYwNDI5Mzg2Njk2NTk5NF8xNzg1NzE4OTA4OjE3ODU3MjI1MDhfVjM" mime="application/zip" size="11833238" token="Bi5XbVhjro9GR1xh7txcy1VNn9f"/></figure>
+<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NTgyZGNjZWU5NTU1MWQ1YzY3YmJlYzA0YTNjNjc2Y2ZfYzkzNDFiOTg5NGQyZjc4NmE3ODRjOWY0MzMyNjRhODZfSUQ6NzY2OTYwNDI5Mzg2Njk2NTk5NF8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="11833238" token="Bi5XbVhjro9GR1xh7txcy1VNn9f"/></figure>
 
-<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Yjk4MmU2OWY1ZGFiOTM3ZjczY2ZiNDRkY2Q2ZmYzNWZfOTk0MzYzZDRkMzdlZjNmZWIyNzk3NDJlNDA5MjA2NTdfSUQ6NzY2OTYwNDM4NTQ5MjEyNjk0Ml8xNzg1NzE4OTMwOjE3ODU3MjI1MzBfVjM" mime="application/zip" size="11833238" token="B4gCbJ8L1oHom6xxfKVcaj50nqf"/></figure>
+<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NGMzZTg2MmJmZTA5NjczNDMxZjlkMzViNWIwNjVlOWVfY2NiM2MyYTdiNjM0OWRkMjE3NzIxNzIwYzcwODBkZTBfSUQ6NzY2OTYwNDM4NTQ5MjEyNjk0Ml8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="11833238" token="B4gCbJ8L1oHom6xxfKVcaj50nqf"/></figure>
+
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWY4YzZjNzY0MTkwZWY5NGI2ZmFhNzBmMzgzN2MyZmVfMDZhMDI4M2EzY2MyZDRiYTQ0ODk0ODRmYzk2ZWNjMmVfSUQ6NzY3NDg3MjMzMjYzMjE4MTcyMF8xNzg2OTQ1NDY5OjE3ODY5NDkwNjlfVjM" mime="application/zip" size="2951668" token="PCyabnm5qoL7inxuCtIceK6Xnmc"/></figure>
