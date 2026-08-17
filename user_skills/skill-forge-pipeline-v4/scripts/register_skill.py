@@ -774,6 +774,76 @@ def ensure_skill_inventory_updated_at_formatter(row_number: int, expected_text: 
         )
 
 
+def _parse_block_id_from_attach_output(attach_output: str) -> str:
+    """Extract the freshly created file block id from `docs +media-insert` output."""
+
+    for match in re.finditer(r'"block_id"\s*:\s*"([^"]+)"', attach_output or ""):
+        return match.group(1)
+    return ""
+
+
+def move_block_to_doc_begin(doc_url: str, block_id: str) -> None:
+    """Relocate a top-level block to BLOCK_BEGIN (index 0, i.e. right below the title).
+
+    `lark-cli docs +media-insert` appends to the document end by default, which
+    silently breaks the pipeline contract "ZIP 文件块必须挂在标题正下方".
+    Anchoring `block_move_after` on the document root token moves the block to
+    index 0. Failure raises: no silent drift allowed.
+    """
+
+    document_id = parse_doc_token(doc_url)
+    run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+update",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--command",
+            "block_move_after",
+            "--block-id",
+            document_id,
+            "--src-block-ids",
+            block_id,
+        ],
+        "move zip file block to doc begin",
+    )
+
+
+def assert_zip_block_at_doc_begin(doc_url: str, block_id: str) -> None:
+    """Runtime gate: the first body block MUST be the newly attached file block."""
+
+    output = run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+fetch",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--doc-format",
+            "xml",
+            "--detail",
+            "with-ids",
+            "-q",
+            ".data.document.content",
+        ],
+        "verify zip file block position",
+    )
+    body = re.sub(r"^\s*<title\b[^>]*>.*?</title>", "", output.strip(), count=1, flags=re.S)
+    first_block = re.search(r'<(\w+)\s+id="([^"]+)"', body.strip())
+    if not first_block or first_block.group(2) != block_id:
+        actual = first_block.group(2) if first_block else "<none>"
+        raise RuntimeError(
+            "ZIP file block position verification FAILED: expected the first body block "
+            f"to be {block_id} (BLOCK_BEGIN, right below the title), got {actual}. "
+            "文件块回挂位置不符合契约，拒绝宣称发布成功。"
+        )
+
+
 def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
     result = subprocess.run(
         [
@@ -798,7 +868,24 @@ def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
             f"insert native file block via lark-cli failed with exit code {result.returncode}\n"
             f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         )
-    return result.stdout.strip()
+
+    attach_output = result.stdout.strip()
+
+    # `+media-insert` appends to the document END; relocate to BLOCK_BEGIN and verify.
+    block_id = _parse_block_id_from_attach_output(attach_output)
+    if not block_id:
+        raise RuntimeError(
+            "Unable to parse the new file block_id from lark-cli media-insert output; "
+            f"cannot guarantee BLOCK_BEGIN placement.\nSTDOUT:\n{attach_output}"
+        )
+
+    print(f"🚚 Relocating zip file block {block_id} to BLOCK_BEGIN (below title)...")
+    move_block_to_doc_begin(doc_url, block_id)
+    time.sleep(2)
+    assert_zip_block_at_doc_begin(doc_url, block_id)
+    print("✅ Zip file block verified at BLOCK_BEGIN (right below the doc title).")
+
+    return attach_output
 
 
 def download_doc_markdown(doc_url: str) -> Path:

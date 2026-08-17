@@ -1,5 +1,9 @@
 # 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
 
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWE0Yjg1OWM2NDg5OGIxOGJmY2JiMTM2NWY3ZjBkODZfMWQ3YWFlYjQyN2NjNTRmMDhkZjFjNWI1ZGQ0ZWI0MzBfSUQ6NzY3NDg3NTE2OTUyMTA5MzkyMl8xNzg2OTQ2MTI5OjE3ODY5NDk3MjlfVjM" mime="application/zip" size="2953585" token="T3nsb2CdzoeJfLxeXQ5c8qlonge"/></figure>
+
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWY4YzZjNzY0MTkwZWY5NGI2ZmFhNzBmMzgzN2MyZmVfMDZhMDI4M2EzY2MyZDRiYTQ0ODk0ODRmYzk2ZWNjMmVfSUQ6NzY3NDg3MjMzMjYzMjE4MTcyMF8xNzg2OTQ1NDY5OjE3ODY5NDkwNjlfVjM" mime="application/zip" size="2951668" token="PCyabnm5qoL7inxuCtIceK6Xnmc"/></figure>
+
 <figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODZiZGE4MTVkOWQ0ODA5MjkzZmRhMDc3Nzk5YzNjNjdfODRhNzg3NThjMWM0OGIyZTgxMDQzNGY2YmUyNTc5ZWJfSUQ6NzY1MDM3NjQxMDAwNzYyMDg1MV8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="1191362" token="I2E1bAxLbo8CaZxsvLAc0UgvnTc"/></figure>
 
 <figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDBmYjRlZmE0MzZiZWNhZGUwZmU2NTkyMWM2MzNhMjBfMDQzOGIzNTZhYmFhZGJiMGIzMGI1MGQzMTU3ZDczODhfSUQ6NzY0MTY2ODk5MjUxNzI2MjI2Nl8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="2894261" token="Y5G2bPYojolKSXxeWo4cIOchnP4"/></figure>
@@ -95,5 +99,3 @@
 <figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NTgyZGNjZWU5NTU1MWQ1YzY3YmJlYzA0YTNjNjc2Y2ZfYzkzNDFiOTg5NGQyZjc4NmE3ODRjOWY0MzMyNjRhODZfSUQ6NzY2OTYwNDI5Mzg2Njk2NTk5NF8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="11833238" token="Bi5XbVhjro9GR1xh7txcy1VNn9f"/></figure>
 
 <figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NGMzZTg2MmJmZTA5NjczNDMxZjlkMzViNWIwNjVlOWVfY2NiM2MyYTdiNjM0OWRkMjE3NzIxNzIwYzcwODBkZTBfSUQ6NzY2OTYwNDM4NTQ5MjEyNjk0Ml8xNzg2OTQ1NDY0OjE3ODY5NDkwNjRfVjM" mime="application/zip" size="11833238" token="B4gCbJ8L1oHom6xxfKVcaj50nqf"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWY4YzZjNzY0MTkwZWY5NGI2ZmFhNzBmMzgzN2MyZmVfMDZhMDI4M2EzY2MyZDRiYTQ0ODk0ODRmYzk2ZWNjMmVfSUQ6NzY3NDg3MjMzMjYzMjE4MTcyMF8xNzg2OTQ1NDY5OjE3ODY5NDkwNjlfVjM" mime="application/zip" size="2951668" token="PCyabnm5qoL7inxuCtIceK6Xnmc"/></figure>

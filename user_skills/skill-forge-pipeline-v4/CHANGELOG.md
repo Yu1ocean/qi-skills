@@ -10,6 +10,8 @@
 - 新增 `POST_FORGE_DRY_RUN=1` 故障注入开关（跳过真实 push、保留断言）；`SKIP_POST_FORGE_GIT_PUSH=1` 调试语义保持不变。
 - `SKILL.md` 同步升级至 V5.14：Red Flags 新增「仅凭 git push 退出码判定成功 / 未做远端 SHA 比对」，Verification 新增第 8 条远端 SHA 断言，Post-Forge Git Push Hook 与 Git 自动归档章节写明 `HEAD:main` 语义。
 - 真机验证：①「HEAD 在特性分支 + 本地 main 落后」场景 → HEAD 正确推到远端 main，assert PASS；②`POST_FORGE_DRY_RUN=1` 故障注入 → assert FAIL 且退出码 1；③ non-fast-forward 场景 → rebase 后重试成功，assert PASS。
+- **附带修复（同版本）**：ZIP 文件块回挂位置漂移。`register_skill.py` 的 `attach_zip_to_doc_via_mcp` 原先只调用 `lark-cli docs +media-insert`，而该命令默认**追加到文档末尾**，使 ZIP 挂在文档尾部而非「标题正下方」，属于同一类「命令成功但契约未达成」的假成功。新增 `_parse_block_id_from_attach_output()` / `move_block_to_doc_begin()`（`block_move_after`，anchor = 文档 root token）/ `assert_zip_block_at_doc_begin()`（回读文档 XML 断言首个正文块 id），不符即 `raise` 熔断。
+- 台账去重：将历史遗留的重复行（`SKL-2604-013`，v5.5）提升为唯一权威行并写入 `SKILL-FORGE-PIPELINE` / 5.14，清空本次新增的重复行，RAW 回读核对通过。
 
 ## v5.13 (2026-07-30)
 - 正式将 Git 自动归档写入 `SKILL.md` 的 Archive 后置 SOP：明确调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`、目标仓库 `https://github.com/Yu1ocean/qi-skills`、commit message 格式与失败汇报口径。

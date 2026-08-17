@@ -29,6 +29,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 输出中出现“应该/大概/可能/我猜/先跳过”，但没有可验证的 RAW 回读证据。
 - **仅凭 `git push` 的退出码判定成功**，没有回读远端 `refs/heads/main` 的 SHA 与本地 HEAD 做比对。
 - Post-Forge Git Push 仍在执行 `git push origin main`（依赖本地可能陈旧的 `main` ref），而非 `git push origin HEAD:main`。
+- ZIP 文件块只调用了 `lark-cli docs +media-insert`（默认追加到文档末尾）就宣称「已挂到标题下方」，没有 `block_move_after` 归位 + 首块回读断言。
 
 ## Verification（强制验收清单）
 
@@ -42,6 +43,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
 8. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
+9. **文件块位置断言验收**：ZIP 原生 File Block 必须位于说明文档**第一个正文块**（BLOCK_BEGIN，标题正下方）。`register_skill.py` 在 `+media-insert` 之后必须执行 `block_move_after`（anchor = 文档 root token）归位，并回读文档 XML 断言首个正文块 id == 新建文件块 id；不一致立刻 `raise` 熔断。
 
 ## 适用场景
 
@@ -148,6 +150,7 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **Zip 打包**：在最后阶段强制运行 `scripts/register_skill.py`，传入 `--skill-dir`，将目标技能目录（如 `user_skills/xxx/`）打包为同级 `.zip` 文件。
 - **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并通过 `feishu-doc-writing-guide` 的 MCP / personal-space 修复链路为 `yuqinan@bytedance.com` 恢复可管理访问权；严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API。
 - **文档挂载**：`scripts/register_skill.py` 必须调用 `inner_skills/lark/mcp_lark_update_lark_doc.py`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式插入到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。
+  - **位置归位与断言（V5.14 新增）**：实际链路使用 `lark-cli docs +media-insert`，其默认行为是**追加到文档末尾**，会静默违反「标题正下方」契约。因此插入后必须：① 从输出解析新文件块 `block_id`；② 执行 `lark-cli docs +update --command block_move_after --block-id <文档 root token> --src-block-ids <block_id>` 将其移到 index 0；③ 回读文档 XML，断言首个正文块 id 等于该 `block_id`，否则 `raise` 熔断。
 - **Wiki Mount Phase**：在 ZIP 原生文件块回挂完成后、`metadata.json` 落盘前，必须调用飞书 Wiki MCP 挂载链路（如 `mcp_lark_move_lark_doc.py`），将说明文档迁入「Aime 技能库」根节点或 `--wiki-node-token` 指定节点。该步骤属于发布成功的强契约；一旦迁移失败，必须立刻熔断，禁止继续 metadata 落盘、归档写台账或宣称发布完成。
 - **元数据打包**：收集并打包新技能或更新技能的元数据（技能编号、名称、功能描述、技能说明文档链接、技能目录路径、zip 路径、飞书云盘文件链接、Wiki 链接、Wiki 节点 token、创建/更新日期）。
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
@@ -205,6 +208,8 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
   - 新增结构化审计日志（分支名 / 本地 HEAD SHA / 远端 main SHA / PASS-FAIL 断言结论）；无新增变更时也不再提前 `exit 0`，仍执行 push 与断言。
   - 新增 `POST_FORGE_DRY_RUN=1` 故障注入开关（跳过真实 push 但保留断言，用于验证失败链路），`SKIP_POST_FORGE_GIT_PUSH=1` 语义保持不变。
   - Red Flags 新增「仅凭 `git push` 退出码判定成功 / 未做远端 SHA 比对」；Verification 新增第 8 条「push 后远端 main SHA 必须等于本地 HEAD SHA」。
+  - **附带修复**：ZIP 文件块回挂位置漂移。`register_skill.py` 的 `attach_zip_to_doc_via_mcp` 原先只调 `lark-cli docs +media-insert`（默认追加到文档末尾），导致 ZIP 挂在文档尾部而非标题下方；现新增 `move_block_to_doc_begin()`（`block_move_after` anchor = 文档 root token）与 `assert_zip_block_at_doc_begin()` 运行时断言，位置不符即 `raise`。
+  - Red Flags / Verification 同步新增「文件块位置断言」条款（Verification 第 9 条）。
 - **V5.13**: 正式写入 Git 自动归档 SOP 与自举约束。
   - 在 Archive 后新增「Git 自动归档」步骤，明确 hook 调用命令、GitHub 仓库、commit message 格式与失败汇报口径。
   - 在约束条件中固化每次 forge/upsert 后必须触发 Git push hook，且 `skill-forge-pipeline-v4` 自举迭代同样适用。
