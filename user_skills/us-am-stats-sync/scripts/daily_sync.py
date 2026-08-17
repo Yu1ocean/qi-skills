@@ -37,6 +37,22 @@ from sync_bitable_to_sheet import (  # noqa: E402
 )
 
 SUMMARY_SHEET_ID = "2unp6l"
+DETAIL_SHEET_NAME = "明细"
+SUMMARY_SHEET_NAME = "US行业统计"
+# 唯一允许写入的汇总单元格公式：取明细表最新 sync_date（文本日期，禁用 MAX）
+N2_UPDATE_DATE_FORMULA = "=INDEX('明细'!J:J,COUNTA('明细'!J:J))"
+
+
+def assert_n2_formula_safe(formula: str) -> str:
+    """副作用前硬熔断：N2 公式禁止使用 MAX( 或引用 sheet_id VM2reD!。"""
+    upper = formula.upper()
+    if "MAX(" in upper:
+        raise RuntimeError(f"N2 formula guard failed: MAX( is forbidden (text date column): {formula!r}")
+    if "VM2reD!" in formula or "VM2RED!" in upper:
+        raise RuntimeError(f"N2 formula guard failed: must reference sheet_name '明细', not sheet_id: {formula!r}")
+    if "INDEX(" not in upper or "COUNTA(" not in upper:
+        raise RuntimeError(f"N2 formula guard failed: expected INDEX+COUNTA anchor formula: {formula!r}")
+    return formula
 SUMMARY_READ_RANGE = "A1:K14"
 FORMULA_CHECK_RANGE = "B2"
 
@@ -98,7 +114,14 @@ def _build_formula_cells() -> List[List[Dict[str, str]]]:
             if row == 9:
                 row_cells.append({"formula": f"=SUM({summary_col}2:{summary_col}8)"})
             else:
-                row_cells.append({"formula": f"=SUMIF(明细!A:A,A{row},明细!{detail_col}:{detail_col})"})
+                row_cells.append(
+                    {
+                        "formula": (
+                            f"=SUMIFS('明细'!{detail_col}:{detail_col},"
+                            f"'明细'!$A:$A,$A{row},'明细'!$J:$J,$N$2)"
+                        )
+                    }
+                )
         cells.append(row_cells)
     return cells
 
@@ -140,7 +163,9 @@ def _write_summary_update_date_formula() -> Dict[str, Any]:
             "--cells",
             "-",
         ],
-        stdin_text=json.dumps([[{"formula": "=MAX(VM2reD!J:J)"}]], ensure_ascii=False),
+        stdin_text=json.dumps(
+            [[{"formula": assert_n2_formula_safe(N2_UPDATE_DATE_FORMULA)}]], ensure_ascii=False
+        ),
     )
 
 
@@ -193,7 +218,8 @@ def step2_update_formulas() -> Dict[str, Any]:
     time.sleep(2)
 
     n2_formula = _read_n2_formula()
-    if "MAX" not in n2_formula.upper():
+    upper_n2 = n2_formula.upper()
+    if "INDEX(" not in upper_n2 or "COUNTA(" not in upper_n2 or "MAX(" in upper_n2 or "VM2RED!" in upper_n2:
         raise RuntimeError(f"N2 formula verification failed: {n2_formula!r}")
 
     after = _read_summary_snapshot()

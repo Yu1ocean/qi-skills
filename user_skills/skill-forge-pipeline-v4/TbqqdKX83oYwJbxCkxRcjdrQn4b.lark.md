@@ -22,4 +22,6 @@
 - 用户输入：同步 US AM 招商统计到 Sheet
 - 标准输出：JSON 审计日志 + RAW 回捞结果
 
-<figure view-type="Card"><source name="us-am-stats-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OGYxMjlkYmM0OWQxNGJhOWQxYTcwOTJiYzEwYjdlYmNfYTFkZDA5OGIwMTEzYzlhNjEwYWI3ZWRkODBlY2NjNjVfSUQ6NzY3MzcxOTI0MjcxOTg5MDQwMF8xNzg2Njc2OTk0OjE3ODY2ODA1OTRfVjM" mime="application/zip" size="36078" token="RtKrbTB5IoNeYBxLoLRcbzHtn9d"/></figure>
+<figure view-type="Card"><source name="us-am-stats-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NDE5OTQ0ODY0Y2MxN2Q0NGJjNGI2ZmIzYzY2MzM4M2RfMDcxOWEyYzRlMmY1NjI3YzU1NDU2YjM1MjMzYWY4MmVfSUQ6NzY3MzcxOTI0MjcxOTg5MDQwMF8xNzg2OTMwNjg0OjE3ODY5MzQyODRfVjM" mime="application/zip" size="36078" token="RtKrbTB5IoNeYBxLoLRcbzHtn9d"/></figure>
+
+<figure view-type="Card"><source name="us-am-stats-sync.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODhmNTQyOWI0MTY2ZWM4ODM3NzMxNzM4NjY5MDI3ZjRfYjkzNDJmY2ExZDUzNTYyOWFkNTQwNWQ0Zjk0MGYzOTBfSUQ6NzY3NDgwODg0NDk3OTYwNDQyOF8xNzg2OTMwNjg3OjE3ODY5MzQyODdfVjM" mime="application/zip" size="44197" token="P1dcbvwwLokDa8xNW47cl4YFnKI"/></figure>
