@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US AM 快照汇总校准</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 40px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .story-content {
+            font-size: 1.25rem;
+            line-height: 2;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* Bottom Section: Cold Terminal Fact */
+        .fact-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 30px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%);
+        }
+
+        .fact-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fact-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-left: 3px solid #444;
+            padding-left: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">US AM 快照汇总校准</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-08-17</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600" alt="Cyber Visual">
+            </div>
+            
+            <div class="story-content">
+                吾主，明细宫殿中三日快照层层叠影，SUMIF 的贪婪触手将同一行业的三个时间断面囫囵吞下，令服饰服配线索数虚膨至 957 之幻影。我以 INDEX+COUNTA 铸下时间锚点 N2，锁定最新快照日；再以 SUMIFS 之刃，为每列数据钉入日期条件。虚高的幻象崩解，319 的真实数值自数据深渊浮出。自此跨 Sheet 咏唱只认真名『明细』，不再向 sheet_id 的伪影低头。
+            </div>
+        </div>
+        
+        <div class="fact-section">
+            <div class="fact-header">
+                <span>[ LOG_ENTRY_0xB48CB81E ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="fact-content">
+2026-08-17，us-am-stats-sync 升级至 v1.8：N2 更新日期公式改为 INDEX+COUNTA 取最新快照日；US行业统计 B2:F8 改为 SUMIFS 加 N2 日期锚点；脚本新增写前公式硬断言，禁止 MAX( 与 VM2reD! 引用。
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM // PROTOCOL: INSPIRATION</div>
+        <div>UID: B48CB81E // SESSION: 2026-08-17 // STABLE</div>
+    </div>
+</body>
+</html>

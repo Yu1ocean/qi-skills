@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.11 · 2026-08-17
+- **发布链路数据文件补齐**：`publish_dashboard_prod.py` 新增 `--source-json / --target-json`（默认 `output/travel_dashboard.prod.json` → `published/travel-dashboard-live/travel_dashboard.prod.json`），确保每次发布时数据文件与 `index.html` 同批同步，彻底消灭“新壳旧数据”。
+- **read-after-write 物理探针**：拷贝完成后调用 `assert_json_synced()` 回读已发布 JSON 的 `generated_at` 与本地比对，源 JSON 缺失、结构漂移或版本不一致均直接熔断（`[DATA_VERSION_MISMATCH]`）。
+- **发布后版本一致性断言**：`build_and_publish_daily.py` 末尾新增 `assert_generated_at_consistency()`，强制断言线上 / 已发布 `generated_at == 本地 generated_at`；不一致输出 `[DATA_VERSION_MISMATCH]` 并非零退出。
+- **可选线上回捞**：新增 `--verify-url`，可 HTTP 拉取真实线上 `travel_dashboard.prod.json` 做远端断言，拉取失败或缺字段输出 `[DATA_VERSION_ASSERT_FAILED]` 并熔断。
+- **审计可视化**：发布成功输出 `data_version_check` 结构化结果（local / published / remote generated_at + 文件路径）。
+
 ## V3.10 · 2026-08-14
 - **快照基线自动回溯**：新增 `find_baseline_snapshot()`，`daily_new_alerts` 不再只认严格昨日快照；当 T-1 缺失时，最多向前 14 天寻找最近可用历史快照。
 - **文案分支修复**：完全无历史快照时才展示“首次运行，暂无历史对比”；有历史但昨日缺失时，新增 / 无新增文案会追加“（基线为 YYYY-MM-DD，非昨日）”。

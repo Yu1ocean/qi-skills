@@ -1,10 +1,10 @@
 # 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）
 
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZDljNTlkNzc4NzFlNTY2NWMxMDgzYTlhZTBmYzkzNDRfNjEzMTVhNWZjYmMzMTkwNTBkMDU3N2IyYzE2ODhmYTFfSUQ6NzY0ODgzNTIwNjQ1NTEwMjcwN18xNzg2MDYxMTkwOjE3ODYwNjQ3OTBfVjM" mime="application/zip" size="415575" token="HkuObInS7o0sK7xp9b1ccp8Nnud"/></figure>
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODE4NWVjOWFmZTI5Y2EwZWRiODlmODhmMTBhN2EyNzFfOGNjMWJiOWVjMTQ3N2RlNmNlYmNmOTllNjNiMGVhODZfSUQ6NzY0ODgzNTIwNjQ1NTEwMjcwN18xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="415575" token="HkuObInS7o0sK7xp9b1ccp8Nnud"/></figure>
 
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZjE0ZWI4ZDdkYzM2OTkzZGVkMmJlYTAzYjRjODhiNTVfY2E5MTcwMWEzYjBhMWMwODFjNWM0NmFmMTU4YWE1Y2JfSUQ6NzY0ODE0MDU5MDI4MjExNjMxN18xNzg2MDYxMTkwOjE3ODYwNjQ3OTBfVjM" mime="application/zip" size="64472" token="Sh2sblmkgoTQOWxOOEbcaMSFnBg"/></figure>
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MzcxMGY5ZGFhYWZmNjM0Mzc4OGVhZWEyMWZjZThjYmFfNmIzZDY3YWFjNjM5OTUwNjVjMjA5MjMwYjE0OGVkMWFfSUQ6NzY0ODE0MDU5MDI4MjExNjMxN18xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="64472" token="Sh2sblmkgoTQOWxOOEbcaMSFnBg"/></figure>
 
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MTdlZjA0N2NjNzZkOTQ4MzQ2ZmJkOWQ4MDkxNTUwODJfMTBkNjczZGYzNGI4MDVlOTNjMzRlYzE2MWUwZmExNGRfSUQ6NzY0ODEzMzI5Nzg2ODA4MjM2NF8xNzg2MDYxMTkwOjE3ODYwNjQ3OTBfVjM" mime="application/zip" size="36668" token="XJ5ybWfEYoOoaZxDNYNcTbxDnrf"/></figure>
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZGFkMjVlYmQ0NmEzY2RhZGJlM2NjYjM2ODJlMzgyNWVfMDdjMjI2NDU1OWE0NDNkMDdmMjNkYTkyMmQ2MmVlODZfSUQ6NzY0ODEzMzI5Nzg2ODA4MjM2NF8xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="36668" token="XJ5ybWfEYoOoaZxDNYNcTbxDnrf"/></figure>
 
 ## 📌 技能简介
 
@@ -66,4 +66,12 @@
 - 规则文档：`references/mail-extraction-rules.md`
 - 输出契约：`references/dashboard-output-contract.md`
 
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MWNjNjFlN2VhMTM3Y2FjOTA3N2M0ZWY4ZDc4MmZhODBfMDg1YmU3ZThlNjQyNGY2YmYxNDI5YjVhYTdkZGI2ZGNfSUQ6NzY3MTA3NDQwMTQyODgwMjUyNF8xNzg2MDYxMTk0OjE3ODYwNjQ3OTRfVjM" mime="application/zip" size="2146379" token="X4MfbzYjdohNjcx3LL1cplEZn6c"/></figure>
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NjJlOGVhNjc5ODMyZTE3MWEzNzlhNWZmOGM5NzRkZmRfYTMxY2VkZTk3NGNhZWQ3ZjkyZmVjZWM3OTlhNzI2YjFfSUQ6NzY3MTA3NDQwMTQyODgwMjUyNF8xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="2146379" token="X4MfbzYjdohNjcx3LL1cplEZn6c"/></figure>
+
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MWU3ZDI3MTdlMjJiMWZmNTJlNThkYTBjODgzZjUzMmZfMGJlOGQzNGI2YjUzNTkzZWQ2OGE5ZDczZWMxNDBjZDlfSUQ6NzY3MzAwNzk4MzI2MDk2MTk3MV8xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="2280460" token="Aad7boPZloe0SMx1REzcApNunYI"/></figure>
+
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZGI3YmRiNTVjMmMyM2Y1MmJhMmE4ZDRhMmQ0MzIwYWNfNWYzZDdhNGFjNmUxMzZjYzQ1YmVmZGY2OGY2NmEwYmVfSUQ6NzY3MzAxNDk1MzI0NjkxOTg5MV8xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="2280460" token="ACK1bxWYto2NZvxPCoOcBY0CnBb"/></figure>
+
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Yzk1ZWI1MWZmN2YwNDA1YjM4NmEyNDNkNmY3NTRiODdfODYzM2ViMzI1ZGFjZjBkNjk0MjRkMDEyODkwYjc0YzhfSUQ6NzY3MzY4NTUwMTQxMjYwOTIzNF8xNzg2OTM2ODI4OjE3ODY5NDA0MjhfVjM" mime="application/zip" size="2339076" token="FUCZb9rM9omxGAxAxn2cOZQanQd"/></figure>
+
+<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OTExOGYzNDBhMzRkZjM5ZTE1MjQwNzlhZmZiMGYzZmRfMDJmNzAzMGE4OGNjMjZlNTNmNGU4MjM0MmJiZTA3NjRfSUQ6NzY3NDgzNTIzODY5MDIxMzE0M18xNzg2OTM2ODMyOjE3ODY5NDA0MzJfVjM" mime="application/zip" size="2359349" token="BJ2gbcC1bomI1AxhFtRc9xC3nrb"/></figure>

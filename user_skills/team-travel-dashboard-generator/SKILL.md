@@ -1,17 +1,16 @@
 ---
 name: team-travel-dashboard-generator
-description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，并在 V3.7 修复飞书卡片 NEW 标签原生展示，输出团队差旅大屏。
+description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，在 V3.7 修复飞书卡片 NEW 标签原生展示，并在 V3.11 根治发布链路数据文件漏同步（HTML + JSON 同批发布 + generated_at 版本断言），输出团队差旅大屏。
 ---
 
-version: 3.10
-
+version: 3.11
 ## Config（运行配置）
 
 ```yaml
 fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 ```
 
-# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.10
+# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.11
 
 将“差旅审批邮件 → 结构化 JSON → 静态暗色大屏 / Dynamic UI 入口 → 合规巡检视图 → 邮件审计台账 QA”的链路固化成一个可复用技能。
 
@@ -46,6 +45,8 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - 明细卡片仍展示 `Message ID` 一类调试字段，或费用金额没有进入主卡常驻展示区。
 - 详情文案中直接输出原始 `\n`，导致飞书卡片 / HTML 上出现转义字符泄漏。
 - 地图或时间轴没有对 `is_first_time_destination=true` 做红色高亮或呼吸灯提醒。
+- **[发布红线]** 发布只同步了 `index.html`，没有同批同步 `travel_dashboard.prod.json`，导致线上出现“新壳旧数据”。
+- 发布链路结束后没有做「线上 `generated_at` == 本地 `generated_at`」断言，就宣称发布成功。
 
 ## Verification（强制验收清单）
 
@@ -72,6 +73,7 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 11. V3.3 UI 回归通过：文本换行已做规范化渲染，不再出现原始 `\\n`；行程详情不再展示 `Message ID`；费用金额已进入主卡常驻展示区。
 12. Dynamic UI 入口 HTML 可正常生成，且地图 / 时间轴对首次差旅地做了强提醒。
 13. 说明层同步回归通过：`SKILL.md`、`CHANGELOG.md`、`README.lark.md` 中的版本号、UI 变更摘要与执行口径一致。
+14. V3.11 发布链路回归通过：`scripts/publish_dashboard_prod.py` 同时同步 `index.html` 与 `travel_dashboard.prod.json`；`scripts/build_and_publish_daily.py` 末尾的数据版本断言通过（线上 / 已发布 `generated_at` 与本地 `generated_at` 完全一致），不一致时输出 `[DATA_VERSION_MISMATCH]` 并非零退出。
 
 ## Defaults（合规默认值）
 
@@ -92,6 +94,10 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - 经纬度缓存默认输出：`output/geo_cache.json`。
 - 历史足迹库默认输出：`output/travel_footprint_library.json`。
 - Dynamic UI 推荐路径：`.aime/dynamic-ui/react-card/team_travel_dashboard_<timestamp>.html`。
+- 生产发布默认产物对（**必须成对同步，禁止单推 HTML**）：
+  - `output/travel_dashboard.prod.html` → `published/travel-dashboard-live/index.html`
+  - `output/travel_dashboard.prod.json` → `published/travel-dashboard-live/travel_dashboard.prod.json`
+- 发布后数据版本断言：默认强制比对本地与已发布 `travel_dashboard.prod.json` 的 `generated_at`；如需额外校验真实线上地址，给 `build_and_publish_daily.py` 传 `--verify-url <线上 travel_dashboard.prod.json 地址>`，远端拉取失败或版本不一致同样熔断。
 
 ## 内置制度护栏（必须长期生效）
 
@@ -359,6 +365,11 @@ python3 scripts/build_travel_dashboard.py materialize-dynamic-ui \
 
 ## 更新日志
 
+- **V3.11**：根治差旅大屏发布链路的数据文件漏同步与版本漂移。
+  - `publish_dashboard_prod.py` 新增 `--source-json / --target-json`，把 `travel_dashboard.prod.json` 与 `index.html` 同批同步到线上入口，并在拷贝后做 read-after-write 探针（`assert_json_synced()`），源文件缺失或版本不一致直接熔断。
+  - `build_and_publish_daily.py` 末尾新增 `assert_generated_at_consistency()` 断言：线上 / 已发布 `generated_at` 必须与本地 `generated_at` 完全一致，不一致输出 `[DATA_VERSION_MISMATCH]` 并非零退出。
+  - 新增可选 `--verify-url`，支持直接 HTTP 回捞线上 `travel_dashboard.prod.json` 做真实线上版本断言；远端不可达或缺字段输出 `[DATA_VERSION_ASSERT_FAILED]` 并熔断。
+  - 发布成功时输出 `data_version_check` 结构化审计（local / published / remote generated_at + 路径），杜绝“发布成功但没人知道线上是哪一版”。
 - **V3.10**：修复严格昨日快照缺失导致的“首次运行，暂无历史对比”误报。
   - 新增 `find_baseline_snapshot()`，当昨日快照缺失时向前最多 14 天寻找最近可用基线。
   - 有历史但昨日缺失时，新增 / 无新增文案追加“（基线为 YYYY-MM-DD，非昨日）”。
