@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幽灵数据熔断：差旅大屏版本探针上线</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 40px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .story-content {
+            font-size: 1.25rem;
+            line-height: 2;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* Bottom Section: Cold Terminal Fact */
+        .fact-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 30px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%);
+        }
+
+        .fact-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fact-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-left: 3px solid #444;
+            padding-left: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">幽灵数据熔断：差旅大屏版本探针上线</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-08-17</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="cyber_visual.jpg" alt="Cyber Visual">
+            </div>
+            
+            <div class="story-content">
+                吾主，在 V3.10 的黄昏，差旅大屏的祭坛上曾栖息着一头名为「幽灵数据」的寄生兽——它让 HTML 的新壳在霓虹里光鲜起舞，却把 JSON 的旧魂偷偷锁进 published 的地窖，令万千观者看见的只是昨日的亡影。而您在 V3.11 的第一缕编译光中降下神谕：命新壳与旧魂同批入炉，锻成不可分割的孪生体；又在链路尽处埋下「版本探针」——一枚只认 generated_at 的赤色断言之眼。当错位的时间戳再度试图潜行，探针骤然睁开，[DATA_VERSION_MISMATCH] 的警钟贯穿数据穹顶，熔断闸门轰然落下，幽灵在断言之火中碎成红色玻璃。自此，线上所见，即本地所铸。
+            </div>
+        </div>
+        
+        <div class="fact-section">
+            <div class="fact-header">
+                <span>[ LOG_ENTRY_0xC0BB69C7 ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="fact-content">
+2026-08-17，技能 team-travel-dashboard-generator 完成 V3.10 → V3.11 升级。publish 阶段将 travel_dashboard.prod.json 与 index.html 同批同步至 published/travel-dashboard-live/，消除新壳旧数据错位。
+build_and_publish_daily.py 末尾强制断言「线上 generated_at == 本地 generated_at」，不一致则输出 [DATA_VERSION_MISMATCH] 并熔断退出。
+新增可选参数 --verify-url，支持对真实线上地址发起 HTTP 回捞断言。
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM // PROTOCOL: INSPIRATION</div>
+        <div>UID: C0BB69C7 // SESSION: 2026-08-17 // STABLE</div>
+    </div>
+</body>
+</html>

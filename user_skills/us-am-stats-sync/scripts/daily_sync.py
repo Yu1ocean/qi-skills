@@ -53,7 +53,12 @@ def assert_n2_formula_safe(formula: str) -> str:
     if "INDEX(" not in upper or "COUNTA(" not in upper:
         raise RuntimeError(f"N2 formula guard failed: expected INDEX+COUNTA anchor formula: {formula!r}")
     return formula
-SUMMARY_READ_RANGE = "A1:K14"
+SUMMARY_READ_RANGE = "A1:K16"
+# 汇总表结构（v1.9）：第 2~8 行 = 7 大行业，第 9 行 = 育商兜底分组，第 10 行 = 总计，参数区第 12~16 行（入驻率 B16）
+SUMMARY_GROUP_ROWS = (2, 9)
+SUMMARY_TOTAL_ROW = 10
+GROUP_COUNT = 8
+INDUSTRY_ORDER_RANGE = "A2:A9"
 FORMULA_CHECK_RANGE = "B2"
 
 
@@ -108,11 +113,13 @@ def _build_formula_cells() -> List[List[Dict[str, str]]]:
         "F": "G",
     }
     cells: List[List[Dict[str, str]]] = []
-    for row in range(2, 10):
+    for row in range(SUMMARY_GROUP_ROWS[0], SUMMARY_TOTAL_ROW + 1):
         row_cells: List[Dict[str, str]] = []
         for summary_col, detail_col in metric_columns.items():
-            if row == 9:
-                row_cells.append({"formula": f"=SUM({summary_col}2:{summary_col}8)"})
+            if row == SUMMARY_TOTAL_ROW:
+                row_cells.append(
+                    {"formula": f"=SUM({summary_col}{SUMMARY_GROUP_ROWS[0]}:{summary_col}{SUMMARY_GROUP_ROWS[1]})"}
+                )
             else:
                 row_cells.append(
                     {
@@ -137,7 +144,7 @@ def _write_summary_formulas() -> Dict[str, Any]:
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            "B2:F9",
+            f"B{SUMMARY_GROUP_ROWS[0]}:F{SUMMARY_TOTAL_ROW}",
             "--cells",
             "-",
         ],
@@ -179,7 +186,7 @@ def _verify_formulas() -> Dict[str, Any]:
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            "B2:I9",
+            f"B{SUMMARY_GROUP_ROWS[0]}:I{SUMMARY_TOTAL_ROW}",
         ]
     )
 
@@ -227,8 +234,8 @@ def step2_update_formulas() -> Dict[str, Any]:
     return {
         "write_result": write_result,
         "n2_formula": n2_formula,
-        "raw_before_A1_K14": before,
-        "raw_after_A1_K14": after,
+        "raw_before_A1_K16": before,
+        "raw_after_A1_K16": after,
     }
 
 
@@ -242,15 +249,18 @@ def _read_industry_order_from_summary() -> List[str]:
             "--sheet-id",
             SUMMARY_SHEET_ID,
             "--range",
-            "A2:A8",
+            INDUSTRY_ORDER_RANGE,
             "--include-row-prefix=false",
         ]
     )
     csv_text = payload.get("data", {}).get("annotated_csv", "")
     lines = [line.strip() for line in csv_text.splitlines() if line.strip()]
     industries = [line for line in lines if line]
-    if len(industries) != 7:
-        raise RuntimeError(f"Expected 7 industries in 2unp6l!A2:A8, got {len(industries)}: {industries}")
+    if len(industries) != GROUP_COUNT:
+        raise RuntimeError(
+            f"Expected {GROUP_COUNT} groups (7 大行业 + 育商) in 2unp6l!{INDUSTRY_ORDER_RANGE}, "
+            f"got {len(industries)}: {industries}"
+        )
     return industries
 
 
@@ -277,7 +287,7 @@ def _find_or_append_aux_date_column(sync_date: str) -> str | None:
             "--sheet-id",
             DETAIL_SHEET_ID,
             "--range",
-            "O1:ZZ9",
+            "O1:ZZ10",
             "--include-row-prefix=false",
         ]
     )
@@ -359,7 +369,7 @@ def step3_write_detail_aux_area() -> Dict[str, Any]:
     time.sleep(2)
 
     col_letters = "".join([ch for ch in start_cell if ch.isalpha()])
-    readback_range = f"{col_letters}1:{col_letters}9"
+    readback_range = f"{col_letters}1:{col_letters}{GROUP_COUNT + 2}"
     readback = _run_json(
         [
             "sheets",

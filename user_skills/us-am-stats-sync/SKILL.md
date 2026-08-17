@@ -1,8 +1,8 @@
 ---
 name: us-am-stats-sync
 skill_id: 56a9d7b0-953b-4ee2-81af-7a86fd7a8f29
-version: 1.8
-description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIF 公式化改造、趋势计算与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
+version: 1.9
+description: 将「美区AM招商统计」飞书多维表格每日同步到统计电子表格，支持分页拉取 Bitable、US行业英文转中文、明细表按日期追加写入、每日 Bitable 原始快照落盘、更新日期落列、US行业统计表 SUMIFS 公式化改造（含「育商」兜底分组）、趋势计算与写后 RAW/公式校验。适用于用户要求同步 US AM 招商统计、刷新 VM2reD 明细、更新 2unp6l 汇总看板或配置每日 19:00 定时同步时使用。
 author: yuqinan
 ---
 
@@ -26,7 +26,9 @@ author: yuqinan
 - 上游 Schema 发生漂移但脚本没有输出 `schema_drift` 结构化告警日志。
 - 目标 Sheet token 或 worksheet id 不等于本技能合规默认值，且用户未明确指定调试目标。
 - 明细写入使用清空、全量覆盖、覆盖历史行等破坏性模式，而不是按 `sync_date` 表尾追加。
-- 写入后未完成 `VM2reD!A1:J3` RAW 回捞，或 `2unp6l!B2:I9` 公式校验不是 success。
+- 写入后未完成 `VM2reD!A1:J3` RAW 回捞，或 `2unp6l!B2:I10` 公式校验不是 success。
+- 明细 `US行业` 列出现空值、空字符串或字面量 `"NULL"`（应统一映射为「育商」）即判定为故障，必须熔断。
+- 汇总总计行公式仍为 `=SUM(B2:B8)`（未覆盖第 9 行育商分组）即判定为故障，必须改为 `=SUM(B2:B9)` 且总计行位于第 10 行。
 - `US行业统计!B2` 写后不包含 `SUMIFS` 公式，或命中不带日期条件的整列 `SUMIF(`（跨日快照累加，指标虚高）即判定为故障。
 - `US行业统计!N2` 公式中出现 `MAX(` 或 `VM2reD!`（sheet_id）即判定为故障，必须改回 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`。
 
@@ -42,15 +44,20 @@ author: yuqinan
 6. 更新日期必须写入 `2unp6l!N2`，且写入内容为公式：`=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（明细 J 列为文本日期，禁用 `MAX`；跨 Sheet 只能引用 sheet_name `明细`，禁止 sheet_id `VM2reD`）。
 7. 明细表需在 `O` 列起维护“按同步日期横向追加”的辅助区（幂等追加：若当日列已存在则跳过）。
 8. `sync_bitable_to_sheet.py` 对所有写入函数入口做硬熔断断言：只允许写入明细表 `VM2reD`；断言失败必须抛异常并写入本地 audit log。
+9. 明细写入前必须通过 `assert_no_null_industry()` 断言：待写数据的 `US行业` 列不得出现空值或 `"NULL"`，违反即 `raise` 并落 audit log。
+10. 育商行（`US行业统计!` 第 9 行）回读值必须等于明细表最新 sync_date 的育商行原值（逐字段核对）。
+11. 总计行（第 10 行）回读值必须等于 8 个分组（7 大行业 + 育商）之和。
 
 ## 快照语义汇总契约（Snapshot-Aware Aggregation Contract）
 
 明细表 `明细`(VM2reD) 自 v1.6 起为**多日快照追加表**（同一行业每个 sync_date 各一行），因此汇总口径必须带日期锚点：
 
 - 日期锚点：`US行业统计!$N$2` = `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（最新 sync_date）
-- `B2:F8` 标准公式：`=SUMIFS('明细'!C:C,'明细'!$A:$A,$A2,'明细'!$J:$J,$N$2)`
+- 汇总表结构（v1.9）：第 2~8 行 = 7 大行业，**第 9 行 = 育商**，**第 10 行 = 总计**，参数区下移至第 12~16 行（入驻率在 `B16`）
+- `B2:F9` 标准公式：`=SUMIFS('明细'!C:C,'明细'!$A:$A,$A2,'明细'!$J:$J,$N$2)`（含第 9 行育商，条件为 `$A9`）
 - 列映射：B←明细 C 线索数、C←D 可联系、D←E 已触达、E←F 有意愿、F←G 新增入驻数（各列把首参数换为对应明细列）
-- 第 9 行为合计：`=SUM(B2:B8)` 等
+- 第 10 行为合计：`=SUM(B2:B9)` 等（C~F 同理，`H10==H9`）
+- 育商行其他派生列：`G9==ROUND(B9*50%,0)`、`H9==H8`、`I9==IFERROR(F9/(B9*B$16*H9),0)`、`J9==D9/B9`
 - **严禁**使用 `=SUMIF('明细'!A:A,$A2,'明细'!C:C)` 一类不带日期条件的整列 SUMIF：会把全部快照日累加（3 个快照日即约 3 倍虚高，如服饰服配线索数 957 vs 当日真实 319）。
 
 ## 使用场景
@@ -77,10 +84,12 @@ author: yuqinan
 - 默认汇总工作表：`2unp6l`
 - 默认明细写入范围：`A:J`，表头固定在第 1 行；每日同步按逻辑 `sync_date` 幂等追加到表尾，禁止清空或全量覆盖历史行
 - 默认每日快照目录：`output/snapshots/bitable_snapshot_YYYYMMDD.json`，结构为 `{"sync_date":"YYYY-MM-DD","records":[...]}`
-- 默认 RAW 回捞范围：明细 `A1:J3`，汇总 `A1:K14`
+- 默认汇总结构：数据行 `B2:F9`（第 2~8 行 7 大行业 + 第 9 行育商），总计行第 10 行，参数区第 12~16 行（入驻率 `B16`）
+- 默认 RAW 回捞范围：明细 `A1:J3`，汇总 `A1:K16`
+- 默认公式校验范围：`2unp6l!B2:I10`
 - 默认唯一允许的汇总写入单元格：`2unp6l!N2`（写入公式 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`）
 - 跨 Sheet 公式引用默认：只能使用 sheet_name（`'明细'`、`'US行业统计'`），**禁止**使用 sheet_id（`VM2reD`、`2unp6l`）
-- 默认明细辅助区起始列：`VM2reD!O1`（按日期横向追加，写第 1 行日期表头、第 2~8 行 7 个行业入驻数、第 9 行总计）
+- 默认明细辅助区起始列：`VM2reD!O1`（按日期横向追加，写第 1 行日期表头、第 2~9 行 8 个分组（7 大行业 + 育商）入驻数、第 10 行总计；分组顺序与 `2unp6l!A2:A9` 一致）
 - 默认执行权限：必须通过 `bash` 工具设置 `include_secrets=true`
 
 ## ⚙️ 核心架构 / SOP / 约束条件
@@ -95,8 +104,8 @@ python3 scripts/daily_sync.py
 
 1. `validate_sync_contract()`：在副作用发生前校验 Bitable token、表 ID、目标电子表格、工作表 ID 与输出列契约。
 2. `step1_sync_detail()`：分页拉取 Bitable 全量记录，把 `US行业` 英文值映射为中文；成功拉取后先写入 `output/snapshots/bitable_snapshot_YYYYMMDD.json` 原始快照，再读取 `VM2reD!A:J` 检查当日逻辑 `sync_date` 是否已存在；若存在则跳过明细写入，若不存在则仅把本次数据行追加到表尾，表头第 1 行和历史行保持不动。
-3. `step2_update_formulas()`：只允许写入 `2unp6l!N2` 更新日期公式 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（写入前经 `assert_n2_formula_safe()` 硬断言：禁含 `MAX(` / `VM2reD!`），其余区域（含 `B2:F9`、趋势区等）全部由用户手工维护，脚本不得覆盖。
-4. `step3_write_detail_aux_area()`：在 `VM2reD` 的 `O` 列起建立横向辅助区（每列一个同步日期），幂等追加今日列：第 1 行写日期 `YYYY-MM-DD`，第 2~8 行写 7 个行业的新增入驻数（行业顺序与 `2unp6l!A2:A8` 一致），第 9 行写总计。
+3. `step2_update_formulas()`：只允许写入 `2unp6l!N2` 更新日期公式 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`（写入前经 `assert_n2_formula_safe()` 硬断言：禁含 `MAX(` / `VM2reD!`），其余区域（含 `B2:F9` 数据行、第 10 行总计、参数区第 12~16 行、趋势区等）全部由用户手工维护，脚本不得覆盖。
+4. `step3_write_detail_aux_area()`：在 `VM2reD` 的 `O` 列起建立横向辅助区（每列一个同步日期），幂等追加今日列：第 1 行写日期 `YYYY-MM-DD`，第 2~9 行写 8 个分组（7 大行业 + 育商）的新增入驻数（分组顺序与 `2unp6l!A2:A9` 一致），第 10 行写总计。
 5. 每次运行都会执行上游 Schema 漂移主动巡检：对比期望字段、别名字段与实际字段；发现漂移时写入 `output/schema_drift/schema_drift_YYYYMMDD_HHMMSS.json`，并在脚本 JSON 输出中返回 `schema_drift` 与 `schema_drift_log`。仍缺少必需字段时保留副作用前硬熔断。
 
 ### 汇总回读验收（补充）
@@ -112,7 +121,13 @@ python3 scripts/daily_sync.py
 
 趋势计算基于明细表历史行的 `更新日期` 字段（逻辑含义为 `sync_date`）；脚本支持 `M/D`、`YYYY/M/D`、`YYYY-MM-DD` 解析。近 7 天与近 4 周趋势只展示当前已积累的历史日期 / 自然周；若历史行不足 7 天 / 4 周，只展示现有数据，不补 0、不报错。
 
-行业映射为：`Fashion → 服饰服配`，`FMCG → 快消生活`，`Sports & Lifestyle → 运动潮奢`，`Electronics → 3C家电`，`Home & Textiles → 日用家纺`，`Automotive & Tools → 汽摩工具`，`Furniture & Home Improvements → 家具家装`。
+行业映射为：`Fashion → 服饰服配`，`FMCG → 快消生活`，`Sports & Lifestyle → 运动潮奢`，`Electronics → 3C家电`，`Home & Textiles → 日用家纺`，`Automotive & Tools → 汽摩工具`，`Furniture & Home Improvements → 家具家装`，`空 / None / 空字符串 / 字面量 "NULL" → 育商`。
+
+### 育商兜底分组（Fallback Group）
+
+- **定义**：Bitable 中 `US行业` 未映射到 7 大行业的线索（上游为空 / `None` / 空字符串 / 字面量 `"NULL"`），统一归入兜底分组「育商」。
+- **映射规则**：`_translate_industry()` 对上述取值一律返回 `育商`，禁止再向明细写入 `NULL` 或空值；写入前经 `assert_no_null_industry()` 硬断言拦截。
+- **汇总口径**：育商在 `US行业统计` 中固定占第 9 行，公式与 7 大行业同构（`SUMIFS + $N$2` 日期锚点），并计入第 10 行总计。
 
 ## 单独同步明细
 
@@ -134,10 +149,12 @@ python3 scripts/sync_bitable_to_sheet.py
   ```
 - 🤖 标准输出：
   ```text
-  已完成同步：明细写入 N 行，VM2reD!A1:J3 RAW 回捞通过，2unp6l!B2:I9 公式校验 success，更新日期已刷新为 M/D。
+  已完成同步：明细写入 N 行，VM2reD!A1:J3 RAW 回捞通过，2unp6l!B2:I10 公式校验 success，育商行与总计行回读一致，更新日期已刷新为 M/D。
   ```
 
 ## 更新日志 (Changelog)
+
+- 1.9：固化「育商」兜底分组口径，杜绝每日同步回吐 `NULL`。`_translate_industry()` 对空 / `None` / 空字符串 / 字面量 `"NULL"` 统一映射为 `育商`；新增写入前硬断言 `assert_no_null_industry()`（含 audit log）；`step3_write_detail_aux_area()` 行业清单由 `A2:A8`（7 行业）扩展为 `A2:A9`（8 分组），辅助区总计行下移至第 10 行；汇总公式区扩展为 `B2:F9`，总计行改为第 10 行 `=SUM(B2:B9)`，公式校验范围改为 `B2:I10`，RAW 回捞改为 `A1:K16`（参数区第 12~16 行、入驻率 `B16`）；Red Flags / Verification 新增 NULL 行业、总计行范围、育商回读三项判定。
 
 - 1.8：修复跨日快照累加导致汇总指标虚高约 3 倍的缺陷。`N2` 默认公式由 `=MAX(VM2reD!J:J)` 改为 `=INDEX('明细'!J:J,COUNTA('明细'!J:J))`，并明确跨 Sheet 公式只能引用 sheet_name；新增「快照语义汇总契约」，`B2:F8` 统一为 `SUMIFS + $N$2` 日期锚点；Red Flags/Verification 新增整列 SUMIF、`MAX(`/`VM2reD!` 故障判定与最新快照 1:1 抽样校验；`daily_sync.py` 新增 `assert_n2_formula_safe()` 写前硬断言并将 `_build_formula_cells()` 改为 SUMIFS。
 

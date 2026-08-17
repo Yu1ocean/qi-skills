@@ -1,16 +1,16 @@
 {
-    "skill_id": "29f99b61-e50d-47eb-a086-f101aad58241",
-    "name": "team-travel-dashboard-generator",
-    "description": "自动抓取差旅审批 / 预订邮件，生成团队差旅大屏；V3.11 根治发布链路数据文件漏同步：publish 阶段 HTML 与 travel_dashboard.prod.json 同批同步，并在发布后强制断言线上 generated_at == 本地 generated_at，不一致熔断。",
-    "version": "3.11",
-    "doc_link": "https://bytedance.larkoffice.com/docx/OJ4Xd5utOoVJbzxYgOEcQxycnHf",
+    "skill_id": "56a9d7b0-953b-4ee2-81af-7a86fd7a8f29",
+    "name": "us-am-stats-sync",
+    "description": "美区 AM 招商统计每日同步（含「育商」兜底分组固化，禁止回吐 NULL）",
+    "version": "1.9",
+    "doc_link": "https://bytedance.larkoffice.com/docx/TbqqdKX83oYwJbxCkxRcjdrQn4b",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-17",
-    "updated_at": "2026-08-17 11:20",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator.zip",
-    "zip_name": "team-travel-dashboard-generator.zip",
-    "drive_file_token": "BJ2gbcC1bomI1AxhFtRc9xC3nrb",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/BJ2gbcC1bomI1AxhFtRc9xC3nrb"
+    "updated_at": "2026-08-17 11:54",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/us-am-stats-sync.zip",
+    "zip_name": "us-am-stats-sync.zip",
+    "drive_file_token": "EgBabTG4OofAnqxIO4OcsZLfnkg",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/EgBabTG4OofAnqxIO4OcsZLfnkg"
 }

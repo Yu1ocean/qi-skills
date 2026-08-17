@@ -50,6 +50,9 @@ FIELD_ALIASES: Dict[str, List[str]] = {
 OPTIONAL_SOURCE_COLUMNS = {"USAM", "历史入驻新增可售"}
 NULL_FALLBACK = "NULL"
 
+# 未映射到 7 大行业的兜底分组：US行业 为空 / None / "" / 字面量 "NULL" 时统一归为「育商」
+FALLBACK_INDUSTRY = "育商"
+
 INDUSTRY_MAP: Dict[str, str] = {
     "Fashion": "服饰服配",
     "FMCG": "快消生活",
@@ -352,13 +355,43 @@ def _normalize_cell(value: Any) -> Any:
 
 
 def _translate_industry(value: Any) -> str:
-    """Translate US行业 values from English to Chinese using the confirmed hard-coded mapping."""
+    """Translate US行业 to Chinese; empty / None / "NULL" falls back to 育商 (never writes NULL)."""
     normalized = str(_normalize_cell(value)).strip()
-    if not normalized:
-        return ""
-    parts = [part.strip() for part in normalized.replace(",", "；").split("；") if part.strip()]
+    if not normalized or normalized.upper() == NULL_FALLBACK:
+        return FALLBACK_INDUSTRY
+    parts = [
+        part.strip()
+        for part in normalized.replace(",", "；").split("；")
+        if part.strip() and part.strip().upper() != NULL_FALLBACK
+    ]
+    if not parts:
+        return FALLBACK_INDUSTRY
     translated = [INDUSTRY_MAP.get(part, part) for part in parts]
     return "；".join(translated)
+
+
+def assert_no_null_industry(values: List[List[Any]]) -> None:
+    """Runtime gate before detail write: US行业 column must not contain empty or literal "NULL"."""
+    industry_idx = OUTPUT_COLUMNS.index("US行业")
+    offenders: List[int] = []
+    for row_no, row in enumerate(values, start=1):
+        if row and row[industry_idx] == "US行业":
+            continue  # header row
+        cell = str(row[industry_idx] if industry_idx < len(row) else "").strip()
+        if not cell or cell.upper() == NULL_FALLBACK:
+            offenders.append(row_no)
+    if offenders:
+        _append_audit_log(
+            {
+                "level": "error",
+                "op": "assert_no_null_industry",
+                "reason": "null_or_empty_industry_detected",
+                "offending_row_offsets": offenders,
+            }
+        )
+        raise ValueError(
+            f"[硬熔断] 明细 US行业 列不得出现空值或 NULL；应映射为「{FALLBACK_INDUSTRY}」，违规行偏移: {offenders}"
+        )
 
 
 def fetch_all_bitable_records(bitable_token: str = BITABLE_TOKEN, table_id: str = TABLE_ID) -> Tuple[List[Dict[str, Any]], List[str]]:
@@ -421,7 +454,7 @@ def build_sheet_values(records: List[Dict[str, Any]], update_date: str | None = 
     values: List[List[Any]] = [OUTPUT_COLUMNS]
     for record in records:
         values.append([
-            resolve_source_value(record, "US行业"),
+            _translate_industry(resolve_source_value(record, "US行业")),
             resolve_source_value(record, "USAM"),
             resolve_source_value(record, "线索数"),
             resolve_source_value(record, "可联系"),
@@ -519,6 +552,7 @@ def append_values_to_sheet(sheet_token: str, sheet_id: str, values: List[List[An
     assert_detail_sheet_id(sheet_id, op="append_values_to_sheet")
     if not values:
         return
+    assert_no_null_industry(values)
     csv_text = values_to_csv(values)
     _run_lark_cli(
         [
@@ -655,6 +689,7 @@ def sync_bitable_to_sheet(
         )
 
     values = build_sheet_values(records, effective_sync_date)
+    assert_no_null_industry(values)
     header, existing_rows, before_state = read_detail_sheet_state(sheet_token, sheet_id)
     existing_header = header or OUTPUT_COLUMNS
     if existing_header != OUTPUT_COLUMNS:
