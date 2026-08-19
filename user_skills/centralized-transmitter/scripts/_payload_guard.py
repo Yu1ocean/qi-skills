@@ -114,8 +114,14 @@ def _extract_text_chunks(value: Any) -> List[str]:
     chunks: List[str] = []
     if isinstance(value, dict):
         for key, item in value.items():
-            if key in {"content", "text", "title", "name", "summary", "subtitle", "task_id", "taskId", "run_id"} and isinstance(item, str):
-                chunks.append(item)
+            # v1.3 根因修复：`task_id` / `taskId` / `run_id` 属于元数据，绝不能被当成
+            # 「可提取主题素材」，否则顶层字段污染时主题断言会误判通过。
+            if isinstance(item, str):
+                # 只有白名单键的字符串才算「可提取主题素材」；元数据字符串
+                # （task_id / topic / run_id 等）必须被彻底忽略。
+                if key in {"content", "text", "title", "name", "summary", "subtitle"}:
+                    chunks.append(item)
+                continue
             chunks.extend(_extract_text_chunks(item))
     elif isinstance(value, list):
         for item in value:
@@ -200,6 +206,147 @@ def validate_payload_task_metadata(payload: Any, *, explicit_task_id: Optional[s
                 f"payload 内部任务标识与当前 task_id 不匹配：期望 `{task_id}`，实际 {', '.join(mismatch)}"
             )
     return task_id
+
+
+# ---------------------------------------------------------------------------
+# v1.3 结构护栏：post payload 顶层字段白名单（GUARD-POST-001~005）
+#
+# P1 事故根因：post payload 的 `content` 顶层同时出现 `task_id` / `topic` 等元数据
+# 字段与语种键 `zh_cn`，飞书返回 `230001 invalid message content`。原护栏只做
+# 「内容断言」，无法拦结构污染，因此新增结构护栏，且必须先于内容/主题断言执行。
+# ---------------------------------------------------------------------------
+
+POST_LANG_KEYS = {
+    "zh_cn",
+    "zh_hk",
+    "zh_tw",
+    "en_us",
+    "ja_jp",
+    "ko_kr",
+    "th_th",
+    "id_id",
+    "vi_vn",
+    "fr_fr",
+    "de_de",
+    "es_es",
+    "it_it",
+    "pt_br",
+    "ru_ru",
+    "hi_in",
+    "ar_sa",
+}
+
+POST_GUARD_FIX_HINT = (
+    "修复建议：post payload 的 content 顶层只允许语种键（如 zh_cn/en_us/ja_jp），"
+    "元数据（task_id/topic/run_id 等）必须放在 payload 顶层而非 content 内，"
+    "语种块结构必须为 {\"title\": str?, \"content\": [[{\"tag\": ...}]]}。"
+)
+
+
+def _is_legacy_bridge_shape(payload: Any) -> bool:
+    """v1.2 旧版差旅大盘摘要 payload（title/summary/content 均为字符串）。
+
+    该形态本身不符合飞书 post schema，由发送阶段的兼容桥自动升级为 interactive
+    card，因此结构护栏对其显式豁免（豁免范围窄且有明确升级路径，不构成绕过）。
+    """
+
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("msg_type") != "post":
+        return False
+    return all(
+        isinstance(payload.get(key), str) and payload.get(key).strip()
+        for key in ("title", "summary", "content")
+    )
+
+
+def looks_like_post_payload(payload: Any, *, filename: str = "") -> bool:
+    if filename.endswith(".post.json"):
+        return True
+    if not isinstance(payload, dict):
+        return False
+    if str(payload.get("msg_type") or "").strip() == "post":
+        return True
+    if any(key in POST_LANG_KEYS for key in payload.keys()):
+        return True
+    content = payload.get("content")
+    if isinstance(content, dict) and any(key in POST_LANG_KEYS for key in content.keys()):
+        return True
+    return False
+
+
+def assert_post_content_shape(payload: Any) -> str:
+    """结构护栏：断言 post payload 的 content 顶层只含合法语种键与合法语种块。
+
+    返回 "ok" 或 "legacy_bridge"；违规一律 raise PayloadGuardError。
+    """
+
+    if _is_legacy_bridge_shape(payload):
+        return "legacy_bridge"
+
+    if not isinstance(payload, dict):
+        raise PayloadGuardError(
+            f"GUARD-POST-001 post payload 必须是 JSON 对象，实际类型：{type(payload).__name__}。{POST_GUARD_FIX_HINT}"
+        )
+
+    content = payload.get("content")
+    if content is None and any(key in POST_LANG_KEYS for key in payload.keys()):
+        # payload 本体即 content（顶层直接是语种键）
+        content = payload
+    if not isinstance(content, dict):
+        raise PayloadGuardError(
+            "GUARD-POST-001 post payload 缺少合法 `content` 对象（当前："
+            f"{type(content).__name__}）。{POST_GUARD_FIX_HINT}"
+        )
+
+    keys = list(content.keys())
+    if not keys:
+        raise PayloadGuardError(
+            f"GUARD-POST-003 post payload 的 content 顶层为空，未发现任何语种键。{POST_GUARD_FIX_HINT}"
+        )
+
+    illegal = [key for key in keys if key not in POST_LANG_KEYS]
+    if illegal:
+        raise PayloadGuardError(
+            "GUARD-POST-002 post payload 的 content 顶层出现非语种键（顶层字段污染）："
+            f"{', '.join(sorted(illegal))}；合法语种键示例：zh_cn/en_us/ja_jp。{POST_GUARD_FIX_HINT}"
+        )
+
+    for lang in keys:
+        block = content[lang]
+        if not isinstance(block, dict):
+            raise PayloadGuardError(
+                f"GUARD-POST-004 语种块 `{lang}` 结构非法：必须是对象，实际 {type(block).__name__}。{POST_GUARD_FIX_HINT}"
+            )
+        title = block.get("title")
+        if title is not None and not isinstance(title, str):
+            raise PayloadGuardError(
+                f"GUARD-POST-004 语种块 `{lang}` 的 `title` 必须是字符串，实际 {type(title).__name__}。{POST_GUARD_FIX_HINT}"
+            )
+        body = block.get("content")
+        if not isinstance(body, list) or not body:
+            raise PayloadGuardError(
+                f"GUARD-POST-004 语种块 `{lang}` 的 `content` 必须是非空「段落列表的列表」，"
+                f"实际 {type(body).__name__}。{POST_GUARD_FIX_HINT}"
+            )
+        for index, paragraph in enumerate(body):
+            if not isinstance(paragraph, list):
+                raise PayloadGuardError(
+                    f"GUARD-POST-004 语种块 `{lang}` 的第 {index + 1} 个段落必须是列表，"
+                    f"实际 {type(paragraph).__name__}。{POST_GUARD_FIX_HINT}"
+                )
+            for element in paragraph:
+                if not isinstance(element, dict):
+                    raise PayloadGuardError(
+                        f"GUARD-POST-005 语种块 `{lang}` 第 {index + 1} 段内的元素必须是对象，"
+                        f"实际 {type(element).__name__}。{POST_GUARD_FIX_HINT}"
+                    )
+                if not str(element.get("tag") or "").strip():
+                    raise PayloadGuardError(
+                        f"GUARD-POST-005 语种块 `{lang}` 第 {index + 1} 段内存在缺少 `tag` 字段的元素："
+                        f"{sorted(element.keys())}。{POST_GUARD_FIX_HINT}"
+                    )
+    return "ok"
 
 
 def assert_payload_topic(payload: Any, *, explicit_topic: Optional[str]) -> str:

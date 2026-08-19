@@ -17,7 +17,9 @@ from _payload_guard import (
     EPHEMERAL_DIR,
     PayloadGuardError,
     assert_payload_topic,
+    assert_post_content_shape,
     ensure_payload_file,
+    looks_like_post_payload,
     load_payload_json,
     parse_optional_flags,
     summarize_payload,
@@ -408,7 +410,7 @@ def validate_card_receipt(*, card_id: str, task_id: str, topic: str) -> Path:
     return receipt_path
 
 
-def convert_content_from_file(payload_file: str, *, explicit_task_id: str | None, explicit_topic: str | None, allowed_suffixes=None) -> tuple[str, Path, str, str]:
+def convert_content_from_file(payload_file: str, *, explicit_task_id: str | None, explicit_topic: str | None, allowed_suffixes=None, msg_type: str | None = None) -> tuple[str, Path, str, str]:
     payload_path = ensure_payload_file(
         payload_file,
         explicit_task_id=explicit_task_id,
@@ -416,6 +418,10 @@ def convert_content_from_file(payload_file: str, *, explicit_task_id: str | None
     )
     payload = load_payload_json(payload_path)
     task_id = validate_payload_task_metadata(payload, explicit_task_id=explicit_task_id)
+    # v1.3 结构护栏（GUARD-POST-001~005）：必须先于主题断言与兼容桥执行。
+    if msg_type == "post" or (msg_type is None and looks_like_post_payload(payload, filename=payload_path.name)):
+        shape = assert_post_content_shape(payload)
+        print(f"[INFO] post 结构护栏通过（GUARD-POST 全量断言）：{shape}")
     topic = assert_payload_topic(payload, explicit_topic=explicit_topic)
     return json.dumps(payload, ensure_ascii=False), payload_path, task_id, topic
 
@@ -578,6 +584,7 @@ def handle_send(args):
                 explicit_task_id=task_id,
                 explicit_topic=topic,
                 allowed_suffixes=allowed_suffixes,
+                msg_type="post" if msg_type == "post" else None,
             )
             raw_payload = load_payload_json(payload_path)
             payload_summary = summarize_payload(raw_payload)
