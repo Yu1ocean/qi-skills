@@ -1,16 +1,16 @@
 {
-    "skill_id": "CENTRALIZED-TRANSMITTER",
-    "name": "centralized-transmitter",
-    "description": "中心化发信员：飞书消息统一发送护栏，v1.3 新增 post payload 结构护栏（GUARD-POST-001~005），拦截 task_id/topic/run_id 等元数据污染 content 顶层导致的 230001 invalid message content 事故",
-    "version": "1.3",
-    "doc_link": "https://bytedance.larkoffice.com/docx/KlATdG1RHo3zW7xfNEJcpAoBnCb",
+    "skill_id": "EU-AM-EFFICIENCY-ANALYZER",
+    "name": "eu-am-efficiency-analyzer",
+    "description": "EU AM 效率漏斗分析器：从飞书明细_分析基盘计算各 AM 线索/有意愿/主备双口径入驻，输出漏斗诊断与白底 ECharts 气泡矩阵（四象限+分行业Tab）",
+    "version": "1.0",
+    "doc_link": "https://bytedance.my.larkoffice.com/docx/MS0DdkWzDoxNBCxopUimY9POylc",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-19",
-    "updated_at": "2026-08-19 14:38",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/centralized-transmitter",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/centralized-transmitter.zip",
-    "zip_name": "centralized-transmitter.zip",
-    "drive_file_token": "NkPwbfTPio7kwixXJN3cc2OjnDc",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/NkPwbfTPio7kwixXJN3cc2OjnDc"
+    "updated_at": "2026-08-19 16:02",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer.zip",
+    "zip_name": "eu-am-efficiency-analyzer.zip",
+    "drive_file_token": "IzqZblVuTom3cSxolQcmufJkyxh",
+    "drive_file_url": "https://bytedance.my.larkoffice.com/file/IzqZblVuTom3cSxolQcmufJkyxh"
 }
