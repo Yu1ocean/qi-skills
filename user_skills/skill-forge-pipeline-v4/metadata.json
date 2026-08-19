@@ -4,13 +4,14 @@
     "description": "EU AM 效率漏斗分析器：从飞书明细_分析基盘计算各 AM 线索/有意愿/主备双口径入驻，输出漏斗诊断与白底 ECharts 气泡矩阵（四象限+分行业Tab）",
     "version": "1.0",
     "doc_link": "https://bytedance.my.larkoffice.com/docx/MS0DdkWzDoxNBCxopUimY9POylc",
-    "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
-    "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
+    "wiki_url": "https://bytedance.my.larkoffice.com/wiki/HEnbwa68Si9w22kyhD4cBxpEnnb",
+    "wiki_node_token": "HEnbwa68Si9w22kyhD4cBxpEnnb",
     "date": "2026-08-19",
     "updated_at": "2026-08-19 16:02",
     "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer",
     "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer.zip",
     "zip_name": "eu-am-efficiency-analyzer.zip",
     "drive_file_token": "IzqZblVuTom3cSxolQcmufJkyxh",
-    "drive_file_url": "https://bytedance.my.larkoffice.com/file/IzqZblVuTom3cSxolQcmufJkyxh"
+    "drive_file_url": "https://bytedance.my.larkoffice.com/file/IzqZblVuTom3cSxolQcmufJkyxh",
+    "wiki_parent_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g"
 }
