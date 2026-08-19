@@ -51,6 +51,16 @@ DEFAULT_WRITE_DELAY_SECONDS: int = 2
 DEFAULT_ALLOWED_LINK_SEGMENTS: tuple[str, ...] = ("/docx/", "/docs/", "/wiki/", "/file/")
 DEFAULT_ALLOWED_MARKDOWN_SUFFIXES: tuple[str, ...] = (".lark.md", ".md")
 DEFAULT_REQUIRE_SECRETS_FOR_REMOTE_WRITE: bool = True
+# 「文件存在」≠「toolset 可用」：命中以下任一特征即判定候选脚本不可用，必须继续降级。
+DEFAULT_TOOLSET_UNAVAILABLE_PATTERNS: tuple[str, ...] = (
+    r"toolset\s+\S+\s+not\s+found",
+    r"toolset\s+not\s+found",
+    r"unknown\s+toolset",
+    r"AimeError",
+    r"Error\s+from\s+AIME\s+Server",
+    r"tool\s+\S+\s+not\s+found",
+)
+DEFAULT_DOWNLOAD_FALLBACK_TO_LARK_CLI: bool = True
 
 CATEGORY_NODE_MAP: Dict[str, str] = {
     "AI/Agent": "HIAbwCz1CiPYg6kghEXcKS2Onqh",
@@ -433,6 +443,177 @@ def resolve_existing_script(candidates: Sequence[Path], action: str) -> Path:
     )
 
 
+def list_existing_scripts(candidates: Sequence[Path]) -> List[Path]:
+    """Return every candidate that physically exists (existence != usability)."""
+    return [candidate for candidate in candidates if candidate.exists() and candidate.is_file()]
+
+
+def is_toolset_unavailable(output: str) -> bool:
+    """Detect that an existing MCP shortcut is backed by a retired AIME toolset.
+
+    ``lark_download`` still ships as a file, but its toolset has been removed, so
+    running it fails with ``toolset lark_download not found``.  Existence checks
+    alone are therefore insufficient — we must probe and keep degrading.
+    """
+    text = _normalize_text(output)
+    if not text:
+        return False
+    for pattern in DEFAULT_TOOLSET_UNAVAILABLE_PATTERNS:
+        if re.search(pattern, text, flags=re.I):
+            return True
+    return False
+
+
+def ephemeral_pool_dir() -> Path:
+    pool = Path(os.environ.get("EPHEMERAL_POOL_DIR") or "/workspace/.ephemeral_pool")
+    pool.mkdir(parents=True, exist_ok=True)
+    return pool
+
+
+def _split_top_level_xml_elements(xml_text: str) -> List[tuple[str, str, str]]:
+    """Split DocxXML into top-level (tag, attrs, whole_element) triples."""
+    elements: List[tuple[str, str, str]] = []
+    pos = 0
+    length = len(xml_text)
+    open_re = re.compile(r"<([A-Za-z][\w:-]*)((?:\"[^\"]*\"|'[^']*'|[^>\"'])*?)(/?)>")
+    while pos < length:
+        match = open_re.search(xml_text, pos)
+        if not match:
+            break
+        tag, attrs, self_closing = match.group(1), match.group(2), match.group(3)
+        if self_closing:
+            elements.append((tag, attrs, match.group(0)))
+            pos = match.end()
+            continue
+        depth = 1
+        cursor = match.end()
+        token_re = re.compile(rf"</{re.escape(tag)}\s*>|<{re.escape(tag)}(?=[\s/>])")
+        end = length
+        while cursor < length:
+            token = token_re.search(xml_text, cursor)
+            if not token:
+                break
+            if token.group(0).startswith("</"):
+                depth -= 1
+                if depth == 0:
+                    end = token.end()
+                    break
+            else:
+                depth += 1
+            cursor = token.end()
+        elements.append((tag, attrs, xml_text[match.start():end]))
+        pos = end
+    return elements
+
+
+def _attr(attrs: str, name: str) -> str:
+    match = re.search(rf'{re.escape(name)}\s*=\s*"([^"]*)"', attrs)
+    return match.group(1) if match else ""
+
+
+def _xml_inline_to_markdown(fragment: str) -> str:
+    text = re.sub(r"<a\s+[^>]*href=\"([^\"]*)\"[^>]*>(.*?)</a>", r"[\2](\1)", fragment, flags=re.S)
+    return _strip_html_tags(text)
+
+
+def _xml_cell_text(cell_xml: str) -> str:
+    inner = re.sub(r"^<t[dh][^>]*>|</t[dh]>$", "", cell_xml.strip(), flags=re.S)
+    return _xml_inline_to_markdown(inner)
+
+
+def xml_table_to_markdown_table(table_xml: str) -> str:
+    """Normalize a DocxXML table into the markdown-format HTML table contract."""
+    widths = re.findall(r'<col\s+width="(\d+)"\s*/?>', table_xml)
+    col_widths = ",".join(widths) if widths else DEFAULT_TABLE_COL_WIDTHS
+    rows_html: List[str] = []
+    for row_xml in re.findall(r"<tr[^>]*>(.*?)</tr>", table_xml, flags=re.S):
+        cells = re.findall(r"<t[dh][^>]*>.*?</t[dh]>", row_xml, flags=re.S)
+        if not cells:
+            continue
+        body = "\n".join(f"        <td>{_xml_cell_text(cell)}</td>" for cell in cells)
+        rows_html.append("    <tr>\n" + body + "\n    </tr>")
+    if not rows_html:
+        raise WikiArchiveError("归档熔断：XML 表格转换失败，未解析到任何数据行。")
+    return (
+        f'<table header-row="true" col-widths="{col_widths}">\n'
+        + "\n".join(rows_html)
+        + "\n</table>"
+    )
+
+
+def _xml_element_to_block_content(tag: str, attrs: str, whole: str) -> str:
+    if tag == "table":
+        return xml_table_to_markdown_table(whole)
+    inner = re.sub(rf"^<{re.escape(tag)}[^>]*>|</{re.escape(tag)}>$", "", whole.strip(), flags=re.S)
+    if re.fullmatch(r"h[1-9]", tag):
+        level = int(tag[1:])
+        return f"{'#' * level} {_xml_inline_to_markdown(inner)}"
+    if tag == "title":
+        return f"# {_xml_inline_to_markdown(inner)}"
+    return _xml_inline_to_markdown(inner)
+
+
+def _element_block_id(attrs: str, whole: str) -> str:
+    block_id = _attr(attrs, "id")
+    if block_id:
+        return block_id
+    nested = re.search(r'\sid="([^"]+)"', whole)
+    return nested.group(1) if nested else ""
+
+
+def docx_xml_to_pseudo_markdown(xml_text: str) -> str:
+    """Convert DocxXML (with-ids) into the pseudo ``.lark.md`` block format."""
+    elements = _split_top_level_xml_elements(xml_text)
+    if not elements:
+        raise WikiArchiveError("归档熔断：DocxXML 解析失败，未发现任何顶层 block。")
+    chunks: List[str] = []
+    number = 0
+    for tag, attrs, whole in elements:
+        block_id = _element_block_id(attrs, whole)
+        if not block_id:
+            continue
+        number += 1
+        content = _xml_element_to_block_content(tag, attrs, whole)
+        chunks.append(
+            f"<!-- BLOCK_{number} | {block_id} -->\n{content}\n<!-- END_BLOCK_{number} -->"
+        )
+    if not chunks:
+        raise WikiArchiveError("归档熔断：DocxXML 中未找到带 block id 的顶层节点。")
+    return "\n".join(chunks) + "\n"
+
+
+def lark_cli_download(document_url: str) -> Path:
+    """Fallback download path: ``lark-cli docs +fetch`` XML (with-ids) → pseudo lark.md."""
+    lark_cli = shutil.which("lark-cli")
+    if not lark_cli:
+        raise WikiArchiveError("归档熔断：未找到 lark-cli，无法执行 docs +fetch 下载兜底，禁止退回 OpenAPI。")
+
+    raw = run_subprocess(
+        [
+            lark_cli, "docs", "+fetch", "--as", "user",
+            "--doc", document_url,
+            "--doc-format", "xml",
+            "--detail", "with-ids",
+            "--format", "json",
+        ],
+        "lark-cli docs +fetch xml with-ids",
+    )
+    try:
+        payload = json.loads(raw)
+        content = payload["data"]["document"]["content"]
+    except Exception as exc:  # noqa: BLE001
+        raise WikiArchiveError(f"归档熔断：lark-cli docs +fetch 输出解析失败：{exc}；原始输出前 500 字：{raw[:500]}")
+    if not _normalize_text(content):
+        raise WikiArchiveError("归档熔断：lark-cli docs +fetch 返回空文档内容。")
+
+    pseudo = docx_xml_to_pseudo_markdown(content)
+    stamp = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", document_url.rstrip("/").split("/")[-1])[:40] or "doc"
+    target = ephemeral_pool_dir() / f"wiki_archive_{slug}_{stamp}_{os.getpid()}.lark.md"
+    target.write_text(pseudo, encoding="utf-8")
+    return target
+
+
 def parse_download_paths(output: str) -> List[str]:
     patterns = (
         r'file_path:\s*"([^"]+)"',
@@ -451,28 +632,54 @@ def parse_download_paths(output: str) -> List[str]:
 
 
 def mcp_download(document_url: str) -> Path:
+    """Download the target doc, probing每个候选脚本的真实可用性后逐级降级。
+
+    降级链路：本地 MCP 下载脚本（存在且可运行）→ lark-cli docs +fetch xml with-ids
+    → 全部不可用才 raise。禁止退回 OpenAPI / JWT 直调。
+    """
     workspace_root = get_workspace_root()
-    download_script = resolve_existing_script(
-        [
-            workspace_root / "inner_skills/lark/mcp_lark_lark_download.py",
-            workspace_root / "inner_skills/lark_download/lark_download.py",
-        ],
-        "下载",
-    )
+    candidates = [
+        workspace_root / "inner_skills/lark/mcp_lark_lark_download.py",
+        workspace_root / "inner_skills/lark_download/lark_download.py",
+    ]
+    existing = list_existing_scripts(candidates)
+    failures: List[str] = []
 
-    output = run_subprocess(
-        ["python3", str(download_script), json.dumps({"document_url": document_url}, ensure_ascii=False)],
-        f"lark download via {download_script}",
-    )
-    paths = parse_download_paths(output)
-    if not paths:
-        raise WikiArchiveError(f"归档熔断：无法从 Lark 下载输出中解析文件路径。输出：{output}")
+    for download_script in existing:
+        try:
+            output = run_subprocess(
+                ["python3", str(download_script), json.dumps({"document_url": document_url}, ensure_ascii=False)],
+                f"lark download via {download_script}",
+            )
+        except WikiArchiveError as exc:
+            if is_toolset_unavailable(str(exc)):
+                failures.append(f"{download_script}: toolset 不可用（已降级）")
+                continue
+            failures.append(f"{download_script}: {exc}")
+            continue
 
-    for raw_path in paths:
-        path = Path(raw_path).expanduser().resolve()
-        if path.exists() and path.name.endswith(DEFAULT_ALLOWED_MARKDOWN_SUFFIXES):
-            return path
-    raise WikiArchiveError(f"归档熔断：Lark 下载结果中未找到可用 Markdown 文件：{paths}")
+        if is_toolset_unavailable(output):
+            failures.append(f"{download_script}: toolset 不可用（已降级）")
+            continue
+
+        paths = parse_download_paths(output)
+        for raw_path in paths:
+            path = Path(raw_path).expanduser().resolve()
+            if path.exists() and path.name.endswith(DEFAULT_ALLOWED_MARKDOWN_SUFFIXES):
+                return path
+        failures.append(f"{download_script}: 输出中未找到可用 Markdown 文件（{paths}）")
+
+    if DEFAULT_DOWNLOAD_FALLBACK_TO_LARK_CLI:
+        try:
+            return lark_cli_download(document_url)
+        except WikiArchiveError as exc:
+            failures.append(f"lark-cli docs +fetch: {exc}")
+
+    formatted = "\n".join(f"- {item}" for item in failures) or "- 无任何可用候选"
+    raise WikiArchiveError(
+        "归档熔断：所有 Lark 下载候选（本地 MCP 脚本 + lark-cli docs +fetch）均不可用，禁止降级到 OpenAPI。\n"
+        f"失败明细：\n{formatted}"
+    )
 
 
 def _run_lark_cli_update(document_url: str, modifications: List[Dict[str, str]]) -> str:
@@ -680,6 +887,29 @@ def _fixture_with_table() -> str:
 """
 
 
+def _fixture_docx_xml() -> str:
+    """Minimal DocxXML (with-ids) fixture mirroring真实 Wiki 分类节点结构。"""
+    return (
+        '<title id="TTL">AI/Agent</title>'
+        '<h2 id="doxcnH1">📚 分区说明</h2>'
+        '<h2 id="doxcnH2">📂 已归档资产</h2>'
+        '<blockquote id="doxcnBQ"><p id="doxcnBQP">本节点由 <code>info-miner</code> 自动追加。</p></blockquote>'
+        '<table id="doxcnTBL"><colgroup><col width="60"/><col width="110"/><col width="260"/>'
+        '<col width="200"/><col width="200"/></colgroup>'
+        '<thead><tr><th vertical-align="top"><p id="h1">序号</p></th>'
+        '<th vertical-align="top"><p id="h2">归档日期</p></th>'
+        '<th vertical-align="top"><p id="h3">资产名称</p></th>'
+        '<th vertical-align="top"><p id="h4">来源/主题</p></th>'
+        '<th vertical-align="top"><p id="h5">访问链接</p></th></tr></thead>'
+        '<tbody><tr><td vertical-align="top"><p id="c1">1</p></td>'
+        '<td vertical-align="top"><p id="c2">2026-05-20</p></td>'
+        '<td vertical-align="top"><p id="c3">既有资产</p></td>'
+        '<td vertical-align="top"><p id="c4">AI/Agent · 既有案例</p></td>'
+        '<td vertical-align="top"><p id="c5">'
+        '<a href="https://bytedance.larkoffice.com/docx/old">打开文档</a></p></td></tr></tbody></table>'
+    )
+
+
 def _selftest() -> int:
     cases: List[tuple[str, str]] = []
 
@@ -757,6 +987,56 @@ def _selftest() -> int:
         cases.append(("reject empty asset name", "FAIL_NOT_RAISED"))
     except WikiArchiveError:
         cases.append(("reject empty asset name", "OK_RAISED"))
+
+    # v1.11: 候选脚本可用性探测（文件存在 ≠ toolset 可用）
+    try:
+        ok = (
+            is_toolset_unavailable("AimeError: toolset lark_download not found")
+            and is_toolset_unavailable("Error from AIME Server: toolset lark_download not found")
+            and not is_toolset_unavailable('file_path: "/tmp/a.lark.md"')
+        )
+        cases.append(("detect retired toolset output", "OK_PASS" if ok else "FAIL_BAD_VALUE"))
+    except Exception:
+        cases.append(("detect retired toolset output", "FAIL_RAISED"))
+
+    # v1.11: DocxXML(with-ids) → 伪 lark.md 转换 + 表头提取
+    try:
+        pseudo = docx_xml_to_pseudo_markdown(_fixture_docx_xml())
+        blocks = parse_blocks(pseudo)
+        heading_idx = find_archive_heading_index(blocks)
+        section_end_idx = find_section_end_index(blocks, heading_idx)
+        table_idx = find_existing_table_block_index(blocks, heading_idx, section_end_idx)
+        ok = (
+            table_idx is not None
+            and blocks[table_idx].block_id == "doxcnTBL"
+            and next_archive_index(blocks[table_idx].content) == 2
+            and 'header-row="true"' in blocks[table_idx].content
+            and "<p id=" not in blocks[table_idx].content
+            and "[打开文档](https://bytedance.larkoffice.com/docx/old)" in blocks[table_idx].content
+        )
+        cases.append(("docx xml -> pseudo lark.md", "OK_PASS" if ok else "FAIL_BAD_VALUE"))
+    except Exception:
+        cases.append(("docx xml -> pseudo lark.md", "FAIL_RAISED"))
+
+    # v1.11: XML 链路生成的伪 markdown 能直接支撑补丁构造
+    try:
+        patch = build_archive_patch(
+            markdown_text=docx_xml_to_pseudo_markdown(_fixture_docx_xml()),
+            document_url=build_wiki_url("AI/Agent"),
+            category="AI/Agent",
+            asset_name="XML 链路资产",
+            source_topic="AI/Agent · XML fallback",
+            access_link="https://bytedance.larkoffice.com/docx/xmlnew",
+            archive_date="2026-08-19",
+        )
+        ok = (
+            patch.next_index == 2
+            and patch.modifications[0]["modification_type"] == "update"
+            and patch.modifications[0]["block_id"] == "doxcnTBL"
+        )
+        cases.append(("build patch from xml fallback", "OK_PASS" if ok else "FAIL_BAD_PATCH"))
+    except Exception:
+        cases.append(("build patch from xml fallback", "FAIL_RAISED"))
 
     print("=== wiki_archive_guard selftest ===")
     failed = 0

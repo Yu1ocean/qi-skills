@@ -1,16 +1,16 @@
 {
-    "skill_id": "29f99b61-e50d-47eb-a086-f101aad58241",
-    "name": "team-travel-dashboard-generator",
-    "description": "团队全景差旅大屏自动生成器：邮件抓取→结构化→合规巡检大屏，V3.12 闭环真实线上部署与线上 generated_at 远端断言",
-    "version": "3.12",
-    "doc_link": "https://bytedance.larkoffice.com/docx/OJ4Xd5utOoVJbzxYgOEcQxycnHf",
+    "skill_id": "95b1248a-7aaa-42fa-b9ef-f58492536e09",
+    "name": "info-miner",
+    "description": "从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。v1.11 修复 Wiki 归档下载链路 toolset 下线导致的 P1 熔断",
+    "version": "1.11",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Q9CJdIyEUoeJMZxT5eGcnE6JnrH",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-19",
-    "updated_at": "2026-08-19 09:42",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator.zip",
-    "zip_name": "team-travel-dashboard-generator.zip",
-    "drive_file_token": "OeSZbexPNosZvkxh3l6cQSXwnCd",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/OeSZbexPNosZvkxh3l6cQSXwnCd"
+    "updated_at": "2026-08-19 10:48",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner.zip",
+    "zip_name": "info-miner.zip",
+    "drive_file_token": "OvgFbLjQWoAi6QxIGMjc0Fd3nhb",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/OvgFbLjQWoAi6QxIGMjc0Fd3nhb"
 }

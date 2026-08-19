@@ -1,7 +1,7 @@
 ---
 name: info-miner
 id: 95b1248a-7aaa-42fa-b9ef-f58492536e09
-version: 1.10
+version: 1.11
 description: 从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。
 ---
 
@@ -13,7 +13,9 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - **非中文信息源**：输出英中双语逐段对照（左英文右中文），用于高保真对照阅读。
 - **新增闭环归档**：生成飞书文档后，必须把资产写入指定 Wiki 分类节点的「已归档资产」表格；归档失败即明确 raise error 并阻断执行。
 
-**当前版本：1.9.2（2026-08-15）**
+**当前版本：1.11（2026-08-19）**
+
+> **v1.11 变更要点**：修复 Wiki 归档阶段 `toolset lark_download not found` 的 P1 熔断。根因是 `inner_skills/lark_download/lark_download.py` **文件仍存在但其背后的 AIME toolset 已下线**，而 `wiki_archive_guard.py` 的候选 resolver 只做 `exists()` 存在性判定，"文件存在" 被误当成 "可用"，导致下载链路直接 raise（更新链路早已有 `lark-cli` 兜底，下载链路缺同类兜底）。修复：① 新增**可用性探测** `is_toolset_unavailable()`，识别 `toolset ... not found` / `AimeError` / `Error from AIME Server` 等特征后**继续降级**而非熔断；② 新增 **lark-cli 下载兜底** `lark_cli_download()`，走 `lark-cli docs +fetch --as user --doc-format xml --detail with-ids`（唯一能拿到 `doxcn...` block id 的路径）；③ 新增 **DocxXML → 伪 `.lark.md` 转换** `docx_xml_to_pseudo_markdown()` / `xml_table_to_markdown_table()`，把 `<thead><tr><th><p id>` 规范化为 markdown-format `<table header-row="true" col-widths="...">` + `<tr><td>`，`<h2>` 还原为 `## 📂 已归档资产`，产物落盘到 `/workspace/.ephemeral_pool/` 任务唯一文件名。全部候选（本地 MCP 脚本 + lark-cli）都不可用才 `raise`；仍严禁退回 OpenAPI / JWT 直调。
 
 > **v1.9.2 变更要点**：修复 Wiki 归档脚本对历史 `inner_skills/lark/mcp_lark_lark_download.py` 与 `mcp_lark_update_lark_doc.py` 的硬编码依赖。`scripts/wiki_archive_guard.py` 现在在 info-miner 侧执行多候选 MCP/shortcut resolver：下载优先兼容旧脚本，缺失时切换当前可用的 `inner_skills/lark_download/lark_download.py`；更新链路保留旧脚本优先并探测可用的 lark-doc update shortcut，若本地脚本候选缺失则切换 `lark-cli docs +update --as user`，候选均缺失才明确熔断且禁止退回 OpenAPI。根因是 inner skill 目录结构演进后历史 wrapper 缺失，导致归档阶段在下载/更新前 P1 熔断。验收要求：`wiki_archive_guard.py --selftest` 与 CDA Guardrails 自检必须通过；远端归档仍必须 MCP-only、用户身份、`include_secrets=true`。
 
@@ -71,6 +73,8 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - “中文源也顺手给成双语对照吧，省得再判断语言。”
 - “先把飞书文档建出来，归档回头再补。”
 - “分类不太确定，先随便扔进一个 Wiki 节点，后面再改。”
+- “候选脚本文件存在，那就当它能用，直接跑不用探测。”（错误：toolset 可能已下线，`exists()` ≠ 可用，必须探测并继续降级）
+- “下载脚本报 `toolset not found`，那就直接熔断报错吧。”（错误：必须继续降级到 `lark-cli docs +fetch xml with-ids`）
 - “归档写入失败了也没关系，先把文档链接交付就算完成。”
 - “卡片挺好看的，顺手贴在文档开头给用户个惊喜。”
 - “交付消息太多了，把文档链接和卡片放在一起发更整洁。”
@@ -91,6 +95,8 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - 用户显式给了 `category`，却被自动推断结果覆盖。
 - 归档写入没有落在 `## 📂 已归档资产` 标题下的表格，或者表头不是 `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`。
 - 归档写入没有走飞书 MCP 路径，而是回退到 OpenAPI / 旧脚本。
+- **下载链路只判 `exists()` 未做可用性探测**，或候选脚本报 `toolset ... not found` / `AimeError` 后没有继续降级到 `lark-cli docs +fetch`。
+- 用 `--doc-format markdown` 抓取后就去构造 block 级补丁（markdown 管道表格无 block id，必须用 `xml --detail with-ids`）。
 - **飞书文档中出现了灵感卡片或赛博小说文案。**
 - **交付消息中将文档链接与灵感卡片合并发送。**
 - **灵感卡片未同步至 Bitable `PRbvbUyLqaeITqsXNMRcRCM5nhh`。**
@@ -126,6 +132,7 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
     - 命中**微信视频号域名**时，已优先调用 `scripts/wechat_channels_resolver.py` 且拿到含 `videoUrl` 的 `feedInfo`（而非直接 yt-dlp / 普通抓取）；若解析器报错，已按提示自建 Worker 复现三段式或显式回报失败，未把裸链接当成功。
     - 命中**微博域名**（`weibo.com` / `m.weibo.cn` / `weibo.cn`）时，已先自动调用 `user_skills/yt-dlp-media-downloader` 执行 `probe`；若 `yt-dlp probe` 仍失败，已继续切到浏览器模拟访问，并拿到可用于 Phase 0 的标题 / 作者 / 发布时间 / 首段摘要，而不是直接中断。
     - 其它站点已自动调用 `user_skills/yt-dlp-media-downloader` 执行 `probe`；若 `yt-dlp probe` 仍失败，已显式回传 stderr / 提取器错误，而不是静默报错或直接跳过。
+16. **归档下载链路降级验收已通过**：候选 MCP 下载脚本已做**实际可用性探测**（而非仅 `exists()`）；命中 `toolset ... not found` / `AimeError` 时已自动降级到 `lark-cli docs +fetch --doc-format xml --detail with-ids`，并完成 DocxXML → 伪 `.lark.md` 转换（表头可被 `validate_archive_table_headers()` 提取、标题还原为 `## 📂 已归档资产`）；只有全部候选都不可用时才 `raise`，且未退回 OpenAPI / JWT 直调。
 
 ### Phase 0：目标前置校验 (Pre-Flight Target Assertion)（硬熔断，必须最先执行）
 > 目标：把“溯源准确性”从软约束升格为硬熔断。第一动作不是搜索、不是全文抓取、不是排版，而是先确认拿到的就是用户想要的那篇文章。
@@ -408,7 +415,8 @@ python3 scripts/inspiration_archiver.py \
 - 承载 `CATEGORY_NODE_MAP`
 - 规范化 / 校验分类
 - 构造归档行与固定表头
-- 在 info-miner 侧解析可用的 Lark MCP/shortcut 脚本：下载链路优先 `inner_skills/lark/mcp_lark_lark_download.py`，缺失时使用当前 `inner_skills/lark_download/lark_download.py`
+- 在 info-miner 侧解析可用的 Lark MCP/shortcut 脚本，并对候选做**运行时可用性探测**（`exists()` 不等于可用）：下载链路优先 `inner_skills/lark/mcp_lark_lark_download.py`，其次 `inner_skills/lark_download/lark_download.py`；任一候选输出命中 `toolset ... not found` / `AimeError` / `Error from AIME Server` 即判定不可用并继续降级
+- 下载兜底（v1.11）：所有本地 MCP 下载候选均不可用时，改走 `lark-cli docs +fetch --as user --doc <url> --doc-format xml --detail with-ids --format json`，解析 `.data.document.content`，再由 `docx_xml_to_pseudo_markdown()` 转成带 `<!-- BLOCK_n | doxcn... -->` 标记的伪 `.lark.md`（XML 表格规范化为 markdown-format HTML 表格、`<h2>` 还原为 `## 📂 已归档资产`），落盘 `/workspace/.ephemeral_pool/` 任务唯一文件名
 - 更新链路优先历史 `inner_skills/lark/mcp_lark_update_lark_doc.py`，并探测当前 lark-doc update shortcut；本地脚本候选缺失时切换 `lark-cli docs +update --as user` 执行 `block_replace` / `block_insert_after`；全部候选缺失时必须显式熔断，禁止退回 OpenAPI/JWT 直调
 - 写后重新下载目标文档并做 RAW 回读验收
 - 任一步失败都 `raise WikiArchiveError`，阻断主流程
@@ -433,6 +441,10 @@ python3 user_skills/info-miner/scripts/wiki_archive_guard.py --selftest
 - 归档写入失败：重新下载目标 Wiki 文档并核查 `## 📂 已归档资产` 区块；若仍失败，必须报错中断，不得只交付文档链接
 
 ## 更新日志 (Changelog)
+- 1.11（2026-08-19）：修复 Wiki 归档阶段 `toolset lark_download not found` 的 P1 熔断。
+  - 根因：`inner_skills/lark_download/lark_download.py` 文件存在但背后 AIME toolset 已下线，而 resolver 只做存在性判定，把「文件存在」当成「可用」；更新链路已有 `lark-cli` 兜底，下载链路没有。
+  - 修复：新增 `is_toolset_unavailable()` 可用性探测（命中 `toolset ... not found` / `AimeError` / `Error from AIME Server` 即继续降级）；新增 `lark_cli_download()` 走 `lark-cli docs +fetch --doc-format xml --detail with-ids`；新增 `docx_xml_to_pseudo_markdown()` / `xml_table_to_markdown_table()` 完成 DocxXML → 伪 `.lark.md` 与 markdown-format 表格规范化；产物落 `/workspace/.ephemeral_pool/` 任务唯一文件名。
+  - 验收：`--selftest` 新增 3 条用例（toolset 不可用探测、XML→伪 lark.md 转换与表头提取、XML 链路补丁构造）；真机对 AI/Agent 节点验证解析出表格 block id 与 `next_index`，并在临时 docx 上完成 `block_replace --doc-format markdown` 写回 + RAW 回读。
 - 1.9.2（2026-08-15）：修复 Wiki 归档脚本因历史 Lark MCP wrapper 缺失导致的 P1 熔断。
   - 根因：`wiki_archive_guard.py` 硬编码依赖 `inner_skills/lark/mcp_lark_lark_download.py` 与 `inner_skills/lark/mcp_lark_update_lark_doc.py`，但当前 `inner_skills` 已演进为 `inner_skills/lark_download/lark_download.py` 等 shortcut 目录，旧 wrapper 不存在。
   - 修复：在 info-miner 侧新增多候选 resolver 与下载输出解析器；下载链路兼容旧脚本并 fallback 到当前 `lark_download` shortcut；更新链路保留 MCP-only 候选解析，本地脚本缺失时通过 `lark-cli docs +update --as user` 执行块替换/插入，全部候选缺失时明确熔断，禁止 OpenAPI/JWT 直调。
