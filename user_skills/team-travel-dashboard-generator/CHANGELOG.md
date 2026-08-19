@@ -1,5 +1,17 @@
 # Changelog
 
+## V3.12 · 2026-08-19
+- **补齐真实线上部署阶段**：`build_and_publish_daily.py` 新增 `deploy_to_prod()`，插在 `publish_dashboard_prod.py` 之后、`assert_generated_at_consistency()` 之前，以 workspace 根为 cwd 调用 `inner_skills/deploy/deploy_frontend.py`（`stable_domain=true`）把 `published/travel-dashboard-live` 真正推到线上静态站点。此前发布链路只做本地 `shutil.copyfile`，线上从未收到新产物。
+- **部署前自动提交**：`git add <publish_dir>` + `git commit --allow-empty -m "更新差旅大屏数据到 YYYY-MM-DD"`，满足 deploy skill「部署前先 commit」的硬要求。
+- **L3 runtime gate（禁止只看退出码）**：捕获 deploy stdout 并断言包含 `DEPLOYMENT SUCCESSFUL`，否则 `raise SystemExit("[DEPLOY_FAILED] ...")` 并打印原始输出。
+- **伪断言修复**：原「本地 json.generated_at == published 目录 json.generated_at」两端都是本地文件、拷完必然相等，断言恒真。现改为默认强制走线上远端断言。
+- **`--verify-url` 默认强制生效**：默认 `https://216a3e1709fd.aime-app.bytedance.net/travel_dashboard.prod.json`；传空串才关闭，且输出标注 `remote_assert_skipped: true`。
+- **远端拉取重试**：`fetch_remote_generated_at()` 最多 3 次尝试、间隔 10 秒、URL 追加 `?t=<epoch>` cache-buster，规避静态站点传播与 CDN 缓存延迟；3 次仍失败或版本不一致才输出 `[DATA_VERSION_ASSERT_FAILED]` / `[DATA_VERSION_MISMATCH]` 并非零退出。
+- **审计字段扩容**：最终 JSON 输出新增 `deploy_check`（`deployed` / `live_url` / `publish_dir` / 部署输出摘要），与 `data_version_check` 并列，便于定时任务审计。
+- **新增参数**：`--publish-dir`（默认 `../../published/travel-dashboard-live`）、`--skip-deploy`（仅调试，启用时 `deployed: false`）、`--skip-build`（单元级真机验证时跳过邮件抓取）。
+- **文案纠偏**：删除误导性提示「如需线上部署，请在上层流程使用 deploy skill 处理」，改为明确声明本脚本已闭环线上部署。
+- **范围收敛**：`publish_dashboard_prod.py` 的成对同步 + read-after-write 行为保持不变。
+
 ## V3.11 · 2026-08-17
 - **发布链路数据文件补齐**：`publish_dashboard_prod.py` 新增 `--source-json / --target-json`（默认 `output/travel_dashboard.prod.json` → `published/travel-dashboard-live/travel_dashboard.prod.json`），确保每次发布时数据文件与 `index.html` 同批同步，彻底消灭“新壳旧数据”。
 - **read-after-write 物理探针**：拷贝完成后调用 `assert_json_synced()` 回读已发布 JSON 的 `generated_at` 与本地比对，源 JSON 缺失、结构漂移或版本不一致均直接熔断（`[DATA_VERSION_MISMATCH]`）。

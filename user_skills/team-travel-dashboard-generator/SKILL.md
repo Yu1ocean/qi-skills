@@ -1,16 +1,16 @@
 ---
 name: team-travel-dashboard-generator
-description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，在 V3.7 修复飞书卡片 NEW 标签原生展示，并在 V3.11 根治发布链路数据文件漏同步（HTML + JSON 同批发布 + generated_at 版本断言），输出团队差旅大屏。
+description: 自动抓取近30天差旅审批 / 预订邮件，默认全量抓取并兼容单程票 / 多段链式行程细粒度去重，补齐周末差旅合规信号、酒店孤儿单审计、差标接入框架与 Email Ledger 零信任 QA，在 V3.7 修复飞书卡片 NEW 标签原生展示，并在 V3.12 闭环真实线上部署（deploy skill 部署 + DEPLOYMENT SUCCESSFUL 断言 + 线上 generated_at 远端断言），输出团队差旅大屏。
 ---
 
-version: 3.11
+version: 3.12
 ## Config（运行配置）
 
 ```yaml
 fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 ```
 
-# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.11
+# 团队全景差旅大屏自动生成器（UK/EU/JP POP BD）V3.12
 
 将“差旅审批邮件 → 结构化 JSON → 静态暗色大屏 / Dynamic UI 入口 → 合规巡检视图 → 邮件审计台账 QA”的链路固化成一个可复用技能。
 
@@ -46,6 +46,7 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - 详情文案中直接输出原始 `\n`，导致飞书卡片 / HTML 上出现转义字符泄漏。
 - 地图或时间轴没有对 `is_first_time_destination=true` 做红色高亮或呼吸灯提醒。
 - **[发布红线]** 发布只同步了 `index.html`，没有同批同步 `travel_dashboard.prod.json`，导致线上出现“新壳旧数据”。
+- **[发布红线]** 发布链路只把产物拷到本地 `published/` 目录、没有实际调用 deploy skill 部署到线上，就宣称发布成功（本地 self-copy 断言恒真，是伪断言）。
 - 发布链路结束后没有做「线上 `generated_at` == 本地 `generated_at`」断言，就宣称发布成功。
 
 ## Verification（强制验收清单）
@@ -74,6 +75,7 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 12. Dynamic UI 入口 HTML 可正常生成，且地图 / 时间轴对首次差旅地做了强提醒。
 13. 说明层同步回归通过：`SKILL.md`、`CHANGELOG.md`、`README.lark.md` 中的版本号、UI 变更摘要与执行口径一致。
 14. V3.11 发布链路回归通过：`scripts/publish_dashboard_prod.py` 同时同步 `index.html` 与 `travel_dashboard.prod.json`；`scripts/build_and_publish_daily.py` 末尾的数据版本断言通过（线上 / 已发布 `generated_at` 与本地 `generated_at` 完全一致），不一致时输出 `[DATA_VERSION_MISMATCH]` 并非零退出。
+15. V3.12 发布链路回归通过：`build_and_publish_daily.py` 已闭环真实线上部署，`deploy_to_prod()` 必须在 `deploy_frontend` 输出中断言 `DEPLOYMENT SUCCESSFUL`（禁止只看退出码），且默认对线上 URL 做 `generated_at` 远端断言（含 3 次重试 + 10s 间隔 + cache-buster query）；输出中必须带 `deploy_check.deployed=true`。
 
 ## Defaults（合规默认值）
 
@@ -97,7 +99,9 @@ fixed_dashboard_url: "https://216a3e1709fd.aime-app.bytedance.net/"
 - 生产发布默认产物对（**必须成对同步，禁止单推 HTML**）：
   - `output/travel_dashboard.prod.html` → `published/travel-dashboard-live/index.html`
   - `output/travel_dashboard.prod.json` → `published/travel-dashboard-live/travel_dashboard.prod.json`
-- 发布后数据版本断言：默认强制比对本地与已发布 `travel_dashboard.prod.json` 的 `generated_at`；如需额外校验真实线上地址，给 `build_and_publish_daily.py` 传 `--verify-url <线上 travel_dashboard.prod.json 地址>`，远端拉取失败或版本不一致同样熔断。
+- 发布后数据版本断言：默认强制比对本地与已发布 `travel_dashboard.prod.json` 的 `generated_at`。
+- `--verify-url`：**默认强制生效**（默认值 `https://216a3e1709fd.aime-app.bytedance.net/travel_dashboard.prod.json`），远端 `generated_at` 断言默认必跑；如需关闭必须显式传空串，且输出中会标注 `remote_assert_skipped: true`。远端拉取最多重试 3 次、间隔 10 秒并追加 cache-buster；仍失败或版本不一致输出 `[DATA_VERSION_ASSERT_FAILED]` / `[DATA_VERSION_MISMATCH]` 并非零退出。
+- 线上部署：`--publish-dir` 默认 `../../published/travel-dashboard-live`，`deploy_to_prod()` 默认开启（`--skip-deploy` 仅调试用，启用时输出 `deployed: false`）。
 
 ## 内置制度护栏（必须长期生效）
 
@@ -365,6 +369,13 @@ python3 scripts/build_travel_dashboard.py materialize-dynamic-ui \
 
 ## 更新日志
 
+- **V3.12**：根治发布链路“缺少真实线上部署动作”的伪断言缺口。
+  - `build_and_publish_daily.py` 新增 `deploy_to_prod()` 阶段，插在 `publish_dashboard_prod.py` 之后、`assert_generated_at_consistency()` 之前：以 workspace 根为 cwd 调用 `inner_skills/deploy/deploy_frontend.py`（`stable_domain=true`）真实部署 `published/travel-dashboard-live`。
+  - 部署前自动 `git add` + `git commit --allow-empty`（中文 commit message「更新差旅大屏数据到 YYYY-MM-DD」），满足 deploy skill 的先提交要求。
+  - L3 runtime gate：捕获 deploy 输出并断言包含 `DEPLOYMENT SUCCESSFUL`，否则 `[DEPLOY_FAILED]` 熔断并打印原始输出；禁止只看退出码。
+  - `--verify-url` 由可选改为**默认强制生效**，远端断言默认必跑；`fetch_remote_generated_at()` 增加 3 次重试 / 10 秒间隔 / cache-buster query，规避静态站点传播与 CDN 缓存延迟。
+  - 新增 `--publish-dir`、`--skip-deploy`（调试）与 `--skip-build`（单元级真机验证）参数；最终 JSON 输出新增 `deploy_check`（deployed / live_url / 输出摘要）与既有 `data_version_check` 并列。
+  - 修正原第 127 行误导性文案「如需线上部署，请在上层流程使用 deploy skill 处理」，改为明确声明本脚本已闭环线上部署。
 - **V3.11**：根治差旅大屏发布链路的数据文件漏同步与版本漂移。
   - `publish_dashboard_prod.py` 新增 `--source-json / --target-json`，把 `travel_dashboard.prod.json` 与 `index.html` 同批同步到线上入口，并在拷贝后做 read-after-write 探针（`assert_json_synced()`），源文件缺失或版本不一致直接熔断。
   - `build_and_publish_daily.py` 末尾新增 `assert_generated_at_consistency()` 断言：线上 / 已发布 `generated_at` 必须与本地 `generated_at` 完全一致，不一致输出 `[DATA_VERSION_MISMATCH]` 并非零退出。

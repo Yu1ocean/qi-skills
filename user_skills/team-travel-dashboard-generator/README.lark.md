@@ -1,9 +1,9 @@
 ## 📌 技能简介
-将 UK/EU/JP POP BD 团队的差旅审批邮件与商旅预订通知自动沉淀为结构化差旅资产：默认全量抓取可识别姓名的邮件，兼容单程票 / 多段链式行程，输出带【合规健康度雷达】、【今日新增预警】、飞书原生 NEW 标签优先展示与 lark_md 降级兜底、发卡前 HTML 回捞防呆、发布链路 HTML+JSON 同批同步与 `generated_at` 版本一致性断言、费用主卡常驻展示与强提醒特效的差旅大屏 V3.11，并补充 `output/mail_ledger.json` 作为 Email Logger 零信任 QA 审计台账。适用于团队差旅巡检、周会大屏、跨区域拜访排期复盘与合规风险扫描场景。
+将 UK/EU/JP POP BD 团队的差旅审批邮件与商旅预订通知自动沉淀为结构化差旅资产：默认全量抓取可识别姓名的邮件，兼容单程票 / 多段链式行程，输出带【合规健康度雷达】、【今日新增预警】、飞书原生 NEW 标签优先展示与 lark_md 降级兜底、发卡前 HTML 回捞防呆、发布链路 HTML+JSON 同批同步、真实线上部署闭环（deploy skill + `DEPLOYMENT SUCCESSFUL` 断言）与线上 `generated_at` 远端一致性断言、费用主卡常驻展示与强提醒特效的差旅大屏 V3.12，并补充 `output/mail_ledger.json` 作为 Email Logger 零信任 QA 审计台账。适用于团队差旅巡检、周会大屏、跨区域拜访排期复盘与合规风险扫描场景。
 
 ## 🔑 触发词
 - 核心关键词：
-  - 差旅大屏 V3.11
+  - 差旅大屏 V3.12
   - 今日新增预警
   - 差旅审批邮件
   - booking 差旅大屏
@@ -27,6 +27,7 @@
 - **QA 审计链路**：`scripts/build_mail_ledger.py` 会额外输出 `output/mail_ledger.json`，保留 `message_id / thread_id / sent_at / primary_category / classification_evidence / travel_record_count` 等字段，供 travel parser 命中复核与跨技能零信任 QA。
 - **模板约束**：大屏必须包含数据总览、飞线总览、目的地热度、合规健康度雷达、今日新增预警、Gantt 时间轴、明细表；首次差旅地需在地图 / 时间轴上做红色强提醒；V3.4 起静态 HTML 与 Dynamic UI 卡片均展示【今日新增预警】；V3.3 起行程详情中的原始 `\\n` 必须转为正常换行，`Message ID` 调试字段禁止继续出现在用户侧，费用金额需进入主卡常驻展示区。
 - **动态展示衔接**：本技能负责生成最终 HTML 与 Dynamic UI 入口文件；结果或链接需额外组装成卡片 Payload，落盘到 `.ephemeral_pool/`，由主进程统一发射。
+- **发布与线上部署（V3.12 闭环）**：`scripts/build_and_publish_daily.py` 一条命令跑完「build → 台账同步 → 本地成对发布 → 真实线上部署 → 线上版本断言」。部署阶段会先 `git commit`，再调用 `inner_skills/deploy/deploy_frontend.py`（`stable_domain=true`）把 `published/travel-dashboard-live` 推到线上；部署输出必须包含 `DEPLOYMENT SUCCESSFUL`，否则 `[DEPLOY_FAILED]` 熔断。随后默认对线上 `travel_dashboard.prod.json` 做 `generated_at` 远端断言（3 次重试 / 10 秒间隔 / cache-buster），不一致输出 `[DATA_VERSION_MISMATCH]` 并非零退出。运行结果会同时给出 `deploy_check` 与 `data_version_check` 两段审计信息。用户视角上，这意味着「定时任务说发布成功，线上就一定是最新数据」，不会再出现本地已更新、线上仍是昨天的静默漂移。
 - **说明层同步闸门**：凡是修改 `assets/travel_dashboard_template.html` 或 `assets/travel_dashboard_dynamic_ui_template.html`，必须在同一轮提交中同步更新 `SKILL.md`、`CHANGELOG.md`、`README.lark.md` 三份说明文件；若模板 diff 存在而说明层无 diff，则视为发版失败，不进入归档流水线。
 
 ## 📖 案例实录 (Best Practice)
@@ -66,4 +67,5 @@
 - Dynamic UI 模板：`assets/travel_dashboard_dynamic_ui_template.html`
 - 规则文档：`references/mail-extraction-rules.md`
 - 输出契约：`references/dashboard-output-contract.md`
+- 发布/部署脚本：`scripts/build_and_publish_daily.py`（V3.12 真实线上部署闭环）
 - 版本日志：`CHANGELOG.md`

@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKILL-FORGE-PIPELINE",
-    "name": "skill-forge-pipeline-v4",
-    "description": "创建、升级、打包、发布并归档 Aime 自制技能。V5.14 修复 Post-Forge Git Push Hook 假成功缺陷：改用 git push origin HEAD:main 并新增远端 main SHA 回读断言。",
-    "version": "5.14",
-    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
+    "skill_id": "29f99b61-e50d-47eb-a086-f101aad58241",
+    "name": "team-travel-dashboard-generator",
+    "description": "团队全景差旅大屏自动生成器：邮件抓取→结构化→合规巡检大屏，V3.12 闭环真实线上部署与线上 generated_at 远端断言",
+    "version": "3.12",
+    "doc_link": "https://bytedance.larkoffice.com/docx/OJ4Xd5utOoVJbzxYgOEcQxycnHf",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
-    "date": "2026-08-17",
-    "updated_at": "2026-08-17 13:55",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
-    "zip_name": "skill-forge-pipeline-v4.zip",
-    "drive_file_token": "T3nsb2CdzoeJfLxeXQ5c8qlonge",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/T3nsb2CdzoeJfLxeXQ5c8qlonge"
+    "date": "2026-08-19",
+    "updated_at": "2026-08-19 09:42",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/team-travel-dashboard-generator.zip",
+    "zip_name": "team-travel-dashboard-generator.zip",
+    "drive_file_token": "OeSZbexPNosZvkxh3l6cQSXwnCd",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/OeSZbexPNosZvkxh3l6cQSXwnCd"
 }
