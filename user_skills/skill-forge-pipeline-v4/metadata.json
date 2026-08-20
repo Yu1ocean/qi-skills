@@ -1,16 +1,16 @@
 {
-    "skill_id": "ROSTER-RESIGN-CHECKER",
-    "name": "roster-resign-checker",
-    "description": "团队名单离职核查器：读取飞书电子表格团队成员名单，逐人核查飞书账号状态（在职/疑似离职/需人工确认），发现疑似离职成员后私信负责人确认；只读+通知，绝不执行删除。",
+    "skill_id": "EU-AM-EFFICIENCY-ANALYZER",
+    "name": "eu-am-efficiency-analyzer",
+    "description": "EU AM 效率漏斗分析器：漏斗诊断 + 白底气泡矩阵，v1.1 补齐多维表格→分析基盘每日 ETL 同步链路与三项零信任门禁",
     "version": "1.1",
-    "doc_link": "https://bytedance.my.larkoffice.com/docx/CPSPd4udPoqjnjxmdKrm2hMlyKh",
+    "doc_link": "https://bytedance.my.larkoffice.com/docx/MS0DdkWzDoxNBCxopUimY9POylc",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-20",
-    "updated_at": "2026-08-20 13:49",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/roster-resign-checker",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/roster-resign-checker.zip",
-    "zip_name": "roster-resign-checker.zip",
-    "drive_file_token": "PEz9b9SGQoyiz8xljvUmoHqfynE",
-    "drive_file_url": "https://bytedance.my.larkoffice.com/file/PEz9b9SGQoyiz8xljvUmoHqfynE"
+    "updated_at": "2026-08-20 16:05",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer.zip",
+    "zip_name": "eu-am-efficiency-analyzer.zip",
+    "drive_file_token": "MoWibpEwZoK8F4xtihRmsyBxyQc",
+    "drive_file_url": "https://bytedance.my.larkoffice.com/file/MoWibpEwZoK8F4xtihRmsyBxyQc"
 }

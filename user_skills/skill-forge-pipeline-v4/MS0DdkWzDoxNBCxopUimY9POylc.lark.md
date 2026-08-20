@@ -1,6 +1,8 @@
 # EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.0 技能说明
 
-<figure view-type="Card"><source name="eu-am-efficiency-analyzer.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NzE3MWYzMzRkY2MwYjdkMWQzOThlMzNjNTNiMGUwZGJfNjQ2YmU3ZWY4M2MxODE1ZDlkZjYzM2FhZWQxZGQyNjJfSUQ6NzY3NTY1MDA4OTMyMjMxOTQ3Nl8xNzg3MTI2NTU2OjE3ODcxMzAxNTZfVjM" mime="application/zip" size="28851" token="IzqZblVuTom3cSxolQcmufJkyxh"/></figure>
+<figure view-type="Card"><source name="eu-am-efficiency-analyzer.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Mzc5MzY2ODY2Mjk1OGJlOWIyNWNjNzQwMmRkZjE5NmVfZDliYWE1NTYwM2VjYmIzZWNmMDBmMWFhMWRkODNlYzBfSUQ6NzY3NjAyMTk4NzI5MDQzNTE4OV8xNzg3MjEzMTQ0OjE3ODcyMTY3NDRfVjM" mime="application/zip" size="31277" token="MoWibpEwZoK8F4xtihRmsyBxyQc"/></figure>
+
+<figure view-type="Card"><source name="eu-am-efficiency-analyzer.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MGY2MmU0ODZkN2Y1NDFmMGFlNjhiOWMxZDg2YWZiOThfZWZkMmJjNGUxZWE0ZDVlZjZhYmNiMDI5YjQ5MGQzZjVfSUQ6NzY3NTY1MDA4OTMyMjMxOTQ3Nl8xNzg3MjEzMTQwOjE3ODcyMTY3NDBfVjM" mime="application/zip" size="28851" token="IzqZblVuTom3cSxolQcmufJkyxh"/></figure>
 
 ## 📌 技能简介
 

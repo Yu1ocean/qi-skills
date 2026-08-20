@@ -2,10 +2,10 @@
 name: eu-am-efficiency-analyzer
 description: EU AM（EU 招商商务）效率漏斗分析器。从飞书「明细_分析基盘」读取分析基盘，计算各 AM 的线索量 / 有意愿数 / 主口径入驻数 / 备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。适用场景：EU AM 效率复盘、招商漏斗诊断、AM 分层与瓶颈定位、入驻率/意愿转化率对比、气泡矩阵可视化。
 author: 于奇楠
-version: 1.0
+version: 1.1
 ---
 
-# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.0
+# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.1
 
 把 EU AM 招商效率从「一堆明细行」变成「可判断的漏斗诊断 + 可看懂的气泡矩阵」。计算内核纯函数、无副作用、内置双路重算与漏斗单调性断言（零信任校验）；渲染层强制白底，与计算解耦。
 
@@ -52,6 +52,17 @@ version: 1.0
 - 背景色：`#FFFFFF`（HTML `backgroundColor` + matplotlib fig/ax/savefig facecolor）
 - 零信任校验：默认开启，FAIL 即熔断
 - 结果 JSON 默认名：`am_funnel_diagnosis.json`
+
+### 数据源同步链路（ETL Defaults）
+
+- 真实数据源（多维表格）：https://bytedance.my.larkoffice.com/base/MPN9bUhBTaUsgcsrN92m2Oq0yde?table=tbl5IlstItZOpInx&view=vewm2HQxRS（base_token=MPN9bUhBTaUsgcsrN92m2Oq0yde, table_id=tbl5IlstItZOpInx）
+- ETL 同步脚本：projects/eu-am-efficiency/source_sync.py（幂等：Pass A 文本清底 + Pass B typed 全量重写；禁用 +cells-clear，禁止新建/复制/删除 sheet）
+- 同步频率：每日工作日 08:50 CST（cron: 50 8 * * 1-5，须使用绝对路径 /usr/local/bin/lark-cli）
+- 同步目标：https://bytedance.my.larkoffice.com/sheets/Bi8msSkCqhBywbtRGlomkoYJylg → 明细_分析基盘（全量重写）/ 元数据与质检（追加同步日志）
+- 过滤口径：AM优先级=AM招商推进 且 历史入驻≠1；历史入驻=1 仅记数不入基盘
+- 长整型字段：EU/UK_global seller id、EU/UK_匹配global_seller_id 一律 dtype=object（文本格式 @）
+- 零信任门禁：行数断言 / 关键字段空值率<5%（负责AM、seller_id[已入驻口径]、AM优先级）/ RAW 抽 10 行 0 差异；任一 FAIL → 写失败日志并非 0 退出
+- 技能内入口：`scripts/sync_source_entry.py`（L3 断言层：校验 `projects/eu-am-efficiency/source_sync.py` 存在，缺失即 `raise FileNotFoundError`，存在则子进程转发调用，不复制真相源）
 
 ## ⚙️ 核心架构 / SOP
 
@@ -125,4 +136,5 @@ cd user_skills/eu-am-efficiency-analyzer && python3 scripts/render_bubble_matrix
 
 ## 变更记录
 
+- **v1.1**：补齐真实数据源 ETL 同步链路（多维表格 → 明细_分析基盘 每日工作日 08:50 CST 全量重写，幂等 Pass A/Pass B），并内置三项零信任门禁（行数断言 / 关键字段空值率<5% / RAW 抽 10 行 0 差异，任一 FAIL 即非 0 退出）；新增技能内 L3 入口脚本 `scripts/sync_source_entry.py`。
 - **v1.0**：首版。内核 `am_analysis_core.py`（含零信任双路重算与漏斗单调性断言）+ 白底渲染层 `render_bubble_matrix.py` + 薄封装 CLI `run_funnel_diagnosis.py`（L3 断言熔断）；补齐 L1 反合理化三件套与 L2 合规默认值。
