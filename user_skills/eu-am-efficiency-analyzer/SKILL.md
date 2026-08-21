@@ -1,11 +1,11 @@
 ---
 name: eu-am-efficiency-analyzer
-description: EU AM（EU 招商商务）效率漏斗分析器。从飞书「明细_分析基盘」读取分析基盘，计算各 AM 的线索量 / 有意愿数 / 主口径入驻数 / 备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。适用场景：EU AM 效率复盘、招商漏斗诊断、AM 分层与瓶颈定位、入驻率/意愿转化率对比、气泡矩阵可视化。
+description: EU AM（EU 招商商务）效率漏斗分析器。从飞书「明细_分析基盘」读取分析基盘，计算各 AM 的线索量 / 有意愿数 / 主口径入驻数 / 备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。另含飞书电子表格「3 底表 + 3 阅读视图」人机分层读写同步架构（底表 106 列全字段幂等覆盖 / 阅读视图 38 列 INDEX+MATCH 动态引用 / 受保护 Sheet 硬熔断）。适用场景：EU AM 效率复盘、分层底表与阅读视图同步、招商漏斗诊断、AM 分层与瓶颈定位、入驻率/意愿转化率对比、气泡矩阵可视化。
 author: 于奇楠
-version: 1.1
+version: 1.2
 ---
 
-# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.1
+# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.2
 
 把 EU AM 招商效率从「一堆明细行」变成「可判断的漏斗诊断 + 可看懂的气泡矩阵」。计算内核纯函数、无副作用、内置双路重算与漏斗单调性断言（零信任校验）；渲染层强制白底，与计算解耦。
 
@@ -211,5 +211,6 @@ cd user_skills/eu-am-efficiency-analyzer && python3 scripts/render_bubble_matrix
 
 ## 变更记录
 
+- **v1.2**：数据同步架构由「1 底表 + 1 阅读视图」升级为「3 底表 + 3 阅读视图」人机分层读写（底表层 106 列全字段每日幂等覆盖：全量底表 8496 行 / 全量_AM招商推进 1906 行 / BD底表 1480 行；阅读层 38 列固定表头 + INDEX+MATCH 按字段名动态引用）；`全量_AM招商推进` 筛选口径改为仅 `AM优先级 == "AM招商推进"`（不再叠加 `历史入驻 != 1`，1422 → 1906 行）；`历史入驻` / `AM分析` 列为受保护只读 Sheet；沉淀 8 条工程护栏（workbook-info 前置复核、cells-clear 存在性判断、formula-verify 分段复扫、INDEX/MATCH 上界参数化、长整型 ID 文本化、PROTECTED guard 硬熔断、质检阈值按底表分别配置）；新增技能内薄壳入口 `scripts/layered_sync_entry.py`（L3 断言 + 子进程转发到 `projects/eu-am-efficiency/build_layered_sheets.py`）。
 - **v1.1**：补齐真实数据源 ETL 同步链路（多维表格 → 明细_分析基盘 每日工作日 08:50 CST 全量重写，幂等 Pass A/Pass B），并内置三项零信任门禁（行数断言 / 关键字段空值率<5% / RAW 抽 10 行 0 差异，任一 FAIL 即非 0 退出）；新增技能内 L3 入口脚本 `scripts/sync_source_entry.py`。
 - **v1.0**：首版。内核 `am_analysis_core.py`（含零信任双路重算与漏斗单调性断言）+ 白底渲染层 `render_bubble_matrix.py` + 薄封装 CLI `run_funnel_diagnosis.py`（L3 断言熔断）；补齐 L1 反合理化三件套与 L2 合规默认值。

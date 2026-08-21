@@ -820,6 +820,80 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
     )
 
 
+def list_zip_figure_blocks(doc_url: str, zip_name: str) -> list[Dict[str, str]]:
+    """List file-block (figure) ids in the doc whose source name matches zip_name."""
+
+    output = run_subprocess(
+        [
+            "lark-cli", "docs", "+fetch",
+            "--doc", doc_url,
+            "--doc-format", "xml",
+            "--detail", "with-ids",
+            "--format", "json",
+        ],
+        "list doc file blocks via lark-cli",
+    )
+    payload = json.loads(output)
+    content = ((payload.get("data") or {}).get("document") or {}).get("content", "")
+
+    blocks: list[Dict[str, str]] = []
+    for m in re.finditer(r'<figure id="([^"]+)"[^>]*>\s*<source[^>]*name="([^"]+)"[^>]*token="([^"]+)"', content):
+        if m.group(2) == zip_name:
+            blocks.append({"block_id": m.group(1), "file_name": m.group(2), "file_token": m.group(3)})
+    return blocks
+
+
+def normalize_zip_file_blocks(doc_url: str, zip_name: str, stale_block_ids: list[str]) -> str:
+    """Idempotent File Block hygiene (v5.14).
+
+    1) Move the freshly inserted ZIP block to the top of the doc (right below the title).
+    2) Physically delete stale ZIP blocks with the same file name, so the doc keeps
+       exactly one authoritative attachment instead of accumulating ghost versions.
+    """
+
+    logs: list[str] = []
+    current = list_zip_figure_blocks(doc_url, zip_name)
+    fresh = [b for b in current if b["block_id"] not in stale_block_ids]
+    if not fresh:
+        raise RuntimeError(f"No freshly inserted file block found for {zip_name}")
+
+    new_block_id = fresh[-1]["block_id"]
+    run_subprocess(
+        [
+            "lark-cli", "docs", "+update",
+            "--doc", doc_url,
+            "--command", "block_move_after",
+            "--block-id", "0",
+            "--src-block-ids", new_block_id,
+            "--format", "json",
+        ],
+        "move zip file block to doc top",
+    )
+    logs.append(f"moved fresh file block {new_block_id} to doc top")
+
+    to_delete = [b["block_id"] for b in current if b["block_id"] in stale_block_ids]
+    if to_delete:
+        run_subprocess(
+            [
+                "lark-cli", "docs", "+update",
+                "--doc", doc_url,
+                "--command", "block_delete",
+                "--block-id", ",".join(to_delete),
+                "--format", "json",
+            ],
+            "delete stale zip file blocks",
+        )
+        logs.append(f"deleted stale file blocks: {','.join(to_delete)}")
+
+    remaining = list_zip_figure_blocks(doc_url, zip_name)
+    if len(remaining) != 1:
+        raise RuntimeError(
+            f"File Block idempotency assertion failed: expected exactly 1 block for {zip_name}, got {len(remaining)}"
+        )
+    logs.append(f"assert PASS: exactly 1 file block remains ({remaining[0]['block_id']}, token={remaining[0]['file_token']})")
+    return " | ".join(logs)
+
+
 def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
     markdown_path = download_doc_markdown(doc_url)
     content = markdown_path.read_text(encoding="utf-8")
@@ -828,35 +902,68 @@ def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
 
 
 def move_doc_to_wiki_via_mcp(doc_url: str, wiki_node_token: str) -> Dict[str, str]:
-    workspace_root = get_workspace_root()
-    move_script = workspace_root / "inner_skills/lark/mcp_lark_move_lark_doc.py"
-    if not move_script.exists():
-        raise FileNotFoundError(f"Lark MCP move script not found: {move_script}")
+    """Wiki Mount Phase via lark-cli (v5.14).
 
-    output = run_subprocess(
-        [
-            "python3",
-            str(move_script),
-            json.dumps(
-                {
-                    "document_urls": [doc_url],
-                    "target_type": "wiki",
-                    "target_location": wiki_node_token,
-                },
-                ensure_ascii=False,
-            ),
-        ],
-        "lark move doc to wiki",
-    )
+    `inner_skills/lark/mcp_lark_move_lark_doc.py` is offline, so mounting now
+    uses `lark-cli wiki +node-get` (idempotent probe) + `lark-cli wiki +move`.
+    Already-mounted docs short-circuit to PASS instead of failing the pipeline.
+    """
 
-    urls = re.findall(r'https?://[^\s"\'<>]+', output)
-    moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), doc_url)
-    moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+    doc_token = parse_doc_token(doc_url)
 
+    def _probe() -> Dict[str, Any]:
+        try:
+            raw = run_subprocess(
+                ["lark-cli", "wiki", "+node-get", "--node-token", doc_url, "--format", "json"],
+                "probe wiki node for skill doc",
+            )
+        except RuntimeError:
+            return {}
+        try:
+            body = json.loads(raw[raw.index("{"):])
+        except (ValueError, json.JSONDecodeError):
+            return {}
+        if not body.get("ok"):
+            return {}
+        return body.get("data") or {}
+
+    node = _probe()
+    if node.get("parent_node_token") == wiki_node_token:
+        node_token = node.get("node_token", "")
+        return {
+            "doc_link": doc_url,
+            "wiki_url": f"https://bytedance.larkoffice.com/wiki/{node_token}" if node_token else DEFAULT_WIKI_URL,
+            "wiki_node_token": node_token or wiki_node_token,
+            "raw_output": f"already mounted under target parent {wiki_node_token} (idempotent PASS)",
+        }
+
+    space_id = node.get("space_id", "")
+    command = [
+        "lark-cli", "wiki", "+move",
+        "--target-parent-token", wiki_node_token,
+        "--format", "json",
+    ]
+    if node.get("node_token"):
+        command += ["--node-token", node["node_token"]]
+        if space_id:
+            command += ["--target-space-id", space_id]
+    else:
+        command += ["--obj-token", doc_token, "--obj-type", "docx"]
+
+    output = run_subprocess(command, "lark move doc to wiki")
+
+    node_after = _probe()
+    if node_after.get("parent_node_token") != wiki_node_token:
+        raise RuntimeError(
+            f"Wiki Mount Phase verification failed: parent_node_token="
+            f"{node_after.get('parent_node_token')!r}, expected {wiki_node_token!r}\n{output}"
+        )
+
+    moved_node_token = node_after.get("node_token", "")
     return {
-        "doc_link": moved_doc_url,
-        "wiki_url": moved_wiki_url or f"https://bytedance.larkoffice.com/wiki/{wiki_node_token}",
-        "wiki_node_token": wiki_node_token,
+        "doc_link": doc_url,
+        "wiki_url": f"https://bytedance.larkoffice.com/wiki/{moved_node_token}" if moved_node_token else DEFAULT_WIKI_URL,
+        "wiki_node_token": moved_node_token or wiki_node_token,
         "raw_output": output,
     }
 
