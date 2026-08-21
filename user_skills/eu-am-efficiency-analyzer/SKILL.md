@@ -245,3 +245,12 @@ cd user_skills/eu-am-efficiency-analyzer && python3 scripts/render_bubble_matrix
 - **v1.2**：数据同步架构由「1 底表 + 1 阅读视图」升级为「3 底表 + 3 阅读视图」人机分层读写（底表层 106 列全字段每日幂等覆盖：全量底表 8496 行 / 全量_AM招商推进 1906 行 / BD底表 1480 行；阅读层 38 列固定表头 + INDEX+MATCH 按字段名动态引用）；`全量_AM招商推进` 筛选口径改为仅 `AM优先级 == "AM招商推进"`（不再叠加 `历史入驻 != 1`，1422 → 1906 行）；`历史入驻` / `AM分析` 列为受保护只读 Sheet；沉淀 8 条工程护栏（workbook-info 前置复核、cells-clear 存在性判断、formula-verify 分段复扫、INDEX/MATCH 上界参数化、长整型 ID 文本化、PROTECTED guard 硬熔断、质检阈值按底表分别配置）；新增技能内薄壳入口 `scripts/layered_sync_entry.py`（L3 断言 + 子进程转发到 `projects/eu-am-efficiency/build_layered_sheets.py`）；新增技能内主脚本 `scripts/build_layered_sheets.py`；沉淀 8 条工程护栏（G1-G8）；分层同步表 `RvpVsoUODhqCXJt4rFgm1M6ky2e`；移除旧版 `Bi8ms...` 单表数据源引用。
 - **v1.1**：补齐真实数据源 ETL 同步链路（多维表格 → 分析基盘 每日工作日 08:50 CST 全量重写，幂等 Pass A/Pass B），并内置三项零信任门禁（行数断言 / 关键字段空值率<5% / RAW 抽 10 行 0 差异，任一 FAIL 即非 0 退出）；新增技能内 L3 入口脚本 `scripts/sync_source_entry.py`。
 - **v1.0**：首版。内核 `am_analysis_core.py`（含零信任双路重算与漏斗单调性断言）+ 白底渲染层 `render_bubble_matrix.py` + 薄封装 CLI `run_funnel_diagnosis.py`（L3 断言熔断）；补齐 L1 反合理化三件套与 L2 合规默认值。
+
+## ☁️ 云端发布记录
+
+- `cloud_publish_status`: **SUCCESS**
+- `skill_name`: `eu-am-efficiency-analyzer`
+- `version`: `1.2`
+- `cloud_scope`: `user`
+- `cloud_published_at`: `2026-08-21 21:30`
+- `cloud_skill_id`: `3b6bdf3f-82e1-481b-945a-ec801dec95a9`

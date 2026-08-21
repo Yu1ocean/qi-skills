@@ -1,5 +1,12 @@
 # Changelog - skill-forge-pipeline-v4
 
+## v5.15 (2026-08-21)
+- 修复 Archive 阶段 ZIP 文件块「无限 append」P1 缺陷：`register_skill.py` 新增 `upsert_zip_file_block()`，把 ZIP 回挂从 append 改为 **UPSERT 幂等替换**（扫描 → 批量 `block_delete` 删同名旧块 → `+media-insert` 插新块 → `block_move_after` 归位标题正下方 → RAW 回读断言块数 == 1）。删除发生在插入之前，避免误删新块。
+- 加固 `verify_file_block_attached()`：由「文件名出现即 PASS」升级为「出现次数 == 1 才 PASS」，不等于 1 直接 `raise GuardrailViolation`，禁止 WARNING 降级（这正是原缺陷长期潜伏的根因）。
+- 新增 `list_doc_zip_file_blocks()` / `is_own_skill_zip()` / `delete_doc_blocks()` / `assert_zip_block_below_title()` / `move_block_to_doc_begin()`；ZIP 块枚举走 `lark-cli docs +fetch --doc-format xml --detail with-ids`，按属性名解析（不依赖 `name`/`size`/`token` 顺序），block_id 取外层 `figure` id。异物块（他人技能 ZIP）只报告不自动删除。
+- 阻断性修复：`inner_skills/lark/mcp_lark_update_lark_doc.py`、`mcp_lark_lark_download.py`、`mcp_lark_move_lark_doc.py` 已从运行时下线，v4 发布链路整体不可运行。文件块插入迁移至 `lark-cli docs +media-insert`，文档下载迁移至 `lark-cli docs +fetch --doc-format markdown`，版本标识同步迁移至 `docs +update --command block_replace`，Wiki Mount 迁移至 `lark-cli wiki +node-get` + `wiki +move`。
+- `SKILL.md` 同步：Verification 第 4 条改写为 UPSERT 断言口径（块数 == 1 + 位置断言 + 失败必须 raise）；Red Flags / Common Rationalizations 新增「只 append 不清旧块」「只验存在不验唯一」条款；Archive SOP 写入六步文档挂载规则。
+
 ## v5.13 (2026-07-30)
 - 正式将 Git 自动归档写入 `SKILL.md` 的 Archive 后置 SOP：明确调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`、目标仓库 `https://github.com/Yu1ocean/qi-skills`、commit message 格式与失败汇报口径。
 - 在约束条件中固化每次 forge/upsert 完成后必须触发 Git push hook，并明确 `skill-forge-pipeline-v4` 自举迭代同样需要触发 Git push。

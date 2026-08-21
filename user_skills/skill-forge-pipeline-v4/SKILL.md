@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.14
+version: 5.15
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.14)
+# 技能锻造流水线 (Forge Pipeline V5.15)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -17,6 +17,8 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - “飞书写入/赋权失败我先跳过，先给你本地路径就算交付。”
 - “自检脚本麻烦，先不跑。”
 - “我大概知道风险等级，就不做分级判断了。”
+- “ZIP 文件块只管插新的，旧的先留着，反正文档还能打开。”
+- “文件名在文档里出现过就算回挂成功了，不用数几个。”
 
 ## Red Flags（危险信号）
 
@@ -26,6 +28,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 升级技能只改了代码（`.py`）但没有同步修改说明书（`SKILL.md`）。
 - 涉及“复盘报告 / 故障修复报告 / 架构演进报告 / 归档”类技能升级，但 `SKILL.md` 的 Workflow / SOP 中没有显式写入【文档生动化标准】。
 - 涉及飞书资产写入/赋权/文件块挂载但没有 `include_secrets=true`。
+- ZIP 回挂只做 append 不清理同名旧块（说明文档堆积「幽灵安装包」），或只验证文件名「存在」而不验证「唯一」。
 - 输出中出现“应该/大概/可能/我猜/先跳过”，但没有可验证的 RAW 回读证据。
 
 ## Verification（强制验收清单）
@@ -35,7 +38,10 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 1. **CDA 自检通过**：`scripts/cda_guardrails_selfcheck.py` 退出码为 0，并清晰输出风险等级与三层覆盖情况。
 2. **双轨校验通过**：升级技能时，`SKILL.md` 与底层代码（如 `.py`）必须同时有变更（否则立刻熔断）。
 3. **Zip 发布闭环**：`scripts/register_skill.py` 生成的 `metadata.json` 中必须包含 `zip_path`、`drive_file_url`、`doc_link`、`wiki_url`、`wiki_node_token`。
-4. **说明文档回挂验收**：回捞下载最新文档，确认标题下方存在最新 zip 的原生 File Block（非纯文本链接）。
+4. **说明文档回挂验收（UPSERT 语义，V5.15 加固）**：ZIP 回挂必须是**幂等替换**而非 append。回读说明文档（`lark-cli docs +fetch --doc-format xml --detail with-ids`）后必须同时满足：
+   - 属于本技能的 ZIP 文件块（`<figure><source name="*.zip">`）**数量恰好 == 1**，且文件名 == 本次发布的 zip 名；
+   - 该文件块是**第一个正文块**（标题正下方），且是原生 File Block（非纯文本链接）；
+   - 数量 != 1 或位置不符时必须 `raise` 熔断，**严禁**降级成 WARNING 后继续宣称发布成功。
 5. **Wiki 归档验收**：说明文档必须已成功迁入目标 Wiki 节点；若 Wiki Mount Phase 失败，发布流程必须立刻熔断，不得继续落盘 `metadata.json` 或宣称发布成功。
 6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
@@ -144,7 +150,13 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 - **Zip 打包**：在最后阶段强制运行 `scripts/register_skill.py`，传入 `--skill-dir`，将目标技能目录（如 `user_skills/xxx/`）打包为同级 `.zip` 文件。
 - **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并通过 `feishu-doc-writing-guide` 的 MCP / personal-space 修复链路为 `yuqinan@bytedance.com` 恢复可管理访问权；严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API。
-- **文档挂载**：`scripts/register_skill.py` 必须调用 `inner_skills/lark/mcp_lark_update_lark_doc.py`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式插入到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。
+- **文档挂载（UPSERT 而非 append，V5.15）**：`scripts/register_skill.py` 必须调用 `upsert_zip_file_block()`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式**幂等替换**到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。执行顺序不可颠倒：
+  1. **插入前枚举**：`list_doc_zip_file_blocks()` 走 `lark-cli docs +fetch --doc-format xml --detail with-ids`，解析 `<figure id=..><source name=.. token=..>`，快照文档全部 ZIP 文件块（block_id 取**外层 figure 的 id**）。
+  2. **先删同名旧块**：`is_own_skill_zip()` 识别属于本技能的旧 ZIP（`<skill>.zip` 或文件名包含技能名的变体，如 `<skill>_latest.zip`），用 `lark-cli docs +update --command block_delete --block-id <逗号分隔>` 批量物理删除，并 `sleep 2s` 后回读断言无残留；有残留即 `raise`。
+  3. **再插入新块**：`lark-cli docs +media-insert` 插入新 ZIP（先删后插，避免误删刚插入的新块）。
+  4. **置顶归位**：`+media-insert` 默认追加到文档末尾，必须用 `lark-cli docs +update --command block_move_after --block-id <docx_token> --src-block-ids <new_block_id>` 归位到标题正下方，并回读断言首个正文块 id == 新块 id。
+  5. **RAW 唯一性断言**：`sleep 2s` 后回读断言目标 zip 文件名的文件块数量 **== 1**；不等于 1 立刻 `raise` 熔断，**禁止**降级 WARNING。`verify_file_block_attached()` 同步升级为「出现次数 == 1 才 PASS」。
+  6. **异物块只报告不删除**：文件名与本技能无关的 ZIP 块属他人资产，只打印 block_id + 文件名清单交人工拍板，严禁自动删除。
 - **Wiki Mount Phase**：在 ZIP 原生文件块回挂完成后、`metadata.json` 落盘前，必须调用飞书 Wiki MCP 挂载链路（如 `mcp_lark_move_lark_doc.py`），将说明文档迁入「Aime 技能库」根节点或 `--wiki-node-token` 指定节点。该步骤属于发布成功的强契约；一旦迁移失败，必须立刻熔断，禁止继续 metadata 落盘、归档写台账或宣称发布完成。
 - **元数据打包**：收集并打包新技能或更新技能的元数据（技能编号、名称、功能描述、技能说明文档链接、技能目录路径、zip 路径、飞书云盘文件链接、Wiki 链接、Wiki 节点 token、创建/更新日期）。
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
@@ -184,6 +196,13 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
   - 如需自定义首发版本，可显式传 `--initial-version 2.0` 覆盖默认；如需强制指定任意目标版本，可显式传 `--new-version 0.2`。
 
 ## 更新日志 (Changelog)
+
+- **V5.15**: 修复 ZIP 回挂「无限 append」导致说明文档堆积幽灵安装包的 P1 缺陷（治本）。
+  - **根因**：`attach_zip_to_doc_via_mcp()` 每次发布都纯 insert 一个新 File Block，从不清理同名旧块；而 `verify_file_block_attached()` 只判断「文件名是否出现过」（`in content`），堆到 14 个 ZIP 块也照样 PASS —— 缺陷因此长期潜伏（24 篇技能说明文档中 7~8 篇被污染）。
+  - **改造**：新增 `upsert_zip_file_block()` 实现 UPSERT 语义五步闭环——扫描（`list_doc_zip_file_blocks()` 解析 `<figure><source name=.. token=..>`，取外层 figure id，属性顺序无关）→ 批量 `block_delete` 删除同名旧块（先删后插）→ `+media-insert` 插入新块 → `block_move_after` 归位标题正下方 + `assert_zip_block_below_title()` 位置断言 → RAW 回读断言目标 zip 块数 **== 1**，不等于 1 直接 `raise GuardrailViolation`（严禁 WARNING 降级）。
+  - **护栏加固**：`verify_file_block_attached()` 由「出现即 PASS」改为「出现次数 == 1 才 PASS」；`is_own_skill_zip()` 兼容 `<skill>_latest.zip` 等历史变体命名；异物块（他人技能 ZIP）只报告不自动删除。
+  - **运行时通道迁移（阻断性修复）**：`inner_skills/lark/mcp_lark_update_lark_doc.py` / `mcp_lark_lark_download.py` / `mcp_lark_move_lark_doc.py` 均已从运行时下线，v4 链路整体不可运行。文件块插入改走 `lark-cli docs +media-insert`，文档下载改走 `lark-cli docs +fetch --doc-format markdown` 兜底，版本标识同步改走 `docs +update --command block_replace`，Wiki Mount 改走 `lark-cli wiki +node-get` + `wiki +move`。
+  - **真机验证**：`skill-forge-pipeline-v4` 说明文档（`HgY3dJBPfowjJfxWnxWcvItJncg`）forge 前 `skill-forge-pipeline-v4.zip` 块数 = 0（另有 1 个异物块 `skill-forge-pipeline.zip` 仅报告不删除），forge 后回读断言 == 1。
 
 - **V5.14**: 修复 forge 回执落点错位与版本号 patch 位截断两项 P1 缺陷。
   - **Task 1（回执落点）**：`register_skill.py` 的 `metadata_path = Path.cwd() / "metadata.json"` 硬编码执行目录，导致回执散落在流水线的当前工作目录而非目标技能目录，并生成一批「看起来像权威元数据、实际内容错位」的幽灵 `metadata.json`。现改为写入 `skill_dir / ".forge_receipt.json"`（无 `--skill-dir` 时才回落 `Path.cwd()`），并同步改名与全部日志文案（`✅ Forge receipt written to ...`），消除「元数据 vs 回执」语义误导。仓库根 `.gitignore` 全局黑名单区追加 `**/.forge_receipt.json`，回执作为可再生产物永不入 Git。
