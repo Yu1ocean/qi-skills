@@ -89,5 +89,7 @@ __pycache__/
 *.pyo
 *.pyd
 
-# ---------- 已废弃的双活目录（v5.19 起更名为 skill-forge-pipeline，禁止再次入库） ----------
+# Orphan nested-repo skill dirs (broken gitlinks; they contain their own .git)
+# Tracked-as-submodule was accidental — exclude until nested .git is removed.
 user_skills/skill-forge-pipeline-v4/
+user_skills/skill-heatmap-generator/

@@ -491,9 +491,9 @@ cd user_skills/skill-forge-pipeline \
 
 ## ☁️ 云端发布记录
 
-- `cloud_publish_status`: **FAILED / 需手动上传**
+- `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.20`
+- `version`: `5.21`
 - `cloud_scope`: `user`
-- `cloud_published_at`: ``
-- 备注：需手动上传（详见死信队列）
+- `cloud_published_at`: `2026-08-21 21:54`
+- `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`
