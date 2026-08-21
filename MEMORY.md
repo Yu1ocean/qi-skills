@@ -2,7 +2,7 @@
 在调用任何底层写操作工具（如 `write_file`, `search_replace_file`, 飞书表格/文档写操作 API）之前，Aime 必须在脑海中（或输出中）进行四步思维链自查：
 1. **目标是什么？** (操作对象是否为 `user_skills/*` 或 飞书资产？)
 2. **工具合法吗？** (底层禁令：绝对禁止直接用基础文件工具改技能，禁止直接操作飞书表格底表！)
-3. **是否漏了包装器？** (改技能必走 `skill-forge-pipeline-v4`；改飞书文档/表格必走 `feishu-doc-writing-guide`。)
+3. **是否漏了包装器？** (改技能必走 `skill-forge-pipeline`；改飞书文档/表格必走 `feishu-doc-writing-guide`。)
 4. **环境路由对齐了吗？** (操作飞书资产前，必须显式确认目标资产是在国内节点（CN）还是国际化节点（SG），并在工具调用时显式指定正确域名。)
 5. **消息路由合规吗？(防大锅乱炖)** (调用 `send_message` 前自查：这是日常对话还是任务结果交付？如果是多任务并发交付，必须强制拆分为多次独立的 `send_message` 调用，归属到各自的任务上下文或独立发送，绝对禁止把无关的任务进度和日常对话合并在一条消息里！)
 **结论**：若触发违规，立即中止调用，改用合法的用户级包装器技能（Wrapper Skill）执行或更正消息路由！
@@ -19,7 +19,7 @@
 
 - **register_skill.py 版本截断 BUG**：当前 `register_skill.py` 将版本号归一化为 `major.minor`，`patch` 位被截断（如 `v1.6.1` → `v1.6`）。需后续迭代时修复为保留 `major.minor.patch`，避免 patch 版本写入台账时被蒸馏掉。
 
-- **GitHub 技能仓库**：`https://github.com/Yu1ocean/qi-skills`（用户：Yu1ocean），存放所有 `user_skills/` 技能代码。`skill-forge-pipeline-v4` 的 `register_skill.py` 已植入 post-forge hook，每次 forge 成功后自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>` 完成 commit+push。PAT 仅存于 `~/.git-credentials`，不得写入任何文档。
+- **GitHub 技能仓库**：`https://github.com/Yu1ocean/qi-skills`（用户：Yu1ocean），存放所有 `user_skills/` 技能代码。`skill-forge-pipeline`（原 v4，v5.19 起改名）的 `register_skill.py` 已植入 post-forge hook，每次 forge 成功后自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>` 完成 commit+push。PAT 仅存于 `~/.git-credentials`，不得写入任何文档。
   - 2026-08-11 因 1.25GB `.mp4.part` 历史污染，用 `git-filter-repo` 重写历史并 force-push main，当前 main HEAD：`b8b232d6`（旧 hash `8740d72` 已失效）。`.gitignore` 已全局追加下载缓存规则（`user_skills/*/downloads/`、`*.mp4.part` 等）。DEC-20260811-022 已录入。
   - 2026-08-14 新增 pre-push hook（>50MB 熔断）双保险：`user_skills/scripts/pre-push` + `user_skills/scripts/install_hooks.sh`，commit `48e5847a`。后续任意 clone 运行 `bash user_skills/scripts/install_hooks.sh` 即可激活；`post_forge_git_push.sh` 末尾已追加安装提示。
 
@@ -49,12 +49,57 @@
 # 积累的上下文
 <!-- 随时间积累的重要事实、模式和洞察 -->
 
+- **【预加载技能候选池机制实测结论（2026-08-21）】**：分析文档 https://bytedance.my.larkoffice.com/docx/EAxTdArfRoNioOxwnddmdhYiypg
+  - **机制真相**：预加载候选列表 = 本地 `user_skills/` 目录扫描 **∪** 云端已启用技能。想让技能"不预加载"必须同时满足：① 云端 `Disabled=true`；② 本地非 draft。
+  - **核心 BUG**：`aime skill refresh` 官方行为是 *draft skills are skipped*，导致 `aime skill disable` 对 draft 技能**完全失效**。当前 4 个定时技能（`us-am-stats-sync`/`heartbeat-inspector`/`team-travel-dashboard-generator`/`skill-heatmap-generator`）云端已 Disabled 但本地 draft 残留，仍占预加载槽位。唯一成功摘除案例：`skill-forge-pipeline-v3`（Disabled + 非 draft → 本地被 refresh 摘除）。
+  - **治理盲区**：12 个技能从未 upload 到云端（纯本地草稿），云端 disable 不可达，只活在本地容器 + qi-skills 仓库：aime-dreaming / weekly-top3-patrol / roster-resign-checker / eu-brand-library-weekly-scanner / hot-radar / reporting-pipeline / media-fetcher / interview-hologram-scanner / performance-review-writer / product-copywriting / script-rule-library / upward-reporting-coach。
+  - **成本量化**：技能名列表 99 个 ≈1.5-2k tokens/轮（常驻）；`UsedWhen` 路由描述 user 5532 + system 14660 字符 ≈12.6k tokens（平台做语义 top-N 预筛，非全量常驻）；本地 53 个 SKILL.md 正文合计 460,982 字符 ≈288k tokens（按需付，单个最贵 `skill-forge-pipeline` 33.5k 字符 ≈21k tokens/次）。**真正痛点是注意力污染与路由竞争，不是 token**。
+  - **定时任务链路**：`aime trigger list` 为空 → 定时任务不是平台 trigger，而是 assistant 层 `schedule`，跑在全新隔离上下文，Prompt 已显式指名技能靠 `view_skill` 直取，**不需要出现在候选池**。
+  - **待验证唯一未知量**：云端 `Disabled=true` 的技能能否被 `view_skill(reload=true)` 拉回（决定"冷藏"方案生死）。
+  - **遗留待清**：`skill-forge-pipeline-v4`（v5.14, enabled, 与正主 v5.20.2 双活）；4 个千字级薄壳待审计（merchant-tier-analyzer / zero-trust-data-analyzer / agatha-ai-novelist / v6-panoramic-chart-generator）；`aime skill draft list` 误把 `.aime`/`output`/`scripts` 识别为草稿。
+
+- **【forge ZIP 回挂 upsert 治本 + 22 个幽灵块清理（2026-08-21, v5.21）】**
+  - **根因不是「没写护栏」，而是「护栏没长牙」**：v5.19 其实已实现 `prune_stale_zip_blocks()` 完整 upsert 编排（扫描→删旧→插新→置顶→回读），但四条失败路径（枚举失败/删除失败/回读失败/唯一性数量!=1）全部只打印 `⚠️ WARNING` 后 `return`，流水线照常判定发布成功。v5.21 统一改为 `raise GuardrailViolation`。**该函数在新块已插入并断言之后才执行，故熔断绝不会导致文档失去安装包**——这是熔断安全性的论证基础。异物块（其他技能 ZIP）维持「只报告不删除」。
+  - **`verify_file_block_attached()` 的旧口径「出现即 PASS」是缺陷潜伏 root cause**：堆到 14 个也照样 PASS。已改为「出现次数 == 1 才 PASS」。
+  - **治标**：8 篇说明文档共清理 22 个幽灵 ZIP 块（info-miner 14→1、team-travel 3→1、multi-source-sync 3→1、us-am-stats-sync×2 各 2→1、centralized-transmitter/media-fetcher/zero-trust-qa-checker 各 2→1），全部 RAW 回读「恰好 1 个」。
+  - **ZIP 文件块 XML 真实结构**（关键坑）：`<figure id="外层ID" view-type="Card"><source id="内层ID" name="x.zip" mime size token/></figure>`。**要删的是外层 figure 的 id**，不是 source 的 id；属性顺序不固定，正则禁止写死顺序。枚举走 `lark-cli docs +fetch --detail with-ids`（旧的 `docx.v1.document_block.list` 内部代理已失效，返回 `unsupported lark method_name`）。删除走 `lark-cli docs +update --command block_delete --block-id "id1,id2"`（支持逗号批量）。
+  - **判新旧只认 `drive metas batch_query` 的 `create_time`，不能按体积**：实测 info-miner 文档顺序 ≠ 时间顺序；us-am-stats-sync 存在「新版本反而更小」（33849 < 59496）。交叉断言用本地 `user_skills/<skill>.zip` size。异名变体（如 `info-miner_latest.zip`）也要一并清。
+
+- **【v4 僵尸目录墓碑归档 + `is_own_skill_zip()` 收紧（2026-08-21, v5.22）】**
+  - **归档结果**：残留物（`skill-forge-pipeline-v4.zip` + `.aime` 草稿快照）迁入墓碑目录 `user_skills/_archived_skill-forge-pipeline-v4_20260821/`，墓碑目录无 `SKILL.md` 不被扫描器识别。TTL **2026-09-21**，届时提醒授权物理删除。
+  - **`is_own_skill_zip()` 判定口径（v5.22 收紧后）**：只有「空后缀 / `_latest`·`-latest` / 云盘去重 `(N)` / **带点号数字版本** `^[-_]?[vV]?\d+(\.\d+)+$`」才算自身旧块。无点号的 `v4`/`4` 及 `-beta`/`_old` 等字母后缀一律判为异物块（只报告不删除），杜绝父技能误删兄弟 ZIP。
+
+- **【title 改写物化幽灵 h1 根治（2026-08-22, forge v5.26）】**
+  - **根因**：`register_skill.py::sync_version_to_skill_doc_via_mcp()` 改文档标题时走 `docs +update --command str_replace --doc-format markdown`。而 `.lark.md` 下载件会把飞书原生 title **渲染成一行 markdown `# ...`**（正文其实并无该 h1），对这行做 str_replace 就会在正文**物化**一个同名 h1 → 「双大标题」。
+  - **Plan A（治本）**：标题改写改走独立 API `lark-cli drive +update-title --as user --url <docx_url> --title <新标题>`（新增 `update_doc_title_via_drive_api()`）；新增 `_is_title_proxy()`，凡 h1 行文本 == title 文本一律走 drive API，不进 str_replace 通道。⚠️ 该接口有 99991400 限流，禁止并行批量重命名。
+  - **Plan B（兜底 L3）**：新增 `assert_no_phantom_h1()`——`docs +fetch --doc-format xml --detail with-ids` 在 Preserve 锚点之前找同名 h1 → `block_delete` 自动纠正 + `⚠️ [L3-autocorrect]` 日志 + sleep 2s 回读 count==0，否则 `raise`；fetch 失败只降级为 `phantom_h1_check="degraded"`。
+  - **真机验证**：5.26→5.99→5.26 两次改写，正文 `<h1` count = 0，own ZIP = 1。修复前旧路径确实物化过幽灵 h1 并被 Plan B 当场斩除。
+  - **教训**：`--bump minor` 在自举时会把 5.26 顶成 5.27，指定目标版本必须显式 `--new-version`。
+
+- **【飞书说明文档三分区策略（2026-08-21, forge v5.23）】**
+  - **设计原则**：飞书文档「对人」，SKILL.md「对机器」是 SSOT。三分区：**Overwrite Zone**（头部版本高亮框/触发词/接口契约，每次 forge 从 SKILL.md 重渲染覆盖）→ **Preserve Zone**（使用案例/踩坑/人工背景，forge 永不 update/delete）→ **Append Zone**（Changelog，只追加）。
+  - **边界锚点（固定 h2 标题）**：`## 📝 使用案例 & 踩坑记录`（Overwrite 止 / Preserve 起）、`## 📋 更新日志`（Preserve 止 / Append 起）。
+  - **实现坐标**：`user_skills/skill-forge-pipeline/scripts/doc_zone_manager.py`，主入口 `sync_doc_zones()`，含 `resolve_zones()` / `update_overwrite_zone()` / `assert_zone_integrity()`；`register_skill.py` 在版本同步后、Wiki Mount 前接入，开关 `--skip-doc-zones`、新建骨架 `--emit-new-doc-markdown`；离线自检 `scripts/test_doc_zones.py`（25 例）。
+  - **护栏**：待删 block 必须先过 `zone_of()` 归属断言，越界即 raise；写后 RAW 回读断言两锚点各恰好 1 次 + Preserve 原文存在性，不满足 `raise GuardrailViolation`（禁止 WARNING 后继续）。老文档无锚点时安全降级为末尾补建并打 `[ZONE-DEGRADED]`。
+  - **遗留**：本次锚点是追加到文档末尾，故 forge 说明文档原有 40 个正文块暂落在 Overwrite Zone（只重渲染特定 h2，无覆盖风险）。建议人工把 `## 📝 使用案例 & 踩坑记录` 上移至人工沉淀段之前使语义归位。
+
+- **【⚠️ 双活目录陷阱：forge 前必须确认「正主」（2026-08-21 血泪）】**
+  - `skill-forge-pipeline`（v5.19 起改名，**正主**）与 `skill-forge-pipeline-v4`（僵尸副本）共享同一 Skill ID `SKILL-FORGE-PIPELINE` 与同一说明文档 `HgY3dJBPfowjJfxWnxWcvItJncg`。子特工误改僵尸副本并 forge，**把台账版本从 5.20.2 倒灌成 5.15、技能名写成 v4**，且给共享文档挂上第 2 个 ZIP 块。已修复为 name=`skill-forge-pipeline` / version=`5.21`。
+  - **教训**：派发 forge 类任务前，主脑必须先核对目录版本号与 `SKILL.md` frontmatter `name`，在 Prompt 中**显式钉死目标目录**，禁止让子特工按技能名自行猜目录。版本号只能升不能降，台账版本回退即事故信号。
+  - **`is_own_skill_zip()` 潜在跨技能误删风险（待办）**：其版本后缀宽松匹配会把 `<父名>-v4.zip` 判为自身旧块。本次结果侥幸正确，但若未来有同名前缀的**独立技能**共享同一文档，父技能 forge 会静默删除其 ZIP。建议收紧为「后缀必须是纯数字 / `v`+数字，且不含新语义词」。
+
+- **【qi-skills 仓库 git push 陷阱（2026-08-21）】**
+  - 工作区当前 HEAD 在 `aime/us-am-stats-sync-v16` 分支，而**本地 `main` 分支陈旧（behind 28）**。此时 `git push origin main` 会去推那个陈旧的本地 `main`，报 `pushed branch tip is behind its remote counterpart` 而令人误判为「远端超前」。**正确姿势：`git push origin HEAD:refs/heads/main`**。
+  - **孤儿 gitlink 清理**：`user_skills/skill-forge-pipeline-v4` 与 `user_skills/skill-heatmap-generator` 曾被误提交为 submodule（mode `160000` 且**无 `.gitmodules`**），在 main 上留下断链子模块引用，会让全新 clone 拿到空目录。已 `git rm --cached`（**只去索引、不删磁盘文件**）+ 写入 `.gitignore`，当前 HEAD gitlink 数 = 0。两目录仍自带 `.git`，若要真正纳管需先删嵌套 `.git`（破坏性，需用户授权）。
+  - 排查命令：`git ls-files -s | awk '$1=="160000"'`。
+
 - **【qi-skills 仓库瘦身与 .gitignore 护栏（2026-08-21）】**：远端 `https://github.com/Yu1ocean/qi-skills.git`，工作区根即仓库根，只同步 `user_skills/`（forge 钩子 `user_skills/scripts/post_forge_git_push.sh` 执行 `git add user_skills/`）。
   - **根因**：技能运行时产物（`.tmp/`、`assets/snapshots/`、`*_export_*.xlsx`、`.runtime/downloads/`、`user_skills/*.zip`）历史上被误纳入 Git，跟踪体积膨胀至 270MB，触发 forge push 被 245MB ZIP 拦截。
   - **已落地护栏**：`.gitignore` 重写为「根目录白名单（`/*` + `!/user_skills/` 等）+ 全局临时目录/快照/导出/zip/媒体黑名单」；`git rm --cached` 摘除 294 个垃圾文件（189MB），跟踪体积 270MB→81MB，`git status` 噪声从数千条降到 8 条。commit `80653ef`。
   - **铁律**：forge 产出的技能 ZIP 只上飞书云盘，**永不入 Git**；任何 `output/`、`snapshots/`、`.tmp/`、`downloads/` 目录一律视为可再生产物。
   - **遗留（已于 2026-08-21 21:15 清理完毕，方案B）**：stale 分支 `aime/1785988362-travel-new-tag-fix` 已 `git branch -D`，3 个 stash 已 `git stash clear`（清前已把 3 份 patch + 分支 commit 清单备份到 `.git_cleanup_backup_20260821/` 与 `/tmp/` 双份），`git gc --aggressive --prune=now` 后**本地 `.git` 1.7G → 150MB**，`git fsck` 零错误。含 1.3GB `.mp4.part` 的 blob 已彻底回收。
   - **【2026-08-21 补：远端历史重写已完成（方案A）】**：用 `git filter-repo` 对 **全部 4 个远端分支**（main + travel-dashboard-v310-clean + multi-source-sync-v2.0 + release/multi-source-sync-v1.4）剔除 `.tmp/`、`snapshots/`、`output(s)/`、`downloads/`、`.runtime/`、`*.zip`、`*_export_*.xlsx`、媒体文件；force push 完成。**clone `.git` 195MB → 41MB，历史最大 blob 由 40MB 降至 2.3MB**，各分支垃圾文件计数均为 0。教训：只重写 main 无效——旧分支同样会把大 blob 拖进 clone，必须走 `--mirror` 全 ref 重写。备份 bundle `/tmp/qi-skills-prerewrite-20260821-2004.bundle`（196MB，TTL 24h）。
+  - **【R4 metadata.json 脱轨已落地（2026-08-21 21:20）】**：`.gitignore` 追加 `metadata.json` + `user_skills/**/metadata.json` 并移除根目录 `!/metadata.json` 白名单；`git rm --cached` 摘除实际在追踪的 **5 个** receipt（根 1 + multi-source-sync / skill-forge-pipeline / skill-forge-pipeline-v4 / weekly-top3-patrol），commit `a4eea95` + `5c9c618`。文件仍在磁盘，仅脱离 Git。
   - **【pre-push 钩子 v2】**：模板 `user_skills/scripts/pre-push`，Rule 1 单文件 >50MB 拦截 + Rule 2 单次 push 新增总量 >100MB 熔断（含 Top10 offenders 提示），紧急旁路 `ALLOW_BIG_PUSH=1`；安装脚本 `user_skills/scripts/install_hooks.sh`。
   - **已有防线**：`.git/hooks/pre-push` 存在 >50MB 单文件拦截（模板在 `user_skills/scripts/install_hooks.sh`），但对「大量 12MB 文件累积」无效，故必须靠 `.gitignore` 兜底。
 
@@ -63,6 +108,12 @@
   - **判定最新版方法**：`lark-cli drive metas batch_query --data '{"request_docs":[{"doc_token":"<file_token>","doc_type":"file"}]}'` 读 `create_time`，并与本地 `user_skills/<skill>.zip` 的 size 交叉断言（size 完全一致即为本次发布产物）。**不能只按体积大小判断新旧**。
   - **清理命令**：`lark-cli docs +update --doc <docx_token> --command block_delete --block-id "id1,id2"`，再 `block_move_after --block-id <docx_token>` 把最新块顶到标题下方，最后 with-ids 回读断言 zip 名出现次数 == 1。
   - eu-am-efficiency-analyzer 说明文档正确坐标：docx `MS0DdkWzDoxNBCxopUimY9POylc`（用户此前提供的 wiki token `HEnbwa68Si9w22kyhD4cBXpEnnb` 在 CN 节点不存在，报 970005/131005）。
+
+- **【Wiki 技能存量清单双轨同步落地（2026-08-22, forge v5.24）】**
+  - Wiki 台账坐标：`https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g`（底层 docx `AKmddboNJos7RcxGiOlcoWCvnjd`），「一、技能存量清单」表 6 列：序号 | 技能名称 | 简介（≤20 字）| 访问链接 | 归档日期 | 近30天使用次数。表格 block id 每次 block_replace 后变化，**禁止硬编码**，必须靠 h2 `doxcnJlL4aBTbjJLXwVKOTsk8Eh` 动态解析。
+  - 2026-08-22 完成 16 → **51 行**补录（覆盖率 31.4% → 100%），`skill-forge-pipeline-v4` 全文改名为 `skill-forge-pipeline`（表格行 + 2 处正文铁律）。4 个技能暂为 `⚠️[待补链接]`：live-material-fraud-auditor / media-fetcher / script-archive / yt-dlp-media-downloader。
+  - forge 新增钩子 `user_skills/skill-forge-pipeline/scripts/wiki_skill_list_sync.py`（主键=技能名称，upsert 语义，写后回读断言行数+名称恰好 1 次），由 `register_skill.py` 在 Sheet 台账之后 / Celebrate 之前调用；开关 `--skip-wiki-sync`；失败降级为 `⚠️ WARNING: Wiki sync failed:` 不阻断 forge。**版本号刻意不写入 Wiki**（现表无版本列，不增列不覆盖人工简介；权威载体是 SKILL.md + Sheet 版本号列）。
+  - 遗留：本次自举的 Celebrate（灵感卡片）因缺 `image-generate` 未执行，需手动补跑 `scripts/celebrate_skill.py`。
 
 - **日程分享偏好**：当发送会议/日程通知到群聊时，只发送飞书“日程卡片/日程直达链接”（Calendar Event Link），无需附加线上视频会议链接（Video Meeting Link），让大家统一通过日程沉淀。
 
@@ -109,9 +160,9 @@
 - **【系统资产与规则自动联动】**：
   - **资产外化**：解决 P0 级 Bug、跨越限制或总结出新 SOP 后，必须外化为飞书复盘文档。
   - **【技能读写硬封锁 (Hard Write-Ban)】**：严禁 Aime 自身直接调用 `write_file` 或 `search_replace_file` 等底层文件工具来修改或创建 `user_skills/` 目录下的任何文件。
-  - **技能诞生联动 (强制代理模式 Wrapper Pattern)**：任何技能的新建与修改，**必须全权调用用户级包装器技能 `skill-forge-pipeline-v4 [user]`**。该技能会在底层硬编码强制执行“锻造-入库-庆祝”三位一体流程，确保：1. 写入【图书馆】台账；2. 触发小说共创钩子生成一张专属灵感卡片。彻底杜绝大模型注意力漂移导致的遗忘。拦截原生工具调用冲突，完美触发流水线。）
+  - **技能诞生联动 (强制代理模式 Wrapper Pattern)**：任何技能的新建与修改，**必须全权调用用户级包装器技能 `skill-forge-pipeline [user]`**。该技能会在底层硬编码强制执行"锻造-入库-庆祝"三位一体流程，确保：1. 写入【图书馆】台账；2. 触发小说共创钩子生成一张专属灵感卡片。彻底杜绝大模型注意力漂移导致的遗忘。拦截原生工具调用冲突，完美触发流水线。）
 - **【飞书资产权限兜底铁律】**：任何由自动化脚本、底层特工或自建应用（如 `cli_a94d...`）在飞书云盘中“凭空新建”的文档、表格或多维表格，在创建操作完成后，**必须强制、自动**调用飞书云盘权限 API，将用户奇楠（`yuqinan@bytedance.com` 或对应 Open ID）添加为协作者，并赋予**最高管理权限 (Owner / Full Access)**。绝对禁止交付用户只能看、不能管的“孤儿资产”。
-- **【技能 Zip 发布与说明文档回挂铁律】**：任何技能的新建或升级在收尾阶段都**必须**自动将目标技能目录打包为 `.zip`，上传至飞书云盘，为 `yuqinan@bytedance.com` 赋予 `full_access`，并通过 `lark` MCP 在对应说明飞书文档标题下方插入原生【文件块 (File Block)】作为最新交付物锚点。该能力已下沉至 `skill-forge-pipeline-v4`。
+- **【技能 Zip 发布与说明文档回挂铁律】**：任何技能的新建或升级在收尾阶段都**必须**自动将目标技能目录打包为 `.zip`，上传至飞书云盘，为 `yuqinan@bytedance.com` 赋予 `full_access`，并通过 `lark` MCP 在对应说明飞书文档标题下方插入原生【文件块 (File Block)】作为最新交付物锚点。该能力已下沉至 `skill-forge-pipeline`。
 - **【Aime 多并发缓存与隔离法则】**：
   - **单聊隔离 (Thread)**：小任务用回复“盖楼”切分上下文沙盒。
   - **阵地隔离 (Lane_id)**：长线战役建“专属双人小群”实现100%物理切片。
@@ -128,7 +179,7 @@
   - zero-trust-data-analyzer：https://bytedance.larkoffice.com/docx/PjhydjQw0o7RnHxyHJzc4s7Pnbv
   - zero-trust-qa-checker：https://bytedance.larkoffice.com/docx/A10sdrDzVoLX0Gxt5zDcB04Sn7f
   - periodic-report-generator：https://bytedance.larkoffice.com/docx/ILsldnt22oXbMExLssccWmJendg
-  - skill-forge-pipeline-v4：https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg
+  - skill-forge-pipeline（原 v4）：https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg
   - v6-panoramic-chart-generator：https://bytedance.larkoffice.com/docx/DM99dCNbzo8KRdxrnt2cYa3dnbe
   - cyber-inspiration-generator：https://bytedance.larkoffice.com/docx/DVRediZK0oeTO1xSJMTcmRk0nub
   - omni-asset-archiver（已存在，不重复生成）：https://bytedance.larkoffice.com/docx/T24hdL5jKokxLjxtdEMcNigunSb
@@ -145,3 +196,7 @@
   > 🛡️ **自愈/兜底动作**：[如：已写入本地死信队列 DLQ_xxx]
   > 👨‍💻 **需要您协助 (Action Required)**：[下一步明确的行动点，如点击授权、确认合并等]
 - **环境路由兜底策略**：飞书节点 CN（`bytedance.larkoffice.com`）与 SG（`bytedance.sg.larkoffice.com`）均可，无强制默认方向。EU/UK/JP 品牌招商运营相关的结构化资料（人才说明书、商家预测表格）优先写 SG（见 USER.md），其余资产按任务上下文自然路由，不做额外限制。
+- **【forge 说明文档「双大标题」根治（2026-08-22, v5.25）】**
+  - 模板根因：`doc_zone_manager.py::build_new_doc_markdown()` 骨架首行写死 `# 【技能说明】<name> (V<ver>)`，与飞书原生 title 重复。v5.25 已删除该 h1 行；`update_overwrite_zone()` 本就不渲染 h1。同时 `PRESERVE_HINT` 改为 `💡 人工沉淀区…`、新增 `APPEND_HINT` = `📌 更新日志区…`，新建骨架与老文档补建两条路径统一引用。
+  - **⚠️ 残留风险（新发现，未修）**：`register_skill.py::sync_version_to_skill_doc_via_mcp()` 改 `<title>` 时走 `docs +update --command str_replace --doc-format markdown`，剥掉 title 标签后下发。实测在正文 h1 已被删除的情况下，该次替换会**在正文重新物化一个同名 h1**（本轮 forge 后又冒出 `doxcnBueTVMljvlTc7ywGOmQuJf`，已二次删除）。即：只要以后版本号有变化触发 title 改写，重复 h1 就可能复现。根治方向是 title 改写改走独立的 doc title API（而非 markdown str_replace），或改写后加「正文 h1 == 文档 title 则删除」的 L3 收尾断言。
+  - **draft-discard 二次踩坑**：`aime skill upload` 后 workspace 把 `user_skills/skill-forge-pipeline/` 回填成**旧版本**（SKILL.md 退回 5.24、代码改动消失），而 Git commit 里是正确的 5.25。恢复命令：`git restore --source=<forge commit> -- user_skills/<name>`。forge 后务必核对本地 frontmatter 版本号。
