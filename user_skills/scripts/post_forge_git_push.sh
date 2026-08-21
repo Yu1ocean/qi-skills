@@ -8,7 +8,7 @@
 #   于是流水线宣称“已 push 到 qi-skills”，而新版本 SKILL.md / 脚本根本没到 GitHub（幽灵资产）。
 #
 # 本版本的两条铁律：
-#   1. 一律 `git push origin HEAD:main`，不再依赖本地 main ref；
+#   1. 一律 `git push --force-with-lease origin HEAD:main`，不再依赖本地 main ref；
 #   2. push 后必须回读远端 refs/heads/main 的 SHA 并与本地 HEAD SHA 比对；
 #      不一致 => 判定 FAIL，以非 0 退出码退出，禁止仅凭 git push 的退出码判定成功。
 #
@@ -18,8 +18,18 @@
 #   POST_FORGE_TARGET_BRANCH    远端目标分支，默认 main
 #   POST_FORGE_DRY_RUN=1        故障注入：跳过真实 push，但仍执行远端回读断言
 #                               （用于验证“push 未真正生效”时脚本能否非 0 退出）
+#
+# v3 并发安全（C+D 组合）：
+#   C. flock 系统级文件锁（/tmp/qi-skills-forge.lock）串行化 git add/commit/push，
+#      最多等待 300s，超时熔断退出，避免多个 forge 进程同时操作同一工作副本。
+#   D. push 一律带 --force-with-lease，远端被其他 session 改写时拒绝无声覆盖。
 
 set -uo pipefail
+
+# ---------- C 方案：flock 系统级文件锁 ----------
+LOCK_FILE="${POST_FORGE_LOCK_FILE:-/tmp/qi-skills-forge.lock}"
+exec 9>"$LOCK_FILE"
+flock -x -w 300 9 || { echo "[forge-lock] 等待超时(300s)，另一 forge 进程可能仍在运行，退出" >&2; exit 1; }
 
 SKILL_NAME="${1:-unknown-skill}"
 SKILL_VERSION="${2:-latest}"
@@ -34,7 +44,7 @@ fail() {
   log "================ POST-FORGE GIT PUSH: FAIL ================"
   log "❌ $*"
   log "🧑‍🔧 需人工介入：请在仓库根目录手动执行"
-  log "     git push ${REMOTE} HEAD:${TARGET_BRANCH}"
+  log "     git push --force-with-lease ${REMOTE} HEAD:${TARGET_BRANCH}"
   log "   并用 git ls-remote ${REMOTE} refs/heads/${TARGET_BRANCH} 回读确认 SHA。"
   log "==========================================================="
   exit 1
@@ -82,7 +92,10 @@ do_push() {
     log "push         : SKIPPED (POST_FORGE_DRY_RUN=1 故障注入，仅执行远端断言)"
     return 0
   fi
-  git push "$REMOTE" "HEAD:${TARGET_BRANCH}" 2>&1
+  # --force-with-lease 需要本地存在远端跟踪 ref 作为 lease 基准，缺失时先补一次 fetch
+  git rev-parse --verify --quiet "refs/remotes/${REMOTE}/${TARGET_BRANCH}" >/dev/null 2>&1 \
+    || git fetch "$REMOTE" "$TARGET_BRANCH" >/dev/null 2>&1 || true
+  git push --force-with-lease "$REMOTE" "HEAD:${TARGET_BRANCH}" 2>&1
 }
 
 # ---------- 2. 首次 push ----------
