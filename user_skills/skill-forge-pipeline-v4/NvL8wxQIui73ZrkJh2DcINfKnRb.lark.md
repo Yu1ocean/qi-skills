@@ -1,7 +1,5 @@
 # info-miner 技能说明文档 v1.11
 
-<figure view-type="Card"><source name="info-miner.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWFjNTgzZDNjZjg0MDQ1ZDEzNTZlNmFiZDBhYjNmYjBfM2EzNzk1NzhhNjQxMjhmYzYwYmY3ZDA5ZTlkNDRkODNfSUQ6NzY3NjI5NTcwODkxMTg2NTEzMF8xNzg3Mjc2ODc1OjE3ODcyODA0NzVfVjM" mime="application/zip" size="58391" token="PT9PbHfgOon8eSxd9jXciv1Dnmb"/></figure>
-
 <figure view-type="Card"><source name="info-miner.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MzBiNDljNmJlYjRjNDBmYmMwMzUyYWIzMjIwZjZiZTFfYWYxZDk2NWYwNTdkM2MzMDM4MGExNjQ0OTEzZTgxOTBfSUQ6NzY3NTU2OTE4MDcyNjQ3OTgxOV8xNzg3Mjc2NzkxOjE3ODcyODAzOTFfVjM" mime="application/zip" size="52210" token="OvgFbLjQWoAi6QxIGMjc0Fd3nhb"/></figure>
 
 <figure view-type="Card"><source name="info-miner.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NTU2OWExOGQwYzg4YTExYjVkY2Q2MjIxZTZkY2FiMmNfZjY1MzQwMTYzYjVmMmJkZjg5MGZkZmY4ZGZkZThkZTBfSUQ6NzY2NjY5MTcxMDU4NzczNDk3OF8xNzg3Mjc2NzkxOjE3ODcyODAzOTFfVjM" mime="application/zip" size="38222" token="FBXwbHlNZofR5axcJ4YcYdddnDg"/></figure>

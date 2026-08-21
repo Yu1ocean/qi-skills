@@ -1,7 +1,7 @@
 ---
 name: info-miner
 id: 95b1248a-7aaa-42fa-b9ef-f58492536e09
-version: 1.11
+version: 1.12
 description: 从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。
 ---
 
@@ -13,7 +13,9 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - **非中文信息源**：输出英中双语逐段对照（左英文右中文），用于高保真对照阅读。
 - **新增闭环归档**：生成飞书文档后，必须把资产写入指定 Wiki 分类节点的「已归档资产」表格；归档失败即明确 raise error 并阻断执行。
 
-**当前版本：1.11（2026-08-19）**
+**当前版本：1.12（2026-08-21）**
+
+> **v1.12 变更要点**：修复归档护栏「硬编码表头 vs 线上 schema 漂移」导致的 P1 硬熔断。根因是 `wiki_archive_guard.py` 把 `DEFAULT_TABLE_HEADERS` 写死为 `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`，而线上「工具/方法论」节点表头已演进为 `编号 | 名称 | 描述 | 归档时间 | 标签`，表头校验一律 `raise`。实测 6 个分类节点 schema 并不统一（工具/方法论 = 新 schema；AI/Agent、文案/创意、跨境运营、组织/管理 = 旧 schema；行业趋势尚无表格），因此改为**双 schema 兼容**而非单向硬切：canonical 表头切换为线上新 schema（v2，新建表格一律用它），同时保留 v1 遗留 schema 的读写能力，按实际命中的 schema 构造归档行。RAW 回读断言从"期望自增序号"改为断言"编号 + 名称 + 链接"三者同行真实存在。新增 `--tags` 与仅供验证的 `--target-doc` 入口。
 
 > **v1.11 变更要点**：修复 Wiki 归档阶段 `toolset lark_download not found` 的 P1 熔断。根因是 `inner_skills/lark_download/lark_download.py` **文件仍存在但其背后的 AIME toolset 已下线**，而 `wiki_archive_guard.py` 的候选 resolver 只做 `exists()` 存在性判定，"文件存在" 被误当成 "可用"，导致下载链路直接 raise（更新链路早已有 `lark-cli` 兜底，下载链路缺同类兜底）。修复：① 新增**可用性探测** `is_toolset_unavailable()`，识别 `toolset ... not found` / `AimeError` / `Error from AIME Server` 等特征后**继续降级**而非熔断；② 新增 **lark-cli 下载兜底** `lark_cli_download()`，走 `lark-cli docs +fetch --as user --doc-format xml --detail with-ids`（唯一能拿到 `doxcn...` block id 的路径）；③ 新增 **DocxXML → 伪 `.lark.md` 转换** `docx_xml_to_pseudo_markdown()` / `xml_table_to_markdown_table()`，把 `<thead><tr><th><p id>` 规范化为 markdown-format `<table header-row="true" col-widths="...">` + `<tr><td>`，`<h2>` 还原为 `## 📂 已归档资产`，产物落盘到 `/workspace/.ephemeral_pool/` 任务唯一文件名。全部候选（本地 MCP 脚本 + lark-cli）都不可用才 `raise`；仍严禁退回 OpenAPI / JWT 直调。
 
@@ -93,7 +95,8 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 - 中文源仍然输出双语对照，或中文源使用左右双栏排版。
 - 生成飞书文档后没有执行归档，或归档失败后仍然把任务宣称为完成。
 - 用户显式给了 `category`，却被自动推断结果覆盖。
-- 归档写入没有落在 `## 📂 已归档资产` 标题下的表格，或者表头不是 `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`。
+- 归档写入没有落在 `## 📂 已归档资产` 标题下的表格，或者表头既不是 v2 `编号 | 名称 | 描述 | 归档时间 | 标签`、也不是 v1 遗留 `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`。
+- 看到线上表头与脚本预期不一致就直接改线上表结构，或反过来硬熔断放弃归档——正确做法是双 schema 兼容，线上历史结构与数据一律不动。
 - 归档写入没有走飞书 MCP 路径，而是回退到 OpenAPI / 旧脚本。
 - **下载链路只判 `exists()` 未做可用性探测**，或候选脚本报 `toolset ... not found` / `AimeError` 后没有继续降级到 `lark-cli docs +fetch`。
 - 用 `--doc-format markdown` 抓取后就去构造 block 级补丁（markdown 管道表格无 block id，必须用 `xml --detail with-ids`）。
@@ -122,7 +125,7 @@ description: 从碎片线索追溯权威来源并产出结构化阅读结果，�
 6. **飞书文档已生成**：正文结构符合【模块一】+【模块二】+【模块三】约定，访问链接可回跳；**且文档中无感性卡片内容**。
 7. **非中文一手附录已落地**：若一手原文为非中文，则同一篇 Docx 中已写入英中双语逐段对照附录，而非仅提供外链。
 8. **分类选择合规**：优先使用用户显式给定的 `category`；仅在用户未提供时才允许推断，并且结果必须落在白名单分类中。
-9. **归档写入已完成**：目标 Wiki 节点的 `## 📂 已归档资产` 表格中能看到新增行，且至少包含自增序号、归档日期、资产名称、来源/主题、访问链接。
+9. **归档写入已完成**：目标 Wiki 节点的 `## 📂 已归档资产` 表格中能看到新增行；v2 schema 下必须能读到「编号（如 `IM-260821-002`）+ 带超链接的名称 + 描述 + 归档时间 + 标签」，v1 遗留节点下为「自增序号 + 归档日期 + 资产名称 + 来源/主题 + 访问链接」。
 10. **RAW 回读验收已完成**：归档写后重新下载目标文档，确认新增行真实存在；若回读失败，必须 raise error。
 11. **未静默降级**：任何抓取失败、文档创建失败、赋权失败、归档失败，都必须显式报错并中断，不得输出“应该/大概/先这样”。
 12. **资产分离交付**：交付时已确认分两条消息发送，且灵感卡片已存入指定 Bitable 台账。
@@ -275,7 +278,9 @@ python3 user_skills/info-miner/scripts/preflight_target_assertion.py --selftest
 - **DEFAULT_ARCHIVE_REQUIRED = True**：飞书文档生成完成后必须继续归档；不能停在“只给文档链接”
 - **DEFAULT_CATEGORY_POLICY = explicit_first_then_infer**：先吃用户显式分类，再允许模型推断
 - **DEFAULT_ARCHIVE_HEADING = `## 📂 已归档资产`**：归档表格必须落在这个标题下
-- **DEFAULT_TABLE_HEADERS = `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`**：表头固定，不允许擅自变形
+- **DEFAULT_TABLE_HEADERS = `编号 | 名称 | 描述 | 归档时间 | 标签`**（v2 canonical，取自线上实测）：新建表格一律用它，不允许擅自变形
+- **SUPPORTED_TABLE_SCHEMAS = {v2, v1}**：v1 = `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`，为线上遗留节点保留读写兼容；表头命中任一即通过，命中不了才熔断
+- **DEFAULT_ASSET_ID_PREFIX = `IM`**：编号格式 `IM-YYMMDD-NNN`，按当日已有最大序号 +1 自增
 - **DEFAULT_VERIFY_AFTER_WRITE = True**：归档写入后必须重新下载并核对新增行
 - **INSPIRATION_BITABLE_ID = `PRbvbUyLqaeITqsXNMRcRCM5nhh`**：灵感台账指定 ID
 - **INSPIRATION_TABLE_ID = `tblHHVXl9ObjSyRw`**：灵感台账指定 Table ID
@@ -366,13 +371,18 @@ python3 user_skills/info-miner/scripts/preflight_target_assertion.py --selftest
 - 目标位置：对应 Wiki 节点背后的 Docx 文档中，`## 📂 已归档资产` 标题下的表格
 - 若表格已存在：向表尾追加一行
 - 若表格不存在：先在该标题下创建表格，再写入首行数据
-- 表头固定为：`序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`
-- 新增行至少包含：
-  - 自增序号
-  - 归档日期（`YYYY-MM-DD`）
-  - 资产名称
-  - 来源/主题
-  - 访问链接（飞书文档直达链接）
+- 表头**双 schema 兼容**（线上 6 节点存在 schema 漂移，禁止为对齐脚本去改线上表结构）：
+  - **v2（canonical，新建表格一律用它）**：`编号 | 名称 | 描述 | 归档时间 | 标签`
+  - **v1（遗留，仅兼容读写）**：`序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`
+- v2 字段映射（与线上历史行风格保持一致）：
+  - `编号`：`IM-YYMMDD-NNN`，按当日已有最大序号 +1 自增（如 `IM-260821-002`）
+  - `名称`：资产名称 + 飞书文档超链接，写成 `[名称](链接)`
+  - `描述`：来源/主题
+  - `归档时间`：`YYYY-MM-DD`
+  - `标签`：分类名（如 `工具 / 方法论`）+ 主题关键词；可用 `--tags` 显式覆盖
+- v1 字段映射保持原样：自增序号 / 归档日期 / 资产名称 / 来源/主题 / 访问链接
+- **链接一律写 HTML 锚点 `<a href="链接">文本</a>`**：表格单元格内禁止用 markdown `[text](url)`，否则锚文本会累积方括号甚至清空名称列
+- RAW 回读断言：v2 断言新增行的「编号 + 名称 + 链接」三者同行真实存在；v1 沿用「序号 + 资产名称」断言
 
 #### 7.3 必须走飞书 MCP 路径（不要退回 OpenAPI，不要用旧脚本）
 优先直接执行护栏脚本：
@@ -394,6 +404,8 @@ python3 scripts/wiki_archive_guard.py archive \
   --source-topic "<来源/主题>" \
   --access-link "https://bytedance.larkoffice.com/docx/xxx"
 ```
+
+> **验证专用入口**：`archive` 子命令支持 `--target-doc <docx_url>`，把写入重定向到一次性临时 Docx，用于回归验证，**严禁在正式归档中使用**（会绕过分类节点路由）。
 
 #### 7.4 灵感卡片同步与分离交付（新增，强制执行）
 - **同步**：必须调用护栏脚本将本次高光卡片存入灵感台账（`PRbvbUyLqaeITqsXNMRcRCM5nhh`）：
@@ -441,6 +453,12 @@ python3 user_skills/info-miner/scripts/wiki_archive_guard.py --selftest
 - 归档写入失败：重新下载目标 Wiki 文档并核查 `## 📂 已归档资产` 区块；若仍失败，必须报错中断，不得只交付文档链接
 
 ## 更新日志 (Changelog)
+- 1.12（2026-08-21）：修复归档护栏硬编码表头与线上 schema 漂移导致的 P1 硬熔断。
+  - 根因：`wiki_archive_guard.py` 将 `DEFAULT_TABLE_HEADERS` 硬编码为 `序号 | 归档日期 | 资产名称 | 来源/主题 | 访问链接`，`_validate_archive_table_headers` 做全等比较；线上「工具/方法论」节点表头已演进为 `编号 | 名称 | 描述 | 归档时间 | 标签`，导致 2026-08-21 08:xx 一次归档写入被硬熔断（当时人工按线上 schema 追加行兜底）。
+  - 实测结论：6 个分类节点 schema 不统一 —— 工具/方法论 = 新 schema；AI/Agent、文案/创意、跨境运营、组织/管理 = 旧 schema；行业趋势尚无表格。故采用双 schema 兼容而非单向硬切。
+  - 修复：canonical 表头切为 v2 `编号 | 名称 | 描述 | 归档时间 | 标签`（列宽 `153,184,185,120,96`）；新增 `detect_table_schema()` 双轨表头识别、`next_archive_asset_id()` 编号自增（`IM-YYMMDD-NNN`）、`build_archive_tags()` 标签生成；`build_archive_row()` / `build_archive_table()` 按 schema 分支构造；RAW 回读断言改为校验「编号 + 名称 + 链接」；新增 `--tags` 与仅供验证的 `--target-doc` 入口。线上既有表结构与历史行数据一律不动。
+  - 附带修复（真机暴露）：单元格链接原先用 markdown `[text](url)` 写入，飞书解析后锚文本会累积字面方括号，多轮「读回 → 追加 → 写回」甚至导致名称列被清空。现统一为 HTML 锚点 `<a href="url">名称</a>`，并新增 `_normalize_cell_anchors()` 做读回规范化（兼容剥掉历史脏数据的外层方括号）+ `_extract_table_rows_raw()` 供链接断言使用，保证往返幂等。
+  - 验收：`--selftest` 19 条用例全绿（新增 9 条：双 schema 识别、未知表头熔断、canonical 表头、编号自增、非法日期熔断、标签生成、v2 追加行、v2 回读断言、缺失行熔断）；并在个人空间一次性临时 Docx 上完成与线上同构表格的真机追加写入 + RAW 回读验收。
 - 1.11（2026-08-19）：修复 Wiki 归档阶段 `toolset lark_download not found` 的 P1 熔断。
   - 根因：`inner_skills/lark_download/lark_download.py` 文件存在但背后 AIME toolset 已下线，而 resolver 只做存在性判定，把「文件存在」当成「可用」；更新链路已有 `lark-cli` 兜底，下载链路没有。
   - 修复：新增 `is_toolset_unavailable()` 可用性探测（命中 `toolset ... not found` / `AimeError` / `Error from AIME Server` 即继续降级）；新增 `lark_cli_download()` 走 `lark-cli docs +fetch --doc-format xml --detail with-ids`；新增 `docx_xml_to_pseudo_markdown()` / `xml_table_to_markdown_table()` 完成 DocxXML → 伪 `.lark.md` 与 markdown-format 表格规范化；产物落 `/workspace/.ephemeral_pool/` 任务唯一文件名。
