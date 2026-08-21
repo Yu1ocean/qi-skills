@@ -1,0 +1,47 @@
+# 品牌 / 正品宣称风险关键词库
+# 口径来源：2026-08 Pearl 直播回放（roomId=7667566803098323734, GB 市场）实战审核
+# 升级规则：授权类词单独出现 = 🟡 中-高（需联查商品页/详情页/包装/评论）；
+#           与材质高风险组件（14K / stamp / gold plated）在同句或近邻 3 句内组合出现 = 🔴 高。
+version: 1.0
+category: brand_authorization
+category_label: 品牌/正品宣称
+
+groups:
+  authorization_claim:
+    label: 授权/正品宣称
+    weight: brand_claim
+    keywords:
+      - "official"
+      - "authorized"
+      - "genuine"
+
+  luxury_brand:
+    label: 奢侈品品牌名
+    weight: brand_claim
+    keywords:
+      - "Rolex"
+      - "Cartier"
+      - "Tiffany"
+      - "Van Cleef"
+      - "Bvlgari"
+      - "Hermes"
+      - "Chanel"
+      - "Dior"
+
+# 邻近升级触发组件（来自材质词库）：命中这些词即视为材质宣称叠加
+escalation_components:
+  - "14K"
+  - "14k stamp"
+  - "stamp"
+  - "gold plated"
+  - "real gold plated"
+  - "real golden"
+
+# ASR 误识别高风险词：中文口语易被误转写成这些英文词，命中后必须标注"需人工回听"
+asr_confusable:
+  official:
+    note: 中文口语「老主顾 / 老朋友」易被 ASR 误识别为 official（2026-08 Pearl 实战真实案例）
+    zh_context_hint: true
+  genuine:
+    note: 中文口语「真的呦 / 真牛」可能被误识别为 genuine
+    zh_context_hint: true

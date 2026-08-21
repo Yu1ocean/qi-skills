@@ -1,0 +1,67 @@
+# 材质造假风险关键词库
+# 口径来源：2026-08 Pearl 直播回放（roomId=7667566803098323734, GB 市场）实战审核
+# 维护规则：新增词只改本文件，不要改脚本，保证审核口径可审计。
+# match 说明：全部按大小写不敏感的子串匹配；phrase 内的空格视为原样空格。
+version: 1.0
+category: material_fraud
+category_label: 材质造假
+
+groups:
+  purity_stamp:
+    label: 纯度标记
+    weight: high_component        # 与真金宣称叠加即构成 🔴 高
+    keywords:
+      - "14K"
+      - "14k stamp"
+      - "40K"
+
+  real_gold_claim:
+    label: 真金宣称
+    weight: high_component
+    keywords:
+      - "real gold plated"
+      - "real golden"
+      - "gold plated"
+
+  waterproof_no_tarnish:
+    label: 防水不变色
+    weight: material_claim
+    keywords:
+      - "waterproof"
+      - "no tarnish"
+      - "no fading"
+      - "no green"
+      - "turn skin green"
+
+  usage_scenario:
+    label: 使用场景
+    weight: material_claim
+    keywords:
+      - "shower"
+      - "swimming"
+      - "take bath"
+      - "keep shining"
+
+  physical_strength:
+    label: 物理强度
+    weight: material_claim
+    keywords:
+      - "scratch-proof"
+      - "solid"
+      - "no hollow"
+
+  test_endorsement:
+    label: 检测背书
+    weight: high_component        # 与实心/真金宣称叠加即构成 🔴 高（误导性背书）
+    keywords:
+      - "pass the diamond test"
+      - "pass diamond test"
+      - "magnetic test"
+
+# 澄清词：出现即说明主播明确交代"镀金"，可将 🔴 降级为 🟡 并转人工复核
+clarifiers:
+  - "plated only"
+  - "not solid gold"
+  - "it is plating"
+  - "just plating"
+  - "gold color"
