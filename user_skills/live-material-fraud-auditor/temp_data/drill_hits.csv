@@ -1,0 +1,5 @@
+﻿violation_type,violation_name,timestamp,evidence_text,risk_level,need_human_review,judge_reason,confidence,modality,evidence_traceable,window_seq
+material_fraud,材质造假宣称,00:00:18,"this necklace is real gold with 14K stamp inside, never fade never turn green",高,False,真金+14K印记宣称叠加永不褪色永不发绿的绝对化承诺，全窗无任何镀层澄清,0.95,audio,True,0
+counterfeit,假货与仿冒品,00:00:44,⚠️[证据不可回溯] 主播说这个是卡地亚手镯的一比一复刻，和专柜同厂同料,高,True,【故意改写的证据】原文是英文，这里被改写成中文概括，用于验证反幻觉断言,0.93,audio,False,0
+brand_authorization,品牌授权与正品宣称,00:01:10,we are the official authorized store for this brand,中,True,自称官方授权店铺但语境无法证明该授权关系,0.9,audio,True,0
+misleading_pricing,商品定价模糊与虚假定价,00:01:23,"original price was 200 dollars, today only 9.9, lowest price on the whole internet",高,False,无法核查的原价对比叠加全网最低价绝对化宣称,0.91,audio,True,0

@@ -526,14 +526,40 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--self-test", action="store_true", help="run built-in guard assertions")
     parser.add_argument(
         "--check",
-        choices=["segment", "timestamps", "coverage", "hits", "checkpoint"],
+        choices=[
+            "segment",
+            "timestamps",
+            "coverage",
+            "hits",
+            "checkpoint",
+            "config",
+            "semantic-hits",
+            "evidence",
+            "enabled-types",
+            "judge-coverage",
+        ],
         help="run a single gate",
     )
     parser.add_argument("--seconds", type=float, help="segment duration for --check segment")
     parser.add_argument("--timestamps", help="comma separated HH:MM:SS list for --check timestamps")
     parser.add_argument("--coverage-file", help="coverage report file for --check coverage")
-    parser.add_argument("--hits-json", help="hit rows JSON file for --check hits")
+    parser.add_argument("--hits-json", help="hit rows JSON file for --check hits / semantic-hits")
     parser.add_argument("--checkpoint-json", help="checkpoint JSON file for --check checkpoint")
+    parser.add_argument(
+        "--config-file",
+        default=str(DEFAULT_AUDIT_CONFIG),
+        help="audit_config.yaml for --check config",
+    )
+    parser.add_argument("--evidence", help="evidence text for --check evidence")
+    parser.add_argument("--transcript-file", help="transcript file for --check evidence")
+    parser.add_argument("--reported-types", help="comma separated types for --check enabled-types")
+    parser.add_argument("--enabled-types", help="comma separated enabled types")
+    parser.add_argument("--summary-json", help="judge summary JSON for --check judge-coverage")
+    parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="--check judge-coverage: 未判定窗口已在覆盖说明中显式列出时使用",
+    )
     args = parser.parse_args(argv)
 
     if args.self_test:
@@ -573,6 +599,42 @@ def main(argv: Sequence[str] | None = None) -> int:
             json.loads(Path(args.checkpoint_json).read_text(encoding="utf-8"))
         )
         print("OK checkpoint has revision_id + RAW-verified covered range")
+    elif args.check == "config":
+        config = validate_audit_config(args.config_file)
+        enabled = [item["id"] for item in config["violation_types"] if item.get("enabled")]
+        print(
+            f"OK audit config v{config['meta'].get('config_version')}: "
+            f"{len(config['violation_types'])} types registered, {len(enabled)} enabled"
+        )
+    elif args.check == "semantic-hits":
+        if not args.hits_json:
+            parser.error("--check semantic-hits requires --hits-json")
+        payload = json.loads(Path(args.hits_json).read_text(encoding="utf-8"))
+        rows = payload.get("hits", []) if isinstance(payload, dict) else payload
+        for row in rows:
+            validate_semantic_hit_row(row)
+        print(f"OK {len(rows)} semantic hit rows carry all six required fields")
+    elif args.check == "evidence":
+        if not args.evidence or not args.transcript_file:
+            parser.error("--check evidence requires --evidence and --transcript-file")
+        validate_evidence_traceable(
+            args.evidence, Path(args.transcript_file).read_text(encoding="utf-8")
+        )
+        print("OK evidence is verbatim traceable in transcript")
+    elif args.check == "enabled-types":
+        if not args.reported_types or not args.enabled_types:
+            parser.error("--check enabled-types requires --reported-types and --enabled-types")
+        validate_enabled_types_declared(
+            args.reported_types.split(","), args.enabled_types.split(",")
+        )
+        print("OK every reported violation type was enabled in this run")
+    elif args.check == "judge-coverage":
+        if not args.summary_json:
+            parser.error("--check judge-coverage requires --summary-json")
+        payload = json.loads(Path(args.summary_json).read_text(encoding="utf-8"))
+        summary = payload.get("summary", payload)
+        validate_judge_coverage(summary, claim_complete=not args.allow_incomplete)
+        print("OK judge coverage accounting is consistent")
     return 0
 
 
