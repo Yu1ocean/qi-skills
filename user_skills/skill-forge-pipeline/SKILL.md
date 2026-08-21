@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.21
+version: 5.22
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.21)
+# 技能锻造流水线 (Forge Pipeline V5.22)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -379,6 +379,8 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py \
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
+
+- **V5.22**: 收紧 `is_own_skill_zip()` 的版本后缀匹配，杜绝跨技能 ZIP 块误删。此前 `<父名>-v4.zip` 会被宽松正则判为父技能自身旧块，若未来出现「同名前缀的独立技能」与父技能共享同一说明文档，父技能 forge 会静默删除该独立技能的 ZIP 块。现要求剥离技能名前缀后的剩余后缀必须为空 / 带点号的纯数字版本（`_5.21`、`_v5.22`）/ `(1)` 去重后缀 / `_latest` 白名单；任何含字母语义的后缀（`-v4`、`_v4`、`-beta`、`_old`）一律判为「异物块，只报告不删除」。新增 `scripts/test_is_own_skill_zip.py` 自检（9 例全绿）。
 
 - **V5.21**: 把 ZIP 回挂 upsert 的软降级全部升级为物理熔断，补齐 V5.19 遗留的最后一道缺口。
   - **根因**：V5.19 已实现 `prune_stale_zip_blocks()`（扫描 → 删旧 → 插新 → 置顶 → 回读），但四条失败路径（枚举失败 / 删除失败 / 回读失败 / 唯一性数量 != 1）全部只打印 `⚠️ WARNING` 后 `return report`，流水线继续宣称发布成功。这是典型的「应然 ≠ 实然」假成功：护栏写了，但没长牙。

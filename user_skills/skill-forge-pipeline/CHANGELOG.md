@@ -2,6 +2,11 @@
 
 > 说明：v5.19 起技能更名为 `skill-forge-pipeline`（Skill ID `SKILL-FORGE-PIPELINE` 不变）。以下历史条目中的旧名 `skill-forge-pipeline-v4` 保留原样以保持记录保真。
 
+## v5.22 (2026-08-21)
+
+- 收紧 `is_own_skill_zip()` 版本后缀匹配：剩余后缀仅允许为空 / 带点号数字版本（`_5.21`、`_v5.22`）/ `(1)` 去重后缀 / `_latest`；`-v4`、`_v4`、`-beta`、`_old` 等含字母语义后缀改判「异物块，只报告不删除」，防止父技能 forge 误删同名前缀独立技能的 ZIP 块。
+- 新增 `scripts/test_is_own_skill_zip.py` 本地自检（9 例，全绿）。
+
 ## v5.21 (2026-08-21)
 
 - **修复 ZIP 回挂 upsert 的四条静默降级路径（软护栏 → 物理熔断）**。

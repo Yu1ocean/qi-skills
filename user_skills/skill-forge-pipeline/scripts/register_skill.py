@@ -983,17 +983,33 @@ def list_doc_zip_file_blocks(doc_url: str) -> list[Dict[str, str]]:
 def is_own_skill_zip(file_name: str, skill_name: str) -> bool:
     """Does this ZIP file name belong to the skill currently being published?
 
-    Accepts version-suffixed variants such as `skill-x.zip`, `skill-x_v1.2.zip`,
-    `skill-x-1.2.zip`, `skill-x (1).zip`.
+    V5.22 (tightened): the remainder after stripping the `<skill_name>` prefix
+    must be one of:
+      * empty                      -> `skill-x.zip`
+      * a dotted numeric version   -> `skill-x_5.21.zip`, `skill-x-v1.2.zip`
+      * a drive dedup suffix       -> `skill-x (1).zip`
+      * the explicit `_latest` alias
+
+    Any suffix carrying alphabetic semantics (`-v4`, `_v4`, `-beta`, `_old`)
+    is NOT treated as our own stale block — it may belong to an independent
+    sibling skill sharing this doc, so it is reported as a foreign block
+    instead of being silently deleted (cross-skill deletion accident guard).
     """
 
     name = (file_name or "").strip()
     if not name.lower().endswith(".zip") or not skill_name:
         return False
     stem = name[: -len(".zip")]
-    if stem == skill_name:
+    if not stem.startswith(skill_name):
+        return False
+    suffix = stem[len(skill_name):].strip()
+    if suffix == "" or suffix.lower() in {"_latest", "-latest"}:
         return True
-    return bool(re.fullmatch(re.escape(skill_name) + r"[\s_\-.(]*[vV]?[\d.\-_() ]*", stem))
+    if re.fullmatch(r"\(\d+\)", suffix):
+        return True
+    # dotted numeric version only: `v4` / `4` (no dot) is ambiguous with a
+    # sibling skill name suffix such as `<parent>-v4`, so it is rejected.
+    return bool(re.fullmatch(r"[-_]?[vV]?[0-9]+(?:\.[0-9]+)+", suffix))
 
 
 def delete_doc_blocks(doc_url: str, block_ids: list[str]) -> str:
