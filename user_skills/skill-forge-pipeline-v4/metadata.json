@@ -1,16 +1,16 @@
 {
-    "skill_id": "MEDIA-FETCHER",
-    "name": "media-fetcher",
-    "description": "批量媒体物理摄入 orchestrator：接收一组视频 URL，先 probe 再按 video/audio 落地媒体与元信息，输出统一 batch manifest 与 DLQ。v1.2 新增 TikTok 403 embed/v2 降级链路（scripts/tiktok_embed_fallback.py），主链路被 WAF 拦截时自动降级，真机回归 0/10 → 9/10。",
-    "version": "1.2",
-    "doc_link": "https://bytedance.larkoffice.com/docx/Gw8Jdgp94otMUNxN8cCcQcXMnSg",
+    "skill_id": "LIVE-MATERIAL-FRAUD-AUDITOR",
+    "name": "live-material-fraud-auditor",
+    "description": "对 TikTok / Pearl 直播回放做材质造假（假 14K / 假真金 / 假防水）与品牌授权、正品宣称合规审核，产出全量逐字稿、风险命中取证表与飞书审核报告",
+    "version": "1.1",
+    "doc_link": "https://bytedance.my.larkoffice.com/docx/X4EYdL9l2otipyx6PommhdPRyIb",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 14:16",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/media-fetcher",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/media-fetcher.zip",
-    "zip_name": "media-fetcher.zip",
-    "drive_file_token": "EezEbvU5eoYcN1xlqRvceiMjn1e",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/EezEbvU5eoYcN1xlqRvceiMjn1e"
+    "updated_at": "2026-08-21 18:14",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-material-fraud-auditor",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-material-fraud-auditor.zip",
+    "zip_name": "live-material-fraud-auditor.zip",
+    "drive_file_token": "EZHhba90KoBTVaxwvlpm3thOynf",
+    "drive_file_url": "https://bytedance.my.larkoffice.com/file/EZHhba90KoBTVaxwvlpm3thOynf"
 }

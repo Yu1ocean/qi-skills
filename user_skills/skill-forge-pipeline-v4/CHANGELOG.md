@@ -1,5 +1,16 @@
 # Changelog - skill-forge-pipeline-v4
 
+## v5.15 (2026-08-21)
+- **关联决策**：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」（起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见）。
+- **新增 L3 断言层熔断脚本** `scripts/dual_track_atomic_write.py`：
+  - 事务块语义：飞书镜像 MCP 写入成功后**立刻**执行本地 SSOT append，两步绑定为一个事务，中间不允许插入其他动作或等待用户确认。
+  - RAW read-after-write 双轨断言：轨道 A 回读本地末条 `- id: DEC-...`、轨道 B 通过 `lark-cli` 回读飞书镜像末行 ID，均需 == 目标 ID；任一轨失败即 `raise` 熔断，严禁静默成功。
+  - 失败即孤儿标记：写入死信队列 `.ephemeral_pool/orphan_decisions.jsonl`（`decision_id` / `failed_track`(local|mirror) / `error` / `timestamp` / `suggested_fix` / `⚠️[孤儿待修复]`）。
+  - CLI：`--dry-run`（零副作用前置校验）、`--verify-only <DEC-ID>`（事后巡检）、`--inject-failure local|mirror`（故障注入自测）。
+  - 复用 `tools/sync_decision_registry.py` 的鉴权与飞书读写链路（`resolve_sheet_url` / `get_sheet_meta` / `read_range` / `write_range` / `raw_verify`），不重造轮子。
+- **`SKILL.md` 升级至 V5.15**：新增独立章节「双轨原子写入约束 (Dual-Track Atomic Write)」（适用范围 / 事务块绑定顺序 / 双轨断言规则 / 孤儿标记流程 / 调用示例）；Common Rationalizations 新增 2 条、Red Flags 新增 3 条、Verification 新增第 10 条「双轨原子写入验收」、Defaults 新增镜像台账 / SSOT / DLQ / 2s 回读默认值。
+- 真机验证：① `--dry-run` 前置校验 PASS（exit 0，无副作用）；② `--verify-only DEC-20260821-001` 双轨断言 PASS（local last_id 与 mirror row29 均为 DEC-20260821-001）；③ 故障注入 `--inject-failure mirror` / `local` 均正确 `raise` 熔断（exit 1）并落 DLQ 两条 `⚠️[孤儿待修复]` 记录。
+
 ## v5.14 (2026-08-17)
 - **修复 P1 级假成功缺陷（幽灵资产）**：`user_skills/scripts/post_forge_git_push.sh` 原先执行 `git push origin main`，当工作副本 HEAD 处于特性分支（如 `aime/us-am-stats-sync-v16`）时推送的是本地陈旧的 `main` ref，退出码仍为 0，导致流水线宣称「已 push 到 qi-skills」而新版本 SKILL.md / 脚本根本没到 GitHub（今日 v1.9 / v2.0 / v2.1 / v2.2 四次发布全部靠人工 `git push origin HEAD:main` 补推）。
 - push 命令改为 `git push origin HEAD:main`，把当前 HEAD 显式推到远端 `main`。

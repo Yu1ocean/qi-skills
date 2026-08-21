@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.14
+version: 5.15
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.14)
+# 技能锻造流水线 (Forge Pipeline V5.15)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -17,6 +17,8 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - “飞书写入/赋权失败我先跳过，先给你本地路径就算交付。”
 - “自检脚本麻烦，先不跑。”
 - “我大概知道风险等级，就不做分级判断了。”
+- “飞书镜像写成功了，本地 SSOT 回头再补。”
+- “只有一轨回读失败，问题不大，先算完成。”
 
 ## Red Flags（危险信号）
 
@@ -30,6 +32,9 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - **仅凭 `git push` 的退出码判定成功**，没有回读远端 `refs/heads/main` 的 SHA 与本地 HEAD 做比对。
 - Post-Forge Git Push 仍在执行 `git push origin main`（依赖本地可能陈旧的 `main` ref），而非 `git push origin HEAD:main`。
 - ZIP 文件块只调用了 `lark-cli docs +media-insert`（默认追加到文档末尾）就宣称「已挂到标题下方」，没有 `block_move_after` 归位 + 首块回读断言。
+- 涉及本地 SSOT + 飞书镜像双轨写入，但只验证了单轨。
+- 写入后没有做 RAW read-after-write 双轨 ID 一致性断言。
+- 双轨断言失败却未写入孤儿待修复死信队列（`.ephemeral_pool/orphan_decisions.jsonl`）。
 
 ## Verification（强制验收清单）
 
@@ -44,6 +49,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
 8. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
 9. **文件块位置断言验收**：ZIP 原生 File Block 必须位于说明文档**第一个正文块**（BLOCK_BEGIN，标题正下方）。`register_skill.py` 在 `+media-insert` 之后必须执行 `block_move_after`（anchor = 文档 root token）归位，并回读文档 XML 断言首个正文块 id == 新建文件块 id；不一致立刻 `raise` 熔断。
+10. **双轨原子写入验收**：凡涉及「决策台账写入飞书镜像」的节点，本地 SSOT `memory/topics/decision-registry.md` 末条决策 ID 与飞书镜像末行 ID **必须一致**，且必须输出双轨回读证据（`assert_local_track` / `assert_mirror_track` 的 evidence）。任一轨失败即 `raise` 熔断并落孤儿死信队列，禁止宣称完成。
 
 ## 适用场景
 
@@ -198,9 +204,65 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
   - 当 `SKILL.md` 当前版本仍处于 `0.x` 脚手架阶段时，流水线判定为「首次发布」，**会忽略 `--bump`，直接将版本设为 `1.1`**，不再做 `0.x → 0.x+0.1` 的小迭代。
   - 已经 ≥ `1.0` 的技能，按原 `--bump major|minor` 规则升迁，不受影响。
   - 如需自定义首发版本，可显式传 `--initial-version 2.0` 覆盖默认；如需强制指定任意目标版本，可显式传 `--new-version 0.2`。
+- 决策镜像台账默认：`https://bytedance.larkoffice.com/wiki/PnnDwYr13imUyVkVPshc46ICnVh`
+- 本地 SSOT 默认路径：`memory/topics/decision-registry.md`
+- 孤儿死信队列默认路径：`.ephemeral_pool/orphan_decisions.jsonl`
+- 双轨 RAW 回读等待默认：`2` 秒（写 → 等 2s → 双轨回读）
+
+## 双轨原子写入约束 (Dual-Track Atomic Write)
+
+关联决策：**DEC-20260821-001**「决策录入必须双轨原子写入，单轨成功即判失败」。
+
+### 适用范围
+
+凡 forge 流程中涉及「决策台账写入飞书镜像」的节点（决策录入、护栏升格、复盘沉淀带出的新决策条目），都必须走本约束。只写飞书镜像不 append 本地 SSOT，会形成**孤儿行**，漂移可长达数天不可见——这是本约束存在的根因。
+
+### 事务块绑定顺序
+
+1. 飞书镜像写入（含 sync 链路自带 RAW 回捞）成功；
+2. **立刻**执行本地 SSOT append（`memory/topics/decision-registry.md`）；
+3. 两步绑定为一个事务：中间不允许插入任何其他动作，不允许等待用户确认，不允许分两次对话完成。
+
+### 双轨断言规则
+
+- 轨道 A（local）：回读本地文件，解析最后一条 `- id: DEC-...`，断言 == 目标 ID。
+- 轨道 B（mirror）：回读飞书镜像末条记录 ID，断言 == 目标 ID。
+- 写后等待 2s 再回读；**任一轨回读失败或 ID 不一致 → 立刻 `raise` 熔断，严禁静默成功**。
+
+### 失败即孤儿标记
+
+断言失败或写入失败时，必须把该条目写入死信队列 `.ephemeral_pool/orphan_decisions.jsonl`，字段含 `decision_id` / `failed_track`(local|mirror) / `error` / `timestamp` / `suggested_fix`，并标记 `⚠️[孤儿待修复]`。随后由 `tools/sync_decision_registry.py`（以本地为准修复镜像）或手工补 append 本地后重跑断言收敛。
+
+### 调用示例
+
+```bash
+# 前置校验 + 事务计划（零副作用）
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
+  --dry-run --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+
+# 双轨原子写入（镜像写入 -> 立刻本地 append -> 双轨断言）
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
+  --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+
+# 事后巡检：只做双轨回读断言
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
+  --verify-only DEC-20260821-001
+
+# 故障注入自测：人为让某一轨失败，验证 raise + 死信队列链路
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
+  --verify-only DEC-20260821-001 --inject-failure mirror
+```
+
+> 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
 
+- **V5.15**: 落地 DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」到执行层（Layer 2）。
+  - 新增 L3 断言层熔断脚本 `scripts/dual_track_atomic_write.py`：事务块绑定「飞书镜像写入 → 立刻本地 SSOT append」，写后 2s 执行 RAW read-after-write 双轨 ID 一致性断言（`assert_local_track` / `assert_mirror_track` / `assert_dual_track`），任一轨失败即 `raise` 熔断。
+  - 失败即孤儿标记：自动写入死信队列 `.ephemeral_pool/orphan_decisions.jsonl`（`decision_id` / `failed_track` / `error` / `timestamp` / `suggested_fix`），标记 `⚠️[孤儿待修复]`。
+  - 提供 `--dry-run`（零副作用前置校验）、`--verify-only <DEC-ID>`（事后巡检）与 `--inject-failure local|mirror`（故障注入自测）。
+  - 复用 `tools/sync_decision_registry.py` 的鉴权与飞书读写链路，不重造轮子。
+  - 新增独立章节「双轨原子写入约束 (Dual-Track Atomic Write)」；Common Rationalizations / Red Flags / Verification（新增第 10 条）/ Defaults 同步加固。
 - **V5.14**: 修复 Post-Forge Git Push Hook 的 P1 级「假成功」缺陷（幽灵资产）。
   - `post_forge_git_push.sh` 由 `git push origin main` 改为 `git push origin HEAD:main`，不再依赖本地可能陈旧的 `main` ref（HEAD 处于 `aime/*` 特性分支时旧实现会推空、退出码仍为 0）。
   - **新增 push 结果的远端回读断言**：push 后回读 `git ls-remote origin refs/heads/main` 并与 `git rev-parse HEAD` 比对，SHA 不一致即以非 0 退出码熔断并输出醒目错误，杜绝仅凭退出码判定成功。
