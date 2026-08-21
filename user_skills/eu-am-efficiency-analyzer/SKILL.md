@@ -2,7 +2,7 @@
 name: eu-am-efficiency-analyzer
 description: EU AM（EU 招商商务）效率漏斗分析器。从飞书分层读写架构（3底表+3阅读视图）读取分析基盘，计算各 AM 的线索量/有意愿数/主口径入驻数/备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。
 author: 于奇楠
-version: 1.2
+version: 1.2.1
 ---
 
 # EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.2
@@ -38,13 +38,13 @@ version: 1.2
 - 对 `历史入驻` / `AM分析` 等受保护 Sheet 发起任何写入或 clear。
 - `+formula-verify` 返回 `status=partial` + `has_more=true` 却拿 `total_errors=0` 当验收通过。
 - 阅读视图 INDEX 行上界或 MATCH 列上界被硬编码，与底表实际行数/列数脱节。
-- 用「全量底表 AM 空值率 77%」当质检 FAIL（错误口径），或对 `BD底表` 不校验 `负责BD` 非空率 == 100%。
+- 用「【1.全量底表】 AM 空值率 77%」当质检 FAIL（错误口径），或对 `【3.BD底表】` 不校验 `负责BD` 非空率 == 100%。
 
 ## Verification（强制验收清单）
 
 宣称「分析完成」时必须同时满足：
 
-1. **来源可回读**：数据来自分层同步表的 `AM招商推进_阅读视图` / `全量_AM招商推进`，且走 MCP `lark-sheets` 读取，行数与飞书侧一致。
+1. **来源可回读**：数据来自分层同步表的 `【2.AM看板】` / `【2.AM底表】`，且走 MCP `lark-sheets` 读取，行数与飞书侧一致。
 2. **零信任 PASS**：`validate_zero_trust` / `run_funnel_diagnosis.py` 退出码 0，无 FAIL 项。
 3. **双口径齐备**：每个 AM 同时给出主口径入驻数（EU/UK 入驻时间有值）与备用口径入驻数（状态=5-已入驻）。
 4. **剔除生效**：`罗才鑫` 已剔除，有效 AM 数与灰色 AM 数在输出中显式打印。
@@ -56,7 +56,7 @@ version: 1.2
 ## 合规默认值（Defaults）
 
 - 数据源 Sheet：`https://bytedance.my.larkoffice.com/sheets/RvpVsoUODhqCXJt4rFgm1M6ky2e`（分层同步表）
-- 分析基盘工作表：优先读 `AM招商推进_阅读视图`（`t5m7r4`），需全字段时读底表 `全量_AM招商推进`（`8953af`）；读取只走 MCP `lark-sheets`，`include_secrets=true`
+- 分析基盘工作表：优先读 `【2.AM看板】`（`t5m7r4`），需全字段时读底表 `【2.AM底表】`（`8953af`）；读取只走 MCP `lark-sheets`，`include_secrets=true`
 - 默认分组维度：`负责AM`（内核维度无关，可传 `行业` / `国家`）
 - 默认剔除名单：`罗才鑫`
 - 背景色：`#FFFFFF`（HTML `backgroundColor` + matplotlib fig/ax/savefig facecolor）
@@ -89,7 +89,7 @@ python3 scripts/layered_sync_entry.py
 
 | 项目 | v1.1 | v1.2 |
 |------|------|------|
-| 分析基盘读取 | 旧单表（已停用） | 优先读 `AM招商推进_阅读视图` 或 `全量_AM招商推进` |
+| 分析基盘读取 | 旧单表（已停用） | 优先读 `【2.AM看板】` 或 `【2.AM底表】` |
 | 架构 | 单表 | 3 底表 + 3 阅读视图 |
 
 ## 🗂 分层读写架构（3 底表 + 3 阅读视图）
@@ -99,13 +99,13 @@ python3 scripts/layered_sync_entry.py
 ```
 多维表格源（106 字段 / 8496 行）
    └─ build_layered_sheets.py --layer base   ← 机器层：3 张底表，106 列全字段，每日幂等覆盖
-        ├─ 全量底表            8496 行  无筛选
-        ├─ 全量_AM招商推进     1906 行  AM优先级 == "AM招商推进"
-        └─ BD底表              1480 行  负责BD 非空
+        ├─ 【1.全量底表】            8496 行  无筛选
+        ├─ 【2.AM底表】     1906 行  AM优先级 == "AM招商推进"
+        └─ 【3.BD底表】              1480 行  负责BD 非空
    └─ build_layered_sheets.py --layer view   ← 人类层：3 张阅读视图，38 列固定表头
-        ├─ 全量_阅读视图        → 全量底表         （8496 行）
-        ├─ AM招商推进_阅读视图  → 全量_AM招商推进  （1906 行）
-        └─ BD_阅读视图          → BD底表           （1480 行）
+        ├─ 【1.全量看板】        → 【1.全量底表】         （8496 行）
+        ├─ 【2.AM看板】  → 【2.AM底表】  （1906 行）
+        └─ 【3.BD看板】          → 【3.BD底表】           （1480 行）
    受保护不可写：历史入驻、AM分析
 ```
 
@@ -115,12 +115,12 @@ python3 scripts/layered_sync_entry.py
 
 | 层 | Sheet 名 | sheetId | 行数 | 列 | 筛选口径 / 引用来源 |
 |---|---|---|---|---|---|
-| 底表 | `全量底表` | `YNN8uk` | 8496 | 106 | 无筛选（源全量） |
-| 底表 | `全量_AM招商推进` | `8953af` | 1906 | 106 | `AM优先级 == "AM招商推进"`（**新口径，不再叠加 `历史入驻 != 1`**；旧口径为 1422 行） |
-| 底表 | `BD底表` | `MpyNOP` | 1480 | 106 | `负责BD` 非空（非 None / 非空串 / strip 后非空） |
-| 阅读 | `全量_阅读视图` | `KYImDl` | 8496 | 38 | 引用 `全量底表` |
-| 阅读 | `AM招商推进_阅读视图` | `t5m7r4` | 1906 | 38 | 引用 `全量_AM招商推进` |
-| 阅读 | `BD_阅读视图` | `JC5aOe` | 1480 | 38 | 引用 `BD底表` |
+| 底表 | `【1.全量底表】` | `YNN8uk` | 8496 | 106 | 无筛选（源全量） |
+| 底表 | `【2.AM底表】` | `8953af` | 1906 | 106 | `AM优先级 == "AM招商推进"`（**新口径，不再叠加 `历史入驻 != 1`**；旧口径为 1422 行） |
+| 底表 | `【3.BD底表】` | `MpyNOP` | 1480 | 106 | `负责BD` 非空（非 None / 非空串 / strip 后非空） |
+| 阅读 | `【1.全量看板】` | `KYImDl` | 8496 | 38 | 引用 `【1.全量底表】` |
+| 阅读 | `【2.AM看板】` | `t5m7r4` | 1906 | 38 | 引用 `【2.AM底表】` |
+| 阅读 | `【3.BD看板】` | `JC5aOe` | 1480 | 38 | 引用 `【3.BD底表】` |
 | 🔒 受保护 | `历史入驻` | `Tc3dvL` | — | — | **只读**，任何写入/clear 立刻熔断 |
 | 🔒 受保护 | `AM分析` | `M45mLI` | — | 38 | **只读**（原名「分析基盘_阅读视图」，线上已被人工改名） |
 
@@ -155,7 +155,7 @@ python3 scripts/layered_sync_entry.py --cache <records.ndjson>   # 复用本地�
 | G4 | 长整型字段（`seller_id` / `shop_id` / `leads_id` / `匹配global_seller_id`）强制 dtype=object（文本格式 @） |
 | G5 | 字段名 key 映射写入，不依赖 API 返回列位置顺序 |
 | G6 | 阅读视图通过 INDEX+MATCH 按列名引用底表 |
-| G7 | `负责AM` / `AM优先级` 空值率断言 <5%（全量底表 / BD底表豁免 `负责AM`；BD底表追加 `负责BD` 非空率 = 100%） |
+| G7 | `负责AM` / `AM优先级` 空值率断言 <5%（【1.全量底表】 / 【3.BD底表】豁免 `负责AM`；【3.BD底表】追加 `负责BD` 非空率 = 100%） |
 | G8 | 零信任质检 4 项（行数断言 / 表头列序 / 关键字段空值率 / RAW 回捞 5 行）任一 FAIL 即 `sys.exit(3)` |
 
 细则：
@@ -167,13 +167,13 @@ python3 scripts/layered_sync_entry.py --cache <records.ndjson>   # 复用本地�
 5. **`MATCH(表头名, 底表!$A$1:$DB$1, 0)` 的上界 `$DB` 恰好等于 106 列**：源表新增字段导致超过 106 列时必须同步放宽上界，否则新字段会静默 MATCH 不到。
 6. **长整型 ID 强制文本**：`seller_id` / `shop_id` / `leads_id` / `临时id` / 任意含 `id` 的字段一律 `dtypes:object`（文本 `@`），并以「15 位数值阈值」兜底识别漏配字段。
 7. **`PROTECTED` 白名单在所有写入入口 `guard()` 硬熔断**（`历史入驻` / `AM分析`），不依赖人工小心。
-8. **质检口径按底表分别配置断言阈值**：`负责AM` / `AM优先级` 空值率 <5% **只适用于 AM 相关底表**；`全量底表`（77% 无 AM）与 `BD底表`（72% 无 AM）是源数据事实，不构成 FAIL。`BD底表` 的硬断言是 **`负责BD` 非空率 == 100%**。
+8. **质检口径按底表分别配置断言阈值**：`负责AM` / `AM优先级` 空值率 <5% **只适用于 AM 相关底表**；`【1.全量底表】`（77% 无 AM）与 `【3.BD底表】`（72% 无 AM）是源数据事实，不构成 FAIL。`【3.BD底表】` 的硬断言是 **`负责BD` 非空率 == 100%**。
 
 
 ## ⚙️ 核心架构 / SOP
 
 ```
-飞书 AM招商推进_阅读视图 --(MCP lark-sheets)--> DataFrame/CSV
+飞书 【2.AM看板】 --(MCP lark-sheets)--> DataFrame/CSV
    └─> am_analysis_core（纯计算：阶段/段转化/瓶颈/对标/零信任）
          └─> run_funnel_diagnosis.py（薄 CLI + L3 断言）--> result.json
    └─> render_bubble_matrix.py --> 白底 ECharts HTML（聚焦版/全轴版）+ PNG + data.json
@@ -185,7 +185,7 @@ python3 scripts/layered_sync_entry.py --cache <records.ndjson>   # 复用本地�
 
 ```bash
 lark-cli sheets +csv-get --url "https://bytedance.my.larkoffice.com/sheets/RvpVsoUODhqCXJt4rFgm1M6ky2e" \
-  --sheet-name "AM招商推进_阅读视图" > /tmp/eu_am_base.csv
+  --sheet-name "【2.AM看板】" > /tmp/eu_am_base.csv
 ```
 
 调用飞书相关脚本/命令时必须设置 `include_secrets=true`。先 `+workbook-info` 确认工作表名，再读取；不要凭直觉猜 sheet 名。
@@ -235,14 +235,15 @@ cd user_skills/eu-am-efficiency-analyzer && python3 scripts/render_bubble_matrix
 
 - 🧑‍💻 用户输入：`分析一下 EU AM 的招商效率，出个气泡矩阵`
 - 🤖 标准输出：
-  1. MCP 读取 `AM招商推进_阅读视图` → 24 位有效 AM（已剔除罗才鑫）；
+  1. MCP 读取 `【2.AM看板】` → 24 位有效 AM（已剔除罗才鑫）；
   2. `run_funnel_diagnosis.py` 退出码 0、零信任 PASS；
   3. 白底 ECharts 聚焦版/全轴版 HTML + PNG，中位数分界线 x=…、y=…；
   4. 附口径说明与灰色 AM 复核清单。
 
 ## 变更记录
 
-- **v1.2**：数据同步架构由「1 底表 + 1 阅读视图」升级为「3 底表 + 3 阅读视图」人机分层读写（底表层 106 列全字段每日幂等覆盖：全量底表 8496 行 / 全量_AM招商推进 1906 行 / BD底表 1480 行；阅读层 38 列固定表头 + INDEX+MATCH 按字段名动态引用）；`全量_AM招商推进` 筛选口径改为仅 `AM优先级 == "AM招商推进"`（不再叠加 `历史入驻 != 1`，1422 → 1906 行）；`历史入驻` / `AM分析` 列为受保护只读 Sheet；沉淀 8 条工程护栏（workbook-info 前置复核、cells-clear 存在性判断、formula-verify 分段复扫、INDEX/MATCH 上界参数化、长整型 ID 文本化、PROTECTED guard 硬熔断、质检阈值按底表分别配置）；新增技能内薄壳入口 `scripts/layered_sync_entry.py`（L3 断言 + 子进程转发到 `projects/eu-am-efficiency/build_layered_sheets.py`）；新增技能内主脚本 `scripts/build_layered_sheets.py`；沉淀 8 条工程护栏（G1-G8）；分层同步表 `RvpVsoUODhqCXJt4rFgm1M6ky2e`；移除旧版 `Bi8ms...` 单表数据源引用。
+- **v1.2.1**：Sheet 命名规范统一为「序号 + 语义」形式（`全量底表`→`【1.全量底表】`、`全量_AM招商推进`→`【2.AM底表】`、`BD底表`→`【3.BD底表】`、`全量_阅读视图`→`【1.全量看板】`、`AM招商推进_阅读视图`→`【2.AM看板】`、`BD_阅读视图`→`【3.BD看板】`）；`sheet_id` 全部保持不变（YNN8uk / 8953af / MpyNOP / KYImDl / t5m7r4 / JC5aOe），仅改展示名；飞书数据基盘 Sheet 标签页、SKILL.md、飞书技能说明文档三轨同步完成。
+- **v1.2**：数据同步架构由「1 底表 + 1 阅读视图」升级为「3 底表 + 3 阅读视图」人机分层读写（底表层 106 列全字段每日幂等覆盖：【1.全量底表】 8496 行 / 【2.AM底表】 1906 行 / 【3.BD底表】 1480 行；阅读层 38 列固定表头 + INDEX+MATCH 按字段名动态引用）；`【2.AM底表】` 筛选口径改为仅 `AM优先级 == "AM招商推进"`（不再叠加 `历史入驻 != 1`，1422 → 1906 行）；`历史入驻` / `AM分析` 列为受保护只读 Sheet；沉淀 8 条工程护栏（workbook-info 前置复核、cells-clear 存在性判断、formula-verify 分段复扫、INDEX/MATCH 上界参数化、长整型 ID 文本化、PROTECTED guard 硬熔断、质检阈值按底表分别配置）；新增技能内薄壳入口 `scripts/layered_sync_entry.py`（L3 断言 + 子进程转发到 `projects/eu-am-efficiency/build_layered_sheets.py`）；新增技能内主脚本 `scripts/build_layered_sheets.py`；沉淀 8 条工程护栏（G1-G8）；分层同步表 `RvpVsoUODhqCXJt4rFgm1M6ky2e`；移除旧版 `Bi8ms...` 单表数据源引用。
 - **v1.1**：补齐真实数据源 ETL 同步链路（多维表格 → 分析基盘 每日工作日 08:50 CST 全量重写，幂等 Pass A/Pass B），并内置三项零信任门禁（行数断言 / 关键字段空值率<5% / RAW 抽 10 行 0 差异，任一 FAIL 即非 0 退出）；新增技能内 L3 入口脚本 `scripts/sync_source_entry.py`。
 - **v1.0**：首版。内核 `am_analysis_core.py`（含零信任双路重算与漏斗单调性断言）+ 白底渲染层 `render_bubble_matrix.py` + 薄封装 CLI `run_funnel_diagnosis.py`（L3 断言熔断）；补齐 L1 反合理化三件套与 L2 合规默认值。
 
