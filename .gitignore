@@ -82,3 +82,9 @@ user_skills/**/metadata.json
 tools/backups/
 tools/__pycache__/
 tools/*.bak
+
+# ---------- Python 缓存（必须放在 !user_skills/** 白名单之后才生效） ----------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
