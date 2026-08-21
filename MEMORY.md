@@ -16,6 +16,15 @@
 # 积累的上下文
 <!-- 随时间积累的重要事实、模式和洞察 -->
 
+- **【qi-skills 仓库瘦身与 .gitignore 护栏（2026-08-21）】**：远端 `https://github.com/Yu1ocean/qi-skills.git`，工作区根即仓库根，只同步 `user_skills/`（forge 钩子 `user_skills/scripts/post_forge_git_push.sh` 执行 `git add user_skills/`）。
+  - **根因**：技能运行时产物（`.tmp/`、`assets/snapshots/`、`*_export_*.xlsx`、`.runtime/downloads/`、`user_skills/*.zip`）历史上被误纳入 Git，跟踪体积膨胀至 270MB，触发 forge push 被 245MB ZIP 拦截。
+  - **已落地护栏**：`.gitignore` 重写为「根目录白名单（`/*` + `!/user_skills/` 等）+ 全局临时目录/快照/导出/zip/媒体黑名单」；`git rm --cached` 摘除 294 个垃圾文件（189MB），跟踪体积 270MB→81MB，`git status` 噪声从数千条降到 8 条。commit `80653ef`。
+  - **铁律**：forge 产出的技能 ZIP 只上飞书云盘，**永不入 Git**；任何 `output/`、`snapshots/`、`.tmp/`、`downloads/` 目录一律视为可再生产物。
+  - **遗留**：本地 stale 分支 `aime/1785988362-travel-new-tag-fix` 与 3 个 stash 内含 1.3GB `.mp4.part`（该 blob 从未推送到远端），删除后本地 `.git` 可由 1.7G 降至约 0.2G，属破坏性操作，待奇楠确认。
+  - **【2026-08-21 补：远端历史重写已完成（方案A）】**：用 `git filter-repo` 对 **全部 4 个远端分支**（main + travel-dashboard-v310-clean + multi-source-sync-v2.0 + release/multi-source-sync-v1.4）剔除 `.tmp/`、`snapshots/`、`output(s)/`、`downloads/`、`.runtime/`、`*.zip`、`*_export_*.xlsx`、媒体文件；force push 完成。**clone `.git` 195MB → 41MB，历史最大 blob 由 40MB 降至 2.3MB**，各分支垃圾文件计数均为 0。教训：只重写 main 无效——旧分支同样会把大 blob 拖进 clone，必须走 `--mirror` 全 ref 重写。备份 bundle `/tmp/qi-skills-prerewrite-20260821-2004.bundle`（196MB，TTL 24h）。
+  - **【pre-push 钩子 v2】**：模板 `user_skills/scripts/pre-push`，Rule 1 单文件 >50MB 拦截 + Rule 2 单次 push 新增总量 >100MB 熔断（含 Top10 offenders 提示），紧急旁路 `ALLOW_BIG_PUSH=1`；安装脚本 `user_skills/scripts/install_hooks.sh`。
+  - **已有防线**：`.git/hooks/pre-push` 存在 >50MB 单文件拦截（模板在 `user_skills/scripts/install_hooks.sh`），但对「大量 12MB 文件累积」无效，故必须靠 `.gitignore` 兜底。
+
 - **日程分享偏好**：当发送会议/日程通知到群聊时，只发送飞书“日程卡片/日程直达链接”（Calendar Event Link），无需附加线上视频会议链接（Video Meeting Link），让大家统一通过日程沉淀。
 
 - **日程确认偏好**：在创建任何日程前，确认阶段需显式确认“是否需要会议室”，不要基于会议主题（如下午茶、coffee chat）自行假设不需要会议室。若用户未指定会议时长，**默认按 30 分钟**安排。【绝对红线】所有的约会/日程安排任务，**必须且只能全权调用 `smart-scheduler` 技能执行**。在分配任务时，必须将“必须先输出几个黄金时段供用户显式确认（下午时段优先推荐），绝对禁止擅自盲目锁定并发起邀约”这条红线作为强制约束写入 Task 的 Prompt 中。
@@ -29,6 +38,8 @@
 - **数据结构基准**：默认沿用“Anker 项目”跑通的数据结构（年份、品牌、区域、营收、增速、毛利率、核心品类等）。在正式输出表格前，需先进行字段完备性（如某字段为 NULL）的“分步确认”。
 
 - **商家等级（Tier）常识修正**：在业务逻辑中，商家的 T 系列等级是正向递增的，即 **数值越大，等级越高**（如 T5 是头部大卖，T1 是尾部/新手）。绝不能受通用大模型“Tier 1 是最高级”的常识污染。
+- **【长任务知识库读取 SOP（借鉴 Codex 第二大脑方案）】**：长任务工作区中，严禁全量加载知识库/记忆文件。必须先读索引/摘要（如 MEMORY.md 目录区、decision-registry 编号列表），再按需精准读取原文段落，避免 Token 浪费与注意力漂移。已在 Aime-Dreaming、us-am-stats-sync 等长任务中验证有效。（来源对比：抖音"Codex 永久记忆+第二大脑"方案 vs Aime 实践，报告：https://bytedance.larkoffice.com/docx/C1pmdiAXxoMHYJxdiJdcZoiPneV）
+
 - **【系统记忆精简与技能解耦原则 (核心规则)】**：`MEMORY.md` 仅保留事件的**触发条件**和高层策略。所有具体的执行步骤、SOP和细节约束必须下沉并封装到对应的独立技能（Skill）中，按需调用技能执行，保持记忆轻量。
 - **【零信任质检强制标准 v3.0 (Zero-Trust QA Engine v3.0)】**：所有战役级数据质检（如高管汇报、战略定性），必须强制按序执行“1+2+3组合拳及最终物理回捞”的四阶段硬核对账流水线：
   - **阶段一：数据契约与断言网络 (Data Contracts & Assertions)**：前置拦截器，强制校验底层“物理定律”与业务常识（如 GMV 非空、不为负数、账号唯一性等脏弹），未通过直接熔断拒绝计算。
@@ -70,6 +81,10 @@
 - **【文档生成与编号强制锁定 SOP (Document ID Allocation Guard)】**：
   凡是触发新建飞书文档、生成复盘报告等任务，严禁直接使用飞书底层 Token 糊弄用户，必须且只能全权代理给 `feishu-doc-writing-guide [user]` 技能执行。由该技能负责完整的“先拿号、再盖章、后归档”防幻觉与物理锁死工作流。
 
+- **feishu-doc-writing-guide 技能坐标（2026-08-21 更新）**：Skill ID `SKL-2604-010`（台账【专属技能清单】row=16），说明文档 https://bytedance.larkoffice.com/docx/KIJfdUkYNoyFeTxo7E2ciApyntb ，Wiki 节点 https://bytedance.larkoffice.com/wiki/Godkwwor8iVycskZoGtcY05snVd 。当前版本 v7.5。
+  - **v7.5 新增陷阱6（飞书 Sheet 多选单元格写入）**：多选值是**选项数组**，必须走 `+cells-set --cells '[[{"multiple_values":[{"value":"EU"},{"value":"UK"}]}]]'`；禁止用逗号串文本（`"EU,UK,JP"`）经 `+csv-put` 或 `value` 通道写入——单值恰好命中时不报错，多值会被判定为「不在选项列表内的整体文本」，导致药丸不渲染 + 红色校验角标。L3 断言脚本：`scripts/multiselect_write_guard.py`。
+  - **台账遗留待清理**：row=6 `SKL-2604-016 / 飞书文档写入权威指南 / v7.1` 是同一技能的中文名重复行；说明文档尾部残留 v7.4 旧 ZIP 幽灵块（token `SXvqbrTUmoxQZXxNFwycFtX3nSd`）。均属破坏性操作，待人工确认后清理。
+
 - **技能说明文档链接沉淀（2026-04-13）**：
   - zero-trust-data-analyzer：https://bytedance.larkoffice.com/docx/PjhydjQw0o7RnHxyHJzc4s7Pnbv
   - zero-trust-qa-checker：https://bytedance.larkoffice.com/docx/A10sdrDzVoLX0Gxt5zDcB04Sn7f
@@ -90,4 +105,4 @@
   > 💥 **异常详情**：[一句话说清报错，如 404跨域、权限拦截等]
   > 🛡️ **自愈/兜底动作**：[如：已写入本地死信队列 DLQ_xxx]
   > 👨‍💻 **需要您协助 (Action Required)**：[下一步明确的行动点，如点击授权、确认合并等]
-- **环境路由兜底策略**：在操作飞书资产且遇到目标节点（CN/SG）不明确的情况时，优先默认使用 **SG 节点**（`bytedance.sg.larkoffice.com`）进行尝试，确保核心数据的平稳回传。
+- **环境路由兜底策略**：飞书节点 CN（`bytedance.larkoffice.com`）与 SG（`bytedance.sg.larkoffice.com`）均可，无强制默认方向。EU/UK/JP 品牌招商运营相关的结构化资料（人才说明书、商家预测表格）优先写 SG（见 USER.md），其余资产按任务上下文自然路由，不做额外限制。
