@@ -1,12 +1,12 @@
 <title>【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.23)</title>
 
-<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YzJkOWFiMmI1NWNhMDVkODA4ZjZiYzFlODdmOTY5NTZfOGI3YzA5MjRmYzM0NGJjNmUxZjI0OGM1YjUyMDhmNjZfSUQ6NzY3NjQ5MTEwMzE4NDYyMDQ5NV8xNzg3MzIyMzY5OjE3ODczMjU5NjlfVjM" mime="application/zip" size="2967134" token="QVpbbymZ7opNLVxVNGzcXxvZnWg"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YTU4MWQ2NDczMGZhMGI1MThlYWZhMDhlYWFiNjAxMWRfN2JjNjQxMjY1OTYzMWU0Njc0NzM3MWY1ZmFhMGU4OTdfSUQ6NzY3NjQ5MTY1MTczNjUzODMxMl8xNzg3MzIyNDk2OjE3ODczMjYwOTZfVjM" mime="application/zip" size="2968212" token="Dtszb3jPmohAr8xV8M9cOTKLnoh"/></figure>
 
 > 🤖 **本区块由 forge 流水线自动生成（Overwrite Zone），请勿手工编辑**  
 > **技能名称**：`skill-forge-pipeline`  
 > **版本号**：5.23  
 > **描述**：创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。  
-> **更新时间**：2026-08-21 22:26
+> **更新时间**：2026-08-21 22:28
 
 # 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.23)
 
@@ -130,4 +130,5 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --ve
 
 > 本章节只追加、不覆盖历史条目。
 
+- **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。
 - **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。

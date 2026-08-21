@@ -699,11 +699,18 @@ def sync_doc_zones(
     if report["anchors"].get("created"):
         time.sleep(2)
         zone_map = fetch_zone_map(doc_url)
-        samples = zone_map.preserve_samples()
+        # 关键：断言样本取「补建前 ∪ 补建后」的并集，绝不用重扫结果覆盖原样本。
+        # 补建锚点只做 append、从不删除，因此补建前采到的人工正文**必须**依然存在；
+        # 若只保留重扫后的样本（往往只剩占位提示），存在性断言就退化成自证，
+        # 等于放弃了「保护既有人工沉淀」这一核心目的。
+        rescanned = zone_map.preserve_samples()
+        samples = list(dict.fromkeys(samples + rescanned))
         report["rescanned"] = True
+        report["preserve_samples"] = len(samples)
         print(
             f"   补建后重扫：overwrite={len(zone_map.overwrite)} "
-            f"preserve={len(zone_map.preserve)} append={len(zone_map.append)}"
+            f"preserve={len(zone_map.preserve)} append={len(zone_map.append)}；"
+            f"断言样本取并集 = {len(samples)} 条"
         )
 
     report["overwrite"] = update_overwrite_zone(

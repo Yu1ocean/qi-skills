@@ -439,7 +439,7 @@ forge 每次发布都会更新飞书技能说明文档。V5.22 之前只有两�
 
 1. **读真实结构**：`fetch_zone_map()` → `lark-cli docs +fetch --doc-format xml --detail with-ids`，解析成有序顶层 block 列表（`<ul>`/`<ol>` 自身无 id，按 `<li>` 展开）。**禁止盲写**。
 2. **采样 Preserve Zone**：`ZoneMap.preserve_samples()` 取最多 8 条人工正文，作为写后存在性断言的基准。
-3. **补建缺失锚点（安全降级）**：`ensure_zone_anchors()` 只做 `append`，绝不 delete / 不重排既有正文，并打印 `[ZONE-DEGRADED]` 显式告知。
+3. **补建缺失锚点（安全降级）**：`ensure_zone_anchors()` 只做 `append`，绝不 delete / 不重排既有正文，并打印 `[ZONE-DEGRADED]` 显式告知。补建后重扫时，断言样本必须取**补建前 ∪ 补建后的并集**，禁止用重扫结果覆盖原样本（否则存在性断言退化为自证）。
 4. **覆盖 Overwrite Zone**：`update_overwrite_zone()` 按 h2 章节整段重建；**每个待删 block 都必须先经 `ZoneMap.zone_of()` 断言归属 Overwrite Zone**，否则 `raise` —— 这是防止误伤 Preserve Zone 的最后一道闸门。
 5. **追加 Changelog**：`append_changelog_entry()` + `build_changelog_entry_from_skill_md()`（文案取自 `SKILL.md` 更新日志，SSOT 原则）。
 6. **等 2s → RAW 回读断言**：`assert_zone_integrity()`。
@@ -491,6 +491,7 @@ python3 scripts/test_doc_zones.py
   - 新建文档路径：`register_skill.py --emit-new-doc-markdown` 产出「Overwrite → Preserve（占位 `[待补充使用案例]`）→ Append」三分区骨架，让文档出生即合规。
   - `register_skill.py`：接入 `sync_doc_zones()`（版本标识同步之后、Wiki Mount 之前），新增 `--skip-doc-zones` 调试开关，metadata 落 `doc_zone_synced` / `doc_zone_sync` / `doc_zone_degraded`。
   - 健壮性踩坑：Preserve 锚点标题自带 `&`，附件 `href` 也常带未转义 `&`，严格 XML 解析必崩 → 新增 `sanitize_doc_xml()` 把非法实体的裸 `&` 补成 `&amp;`；`SKILL.md` 的文档模板骨架里本就写着 `## 🔑 触发词`，故 `extract_skill_md_section()` 必须先 `_strip_fenced_blocks()` 剔除围栏，否则会把模板占位符灌进飞书文档。
+  - 断言样本取「补建锚点前 ∪ 补建后」的并集：补建只 append 不删除，故补建前采到的人工正文必须依然存在；若用重扫结果覆盖原样本（往往只剩占位提示），存在性断言会退化成自证，等于放弃保护既有沉淀。
   - 新增 `scripts/test_doc_zones.py` 离线自检（25 例全绿）：覆盖边界切分、老文档降级、锚点重复 / 顺序颠倒、标题空格与 `&` 变体、非法 XML 熔断、围栏剔除。
 
 - **V5.22**: 收紧 `is_own_skill_zip()` 的版本后缀匹配，杜绝跨技能 ZIP 块误删。此前 `<父名>-v4.zip` 会被宽松正则判为父技能自身旧块，若未来出现「同名前缀的独立技能」与父技能共享同一说明文档，父技能 forge 会静默删除该独立技能的 ZIP 块。现要求剥离技能名前缀后的剩余后缀必须为空 / 带点号的纯数字版本（`_5.21`、`_v5.22`）/ `(1)` 去重后缀 / `_latest` 白名单；任何含字母语义的后缀（`-v4`、`_v4`、`-beta`、`_old`）一律判为「异物块，只报告不删除」。新增 `scripts/test_is_own_skill_zip.py` 自检（9 例全绿）。
@@ -608,7 +609,7 @@ cd user_skills/skill-forge-pipeline \
 
 - `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.22`
+- `version`: `5.23`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 22:13`
+- `cloud_published_at`: `2026-08-21 22:26`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`
