@@ -106,3 +106,35 @@
   > 🛡️ **自愈/兜底动作**：[如：已写入本地死信队列 DLQ_xxx]
   > 👨‍💻 **需要您协助 (Action Required)**：[下一步明确的行动点，如点击授权、确认合并等]
 - **环境路由兜底策略**：飞书节点 CN（`bytedance.larkoffice.com`）与 SG（`bytedance.sg.larkoffice.com`）均可，无强制默认方向。EU/UK/JP 品牌招商运营相关的结构化资料（人才说明书、商家预测表格）优先写 SG（见 USER.md），其余资产按任务上下文自然路由，不做额外限制。
+
+<!-- restored from trace 2026-08-21 -->
+
+# 当前上下文
+
+- **register_skill.py 版本截断 BUG**：当前 `register_skill.py` 将版本号归一化为 `major.minor`，`patch` 位被截断（如 `v1.6.1` → `v1.6`）。需后续迭代时修复为保留 `major.minor.patch`，避免 patch 版本写入台账时被蒸馏掉。
+
+- **GitHub 技能仓库**：`https://github.com/Yu1ocean/qi-skills`（用户：Yu1ocean），存放所有 `user_skills/` 技能代码。`skill-forge-pipeline-v4` 的 `register_skill.py` 已植入 post-forge hook，每次 forge 成功后自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>` 完成 commit+push。PAT 仅存于 `~/.git-credentials`，不得写入任何文档。
+  - 2026-08-11 因 1.25GB `.mp4.part` 历史污染，用 `git-filter-repo` 重写历史并 force-push main，当前 main HEAD：`b8b232d6`（旧 hash `8740d72` 已失效）。`.gitignore` 已全局追加下载缓存规则（`user_skills/*/downloads/`、`*.mp4.part` 等）。DEC-20260811-022 已录入。
+  - 2026-08-14 新增 pre-push hook（>50MB 熔断）双保险：`user_skills/scripts/pre-push` + `user_skills/scripts/install_hooks.sh`，commit `48e5847a`。后续任意 clone 运行 `bash user_skills/scripts/install_hooks.sh` 即可激活；`post_forge_git_push.sh` 末尾已追加安装提示。
+
+- **决策体系进化长期项目锚点**：
+  - 本地 SSOT：`memory/topics/decision-registry.md`，当前已收录 DEC-001 ~ DEC-013 共13条决策
+  - 飞书镜像：`https://bytedance.larkoffice.com/wiki/PnnDwYr13imUyVkVPshc46ICnVh`
+  - 项目看板：`https://bytedance.larkoffice.com/docx/LAwVdHJneoM8PZxAdaaceqncnnc`
+  - 规划讨论文档 v1：`https://bytedance.larkoffice.com/docx/Qjm6dw2zHoiIycxjAZUcWrFon0b`
+  - 核心定位约定：决策体系进化为系统元规则（宪法层），Aime-Skill-Governance 为立法+执法层，路由决策进化为判例层，三者不平级；决策采用 L0/L1/L2/L3 四层分类；新增 `/dec review`、`/dec conflict`、`/dec audit` 三个暗号补全决策自进化飞轮。
+
+- 用户常在字节/飞书生态内工作，频繁使用 Feishu Doc/Sheet/Bitable/Wiki 等资产，并通过 Aime + MCP 工具做自动化、分析和归档。
+- 用户大量使用 Aime 处理跨境电商相关工作（TikTok Shop / 抖音服饰、POP-Fashion、Anker、Roborock、POP MART 等），包括数据分析、市场研究、直播运营复盘、人才画像等。
+- 用户经常需要将复杂内容"结构化、一页纸化"：L1-L4 分层、思维导图、信息图、结构化周报/复盘、可视化报告等。
+- 用户偏好中文输出，英文内容多用于翻译、本地化或对外物料。
+- 用户多次要求生成卡通/手绘风信息图，区分横版 16:9（电脑）与竖版 9:16（手机），强调信息精简、关键词突出、多留白、少量卡通元素。
+- 用户对数据和流程有强"零信任"与"防爆破"偏好：强调幂等、只读/只写边界、RAW 回捞校验、避免幻觉与幽灵数据。
+- 用户习惯用飞书表格作为"主台账/SSOT"，并有固定主表：`ECQ0sDwmbhDex9tcUSjlkU7Bgdh`（SG 节点，含图书馆、Daily_Logs 等）。
+- 用户在内容创作上偏好"运营专家+极客幽默"语气，喜欢用"蒸馏成 Token""物理探针""幽灵数据"等隐喻。
+- 用户会反复迭代视觉作品（信息图、表情包、GIF、PPT），要求在保持尺寸/比例不变前提下只改文字或局部元素。
+- 用户已为"每日记忆闭环同步"建立固定平替链路：必须使用 `python3 tools/prism_flush_llmproxy.py --type all -o json`，禁止使用原生 `aime prism flush`。
+- 当日已完成「梁文锋公开发声资料库」双路闭环：Plan A 通过 info-miner 深度清洗获得科技行者 11202 字正文，Plan B 通过夸克 PDF 直下并上传飞书云盘；产物为飞书文档 `I8pddmtNBoeMGVx9ECpcYoKpnQe`、云盘文件 `Bflabxsddoiu2KxdQfumCtq6yUf`，相关决策 `DEC-20260726-017` 已录入并同步飞书。
+- 2026-08-06 prism_flush_llmproxy.py 记忆回退问题已定位并修复：脚本改为注入现有 MEMORY.md/USER.md 作为权威基准，采用增量合并 prompt，并新增 70% 行数 regression guard 与关键锚点丢失熔断；安全补跑候选必须先落临时文件、校验通过后才允许覆盖。
+- 2026-08-07 prism_flush_llmproxy.py 二次修复：根因 B（prompt 压缩型约束诱导 LLM 删减内容）+ C（session 输入上限 800k 过大超出有效 context）双命中；修复：session 上限收敛到 120k，prompt 改为"逐行保留+只追加增量"，新增 --write-files 门禁；flush 成功，MEMORY.md 177 行，关键锚点全保留。长期方向：进一步升级为只喂 delta sessions。
+- Aime-Dreaming Cycle #81（2026-08-07）已闭环：38节点/288边/0悬挂/20.48%密度，结构保持模式第43日，Wiki拓扑页+Aime乐园首页已同步，RAW回捞通过，manifest=wiki_updated，一次跑通无人工干预。

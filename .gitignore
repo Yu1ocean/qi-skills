@@ -10,6 +10,7 @@
 !/MEMORY.md
 !/metadata.json
 !/user_skills/
+!/tools/
 !/published/
 !/weekly-card-w30/
 
@@ -72,3 +73,8 @@ top3_W*.xlsx
 
 # 根目录必须保留的元数据（覆盖上面的 *.json 全局忽略）
 !/metadata.json
+
+# ---------- prism flush 写前快照（本地灾备，永不入库） ----------
+tools/backups/
+tools/__pycache__/
+tools/*.bak
