@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKL-2604-008",
-    "name": "cyber-inspiration-generator",
-    "description": "生成 AI 视觉图 + 赛博双轨文案 + 卡片网页 + 全尺寸截图的高光时刻资产；v2.1 新增通用化 scripts/sync_gallery.py（参数化取代一次性 sync_gallery_*.py），画廊同步唯一正式表锁定 tblHHVXl9ObjSyRw，内置 5 条 L3 断言与写后 RAW 回读",
-    "version": "2.1",
-    "doc_link": "https://bytedance.my.larkoffice.com/docx/Gv3BdJAbood680x2OGymsBv6ynf",
+    "skill_id": "SKILL-FORGE-PIPELINE",
+    "name": "skill-forge-pipeline-v4",
+    "description": "自动化技能创建、升级、打包发布与归档流水线（含 CDA Guardrails 自检 + ZIP 文件块幂等替换）；V5.17 修复 Celebrate 阶段幽灵 V3 资产与静默降级，celebrate_skill.py 升格正式入口并新增依赖存在性断言",
+    "version": "5.17",
+    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 20:00",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/cyber-inspiration-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/cyber-inspiration-generator.zip",
-    "zip_name": "cyber-inspiration-generator.zip",
-    "drive_file_token": "PeWdbCBHloXZSaxzEKZmoESCyxg",
-    "drive_file_url": "https://bytedance.my.larkoffice.com/file/PeWdbCBHloXZSaxzEKZmoESCyxg"
+    "updated_at": "2026-08-21 20:01",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
+    "zip_name": "skill-forge-pipeline-v4.zip",
+    "drive_file_token": "Xg01bj4MNo5yclx6ODNcINB8n3v",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Xg01bj4MNo5yclx6ODNcINB8n3v"
 }
