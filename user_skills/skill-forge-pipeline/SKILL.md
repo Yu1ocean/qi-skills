@@ -1,6 +1,6 @@
 ---
 name: skill-forge-pipeline
-version: 5.24
+version: 5.25
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
@@ -499,6 +499,13 @@ python3 scripts/test_doc_zones.py
 > 调试开关：`--skip-doc-zones`（正式发布默认必须执行，它同时承担 Preserve Zone 的保护断言）。
 
 ## 更新日志 (Changelog)
+
+- **V5.25**: 根治说明文档「双大标题」冗余，并强化三个 Zone 的入口引导语。
+  - **根因**：`doc_zone_manager.py::build_new_doc_markdown()` 的新建文档骨架第一行写死 `# 【技能说明】<name> (V<version>)`，而飞书文档原生 `title` 已承载同一标题 —— 于是文档顶部出现两个一模一样的大标题（本轮 forge 说明文档实测到冗余 h1 `doxcn9YTJXtImUhzmRHmBQPFaEg`）。Overwrite Zone 的职责只应是「高亮框 / 版本信息 / 触发词 / 接口契约」，标题不属于它。
+  - **修复**：`build_new_doc_markdown()` 删除 h1 行（保留显式 NOTE 注释说明原因），文档骨架自出生起不再产生重复标题；`update_overwrite_zone()` 本就不渲染 h1，无需改动（已复核确认）。
+  - **Zone 引导语强化**：`PRESERVE_HINT` 改为 `💡 此区域为人工沉淀区（Preserve Zone），forge 不会覆盖，请在此记录使用案例、踩坑与注意事项。`；新增 `APPEND_HINT` = `📌 此区域为更新日志区（Append Zone），forge 每次发布后自动追加，请勿手动修改已有条目。`，并在 `ensure_zone_anchors()`（老文档补建）与 `build_new_doc_markdown()`（新建骨架）两条路径统一引用，杜绝两处提示语各写一套的漂移。
+  - **配套治标**：手工清除存量 forge 说明文档中的冗余 h1 块，RAW 回读断言正文中该标题文本出现次数 == 0（title 不计入正文 block）。
+  - 回归：`scripts/test_doc_zones.py` 25 例全绿。
 
 - **V5.24**: 新增 Wiki「技能存量清单」Upsert 钩子，补齐 forge 台账同步的第二条轨道。
   - **根因**：forge 长期只同步「专属技能清单」Sheet，Wiki 上给人扫读的「一、技能存量清单 (Skill Registry)」表格无人维护，导致 Wiki 三个月未更新、覆盖率一度只有 31.4%。

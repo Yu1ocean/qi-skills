@@ -70,8 +70,12 @@ APPEND_ANCHOR_TITLE = APPEND_ANCHOR.lstrip("# ").strip()
 
 PRESERVE_PLACEHOLDER = "[待补充使用案例]"
 PRESERVE_HINT = (
-    "本章节属于 Preserve Zone：forge 流水线永不覆盖，请在此自由记录使用案例、"
-    "踩坑与注意事项。"
+    "💡 此区域为人工沉淀区（Preserve Zone），forge 不会覆盖，"
+    "请在此记录使用案例、踩坑与注意事项。"
+)
+APPEND_HINT = (
+    "📌 此区域为更新日志区（Append Zone），forge 每次发布后自动追加，"
+    "请勿手动修改已有条目。"
 )
 
 ZONE_OVERWRITE = "overwrite"
@@ -416,9 +420,10 @@ def build_new_doc_markdown(
         skill_md, "接口契约"
     )
 
+    # NOTE(V5.25): 刻意不再写文档标题 h1 —— 飞书文档原生 title 已承载标题，
+    # 正文再写一个同名 h1 会造成「双大标题」视觉冗余。Overwrite Zone 只负责
+    # 高亮框 / 版本信息 / 触发词 / 接口契约。
     parts = [
-        f"# 【技能说明】{name} (V{version})",
-        "",
         render_version_callout(skill_dir, version, updated_at),
         "",
         "## 📌 技能简介",
@@ -438,6 +443,8 @@ def build_new_doc_markdown(
         PRESERVE_PLACEHOLDER,
         "",
         APPEND_ANCHOR,
+        "",
+        f"> {APPEND_HINT}",
         "",
         changelog_entry or f"- **V{version}**：首次发布。",
         "",
@@ -461,7 +468,7 @@ def ensure_zone_anchors(doc_url: str, zone_map: ZoneMap) -> Dict[str, Any]:
         chunks += [PRESERVE_ANCHOR, "", f"> {PRESERVE_HINT}", "", PRESERVE_PLACEHOLDER, ""]
         report["created"].append(PRESERVE_ANCHOR_TITLE)
     if _normalize_title(APPEND_ANCHOR_TITLE) not in titles:
-        chunks += [APPEND_ANCHOR, "", "> 本章节只追加、不覆盖历史条目。", ""]
+        chunks += [APPEND_ANCHOR, "", f"> {APPEND_HINT}", ""]
         report["created"].append(APPEND_ANCHOR_TITLE)
 
     if not chunks:

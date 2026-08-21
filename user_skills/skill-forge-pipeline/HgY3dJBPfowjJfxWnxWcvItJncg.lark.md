@@ -1,14 +1,14 @@
-<title>【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.24)</title>
+<title>【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.25)</title>
 
-<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MjgwNzRiYzNlZjlkNjA0YjEyMzcxYTI1OTY2NjM5Y2NfYjc2YWZjZGQ3ZTIzNzA4YzQ1NDY3MTZjM2ZjNGMwYWZfSUQ6NzY3NjUzMzg1NjQ5MjYyMDc4N18xNzg3MzMyMzIyOjE3ODczMzU5MjJfVjM" mime="application/zip" size="2980647" token="KglGbhocqo2ci8xXGCVc4A6onGd"/></figure>
+# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.25)
 
 > 🤖 **本区块由 forge 流水线自动生成（Overwrite Zone），请勿手工编辑**  
 > **技能名称**：`skill-forge-pipeline`  
-> **版本号**：5.24  
+> **版本号**：5.25  
 > **描述**：创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。  
-> **更新时间**：2026-08-22 01:12
+> **更新时间**：2026-08-22 01:23
 
-# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.24)
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=N2MyMmM4N2ViOTMwYWY5OTViMDcwOTBjYzI1NjZiMjlfOTk3ZGQxNWUyY2M1MWVmNWFiMTBiNWQ4OGZjOGE5ZGZfSUQ6NzY3NjUzNjczNzA2NTA3Nzk0NV8xNzg3MzMyOTkyOjE3ODczMzY1OTJfVjM" mime="application/zip" size="2981730" token="MbFpbPvaToFlpGxuDiqcLJdMn7g"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -92,7 +92,7 @@
   
   ```
 
-## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.24 新增
+## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.25 新增
 
 关联决策：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」。事故起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见。
 
@@ -133,3 +133,4 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --ve
 - **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。
 - **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。
 - **V5.24**: 新增 Wiki「技能存量清单」Upsert 钩子，补齐 forge 台账同步的第二条轨道。
+- **V5.25**: 根治说明文档「双大标题」冗余，并强化三个 Zone 的入口引导语。
