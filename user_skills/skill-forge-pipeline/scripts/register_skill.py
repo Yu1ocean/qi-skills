@@ -1031,6 +1031,12 @@ def prune_stale_zip_blocks(
     doc without any package. Foreign ZIP blocks (other skills) are reported only,
     never auto-deleted: deleting someone else's asset is destructive and needs a
     human call.
+
+    V5.21 — every failure path here RAISES GuardrailViolation. There is no
+    silent-WARNING degradation: enumerate failure, delete failure, readback
+    failure and a uniqueness count != 1 are all hard circuit breaks. The previous
+    report-only behaviour is what allowed ghost ZIP blocks to accumulate
+    unnoticed (info-miner reached 14 stacked packages).
     """
 
     report: Dict[str, Any] = {
@@ -1041,15 +1047,19 @@ def prune_stale_zip_blocks(
         "unique_ok": None,
         "residual": [],
     }
+    # V5.21: NO silent-WARNING degradation. Every failure below is a hard circuit
+    # break. Rationale: this function runs AFTER the new block is inserted and
+    # asserted, so raising can never leave the doc without a package — while a
+    # soft WARNING is exactly what let 22 ghost ZIP blocks pile up across 8 docs.
     try:
         blocks = list_doc_zip_file_blocks(doc_url)
-    except Exception as exc:  # noqa: BLE001 - degrade, never break the pipeline
+    except Exception as exc:  # noqa: BLE001
         report["degraded"] = f"enumerate failed: {exc}"
-        print(
-            "⚠️ WARNING: 无法枚举文档现有 ZIP 文件块，降级为「只插入不删除」；"
-            f"旧版本文件块可能残留，请人工清理。原因：{exc}"
-        )
-        return report
+        raise GuardrailViolation(
+            "ZIP 文件块 upsert 失败：无法枚举文档现有 ZIP 文件块，因此无法保证唯一性。"
+            "严禁降级为「只插入不删除」（该降级正是幽灵安装包堆积的根因）。"
+            f"原因：{exc}"
+        ) from exc
 
     report["enumerated"] = blocks
     own_stale = [
@@ -1069,18 +1079,23 @@ def prune_stale_zip_blocks(
             report["deleted"] = own_stale
         except Exception as exc:  # noqa: BLE001
             report["degraded"] = f"delete failed: {exc}"
-            print(f"⚠️ WARNING: 旧 ZIP 文件块删除失败，需人工清理。原因：{exc}")
+            raise GuardrailViolation(
+                f"ZIP 文件块 upsert 失败：{len(own_stale)} 个旧 ZIP 文件块删除失败，"
+                f"文档将残留幽灵安装包。原因：{exc}"
+            ) from exc
     else:
         print("ℹ️ No stale ZIP file block of this skill found; nothing to prune.")
 
-    # RAW read-after-write uniqueness assertion (report-only, never silent).
+    # RAW read-after-write uniqueness assertion — hard gate, never report-only.
     time.sleep(2)
     try:
         after = list_doc_zip_file_blocks(doc_url)
     except Exception as exc:  # noqa: BLE001
         report["degraded"] = f"{report['degraded']}; readback failed: {exc}".strip("; ")
-        print(f"⚠️ WARNING: 删除后回读断言失败，无法确认唯一性。原因：{exc}")
-        return report
+        raise GuardrailViolation(
+            "ZIP 文件块 upsert 失败：删除后 RAW 回读失败，无法断言唯一性。"
+            f"原因：{exc}"
+        ) from exc
 
     mine = [b for b in after if is_own_skill_zip(b["file_name"], skill_name)]
     report["residual"] = mine
@@ -1088,11 +1103,13 @@ def prune_stale_zip_blocks(
     if report["unique_ok"]:
         print(f"✅ ZIP block uniqueness verified: exactly 1 block ({new_block_id}) for {skill_name}.")
     else:
-        print(
-            "⚠️ WARNING: 本技能 ZIP 文件块唯一性断言未通过，残留清单如下（需人工清理）："
+        residual_desc = "; ".join(
+            f"block_id={b['block_id']} file={b['file_name']} token={b['file_token']}" for b in mine
+        ) or "(none)"
+        raise GuardrailViolation(
+            f"ZIP 文件块唯一性断言失败：期望 {skill_name} 在文档中恰好 1 个 ZIP 文件块"
+            f"（block_id={new_block_id}），实际 {len(mine)} 个。残留清单：{residual_desc}"
         )
-        for b in mine:
-            print(f"   - block_id={b['block_id']} file={b['file_name']} token={b['file_token']}")
     return report
 
 

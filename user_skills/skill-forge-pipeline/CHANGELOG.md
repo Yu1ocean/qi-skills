@@ -2,6 +2,14 @@
 
 > 说明：v5.19 起技能更名为 `skill-forge-pipeline`（Skill ID `SKILL-FORGE-PIPELINE` 不变）。以下历史条目中的旧名 `skill-forge-pipeline-v4` 保留原样以保持记录保真。
 
+## v5.21 (2026-08-21)
+
+- **修复 ZIP 回挂 upsert 的四条静默降级路径（软护栏 → 物理熔断）**。
+  - v5.19 引入的 `prune_stale_zip_blocks()` 已具备完整 upsert 编排，但「枚举失败 / 删除失败 / 回读失败 / 唯一性数量 != 1」四条路径均只打印 `⚠️ WARNING` 后返回，流水线照常判定发布成功——护栏形同虚设，幽灵安装包继续堆积且无人察觉。
+  - `register_skill.py`：四条路径统一改为 `raise GuardrailViolation`，并在 docstring / 内联注释写明「本函数在新块插入并断言之后执行，故熔断不会导致文档失去安装包」的安全性论证。异物块维持「只报告不自动删除」。
+  - `SKILL.md`：Verification 第 4 条改写为「ZIP 文件块出现次数必须 == 1」的 UPSERT 断言口径，废弃「存在即通过」；Red Flags 新增「只 append 不清旧块」与「唯一性失败降级 WARNING」两条。
+- **同批治标**：清理 8 篇存量说明文档共 22 个幽灵 ZIP 块，判定基准 = `lark-cli drive metas batch_query` 的 `create_time` 最新 + 本地 `user_skills/<skill>.zip` size 交叉断言（不按体积大小判新旧）。清理后每篇文档 RAW 回读均为「恰好 1 个 ZIP 块」。附带清掉 info-miner 的 `info-miner_latest.zip` 异名变体。
+
 ## v5.20 (2026-08-21)
 
 ### Task 1 — 补 L3 断言：说明文档正文版本回读

@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.20.2
+version: 5.21
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.20.2)
+# 技能锻造流水线 (Forge Pipeline V5.21)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -40,6 +40,8 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - 涉及“复盘报告 / 故障修复报告 / 架构演进报告 / 归档”类技能升级，但 `SKILL.md` 的 Workflow / SOP 中没有显式写入【文档生动化标准】。
 - 涉及飞书资产写入/赋权/文件块挂载但没有 `include_secrets=true`。
 - 输出中出现“应该/大概/可能/我猜/先跳过”，但没有可验证的 RAW 回读证据。
+- ZIP 回挂只做 append 不清理同名旧块，或只验证「文件块存在」而不验证「出现次数 == 1」。
+- ZIP 文件块唯一性断言失败后，只打印 ⚠️ WARNING 就继续走 metadata 落盘 / 台账写入 / 宣称发布成功。
 - **仅凭 `git push` 的退出码判定成功**，没有回读远端 `refs/heads/main` 的 SHA 与本地 HEAD 做比对。
 - Post-Forge Git Push 仍在执行 `git push origin main`（依赖本地可能陈旧的 `main` ref），而非 `git push origin HEAD:main`。
 - ZIP 文件块只调用了 `lark-cli docs +media-insert`（默认追加到文档末尾）就宣称「已挂到标题下方」，没有 `block_move_after` 归位 + 首块回读断言。
@@ -72,7 +74,7 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 1. **CDA 自检通过**：`scripts/cda_guardrails_selfcheck.py` 退出码为 0，并清晰输出风险等级与三层覆盖情况。
 2. **双轨校验通过**：升级技能时，`SKILL.md` 与底层代码（如 `.py`）必须同时有变更（否则立刻熔断）。
 3. **Zip 发布闭环**：`scripts/register_skill.py` 生成的 `metadata.json` 中必须包含 `zip_path`、`drive_file_url`、`doc_link`、`wiki_url`、`wiki_node_token`。
-4. **说明文档回挂验收**：回捞下载最新文档，确认标题下方存在最新 zip 的原生 File Block（非纯文本链接）。
+4. **说明文档回挂验收（UPSERT 唯一性断言）**：回捞下载最新文档，确认标题下方存在最新 zip 的原生 File Block（非纯文本链接），**且本技能 ZIP 文件块在文档中出现次数必须严格 == 1**。「存在即通过」的旧口径已废弃——它正是幽灵安装包长期堆积（info-miner 曾堆到 14 个）而无人发现的根因。枚举失败 / 删除失败 / 回读失败 / 数量 != 1 四种情况**一律 `raise` 熔断**，严禁降级为 WARNING 后继续宣称发布成功。
 5. **Wiki 归档验收**：说明文档必须已成功迁入目标 Wiki 节点；若 Wiki Mount Phase 失败，发布流程必须立刻熔断，不得继续落盘 `metadata.json` 或宣称发布成功。
 6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
@@ -377,6 +379,12 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py \
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
+
+- **V5.21**: 把 ZIP 回挂 upsert 的软降级全部升级为物理熔断，补齐 V5.19 遗留的最后一道缺口。
+  - **根因**：V5.19 已实现 `prune_stale_zip_blocks()`（扫描 → 删旧 → 插新 → 置顶 → 回读），但四条失败路径（枚举失败 / 删除失败 / 回读失败 / 唯一性数量 != 1）全部只打印 `⚠️ WARNING` 后 `return report`，流水线继续宣称发布成功。这是典型的「应然 ≠ 实然」假成功：护栏写了，但没长牙。
+  - **修复**：四条路径统一改为 `raise GuardrailViolation`。因 `prune_stale_zip_blocks()` 在新块已插入并断言之后才执行，熔断绝不会导致文档失去安装包，故熔断是安全的。异物块（其他技能的 ZIP）保持「只报告不删除」——删除他人资产属破坏性操作，需人工判断。
+  - **Verification 第 4 条**改写为 UPSERT 唯一性口径（出现次数必须 == 1），并在 Red Flags 新增「只 append 不清旧块」「唯一性失败降级 WARNING」两条反合理化条款。
+  - **配套治标**：同批清理 8 篇存量说明文档共 22 个幽灵 ZIP 块（info-miner 14→1、team-travel 3→1、multi-source-sync 3→1、us-am-stats-sync ×2 各 2→1、centralized-transmitter 2→1、media-fetcher 2→1、zero-trust-qa-checker 2→1），判定基准为 `drive metas create_time` 最新 + 本地 zip size 交叉断言，全部 RAW 回读通过。
 
 - **V5.20.2**: 修复 forge 回执落点错位（Path.cwd() 硬编码）。
   - `register_skill.py` 的 `metadata_path = Path.cwd() / "metadata.json"` 把回执写到流水线执行目录而非目标技能目录，产生散落且内容错位的幽灵 `metadata.json`（曾被误当成 Skill ID 权威来源）。现统一改为 `skill_dir / ".forge_receipt.json"`（无 `--skill-dir` 时才回落 `Path.cwd()`），Cloud Publish 阶段的二次落盘与日志文案同步改名，杜绝「一处改名、日志仍喊 metadata.json」的不一致。
