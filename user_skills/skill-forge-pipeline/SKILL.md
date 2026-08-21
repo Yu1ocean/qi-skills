@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.25
+version: 5.27
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.24)
+# 技能锻造流水线 (Forge Pipeline V5.26)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -81,6 +81,8 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - 老文档缺失 Zone 锚点标题时，**猜测**边界并照旧覆盖，而不是安全降级（末尾补建锚点 + 显式告知）。
 - 三分区写入后没有 RAW 回读断言（锚点各 1 次 + Preserve 正文存在性），或断言失败后降级为 WARNING 继续。
 - 写入前没有先 `docs +fetch --detail with-ids` 读取真实结构，就直接下发 block 级写指令。
+- 改文档标题仍走 `docs +update --command str_replace --doc-format markdown`（剥 `<title>` 标签后当正文下发，会在正文物化同名 h1，复现「双大标题」）。
+- `assert_no_phantom_h1()` 检测到与 title 同名的正文 h1，却只打 WARNING 不删除、不熔断，或因 fetch 抖动静默 `return success` 而不标记 `degraded`。
 - forge 只同步了「专属技能清单」Sheet，却没有同步 Wiki「技能存量清单」表格（Wiki 长期腐化、覆盖率下滑的历史根因）。
 - Wiki 存量清单同步**内部**的写后回读断言失败（行数不符 / 技能名出现次数 != 1），却被包装成 success 上报。
 - Wiki 存量清单 upsert 未以「技能名称」为主键，导致同一技能重复 forge 追加出重复行。
@@ -120,6 +122,8 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
     - ⑥ 老文档无锚点时必须**安全降级**（末尾补建锚点章节 + 日志显式告知 `[ZONE-DEGRADED]`），绝不误删既有正文。
 
 16. **Wiki 技能存量清单 Upsert 验收（V5.24 新增）**：Sheet 台账写入完成后必须调用 `sync_wiki_skill_list()`（`scripts/wiki_skill_list_sync.py`）：以**技能名称**为主键 upsert Wiki「一、技能存量清单 (Skill Registry)」表格 → `block_replace` 整表 → `sleep 2s` → `docs +fetch --doc-format markdown` 回读断言（行数 == 预期、目标技能名在表格行中**恰好出现 1 次**）。断言失败必须 `raise WikiSyncError`；调用侧允许把该步骤降级为 `⚠️ WARNING: Wiki sync failed: <原因>` 并继续 forge（Wiki 同步是增强项），但**禁止**把断言失败伪装成成功。表格 block id 每次 `block_replace` 后都会变化，必须动态解析，禁止硬编码。
+
+17. **文档标题改写路径与幽灵 h1 断言验收（V5.26 新增）**：说明文档标题的改写**必须**走 `lark-cli drive +update-title`（`update_doc_title_via_drive_api()`），严禁再经 `docs +update --command str_replace --doc-format markdown` 下发标题文案。`sync_version_to_skill_doc_via_mcp()` 末尾必须调用 `assert_no_phantom_h1(doc_url, doc_title)`：在 Overwrite Zone（Preserve 锚点之前）范围内查找与文档 title 同名（空白归一化）的 h1 block，命中即 `block_delete` 自动纠正并打印 `⚠️ [L3-autocorrect] deleted phantom h1: <block_id>`，删后 sleep 2s 回读断言 count == 0，仍存在即 `raise GuardrailViolation`。fetch 失败只允许降级为醒目 WARNING 且必须在返回值标记 `phantom_h1_check="degraded"`，禁止静默成功。
 
 ## 适用场景
 
@@ -352,6 +356,8 @@ python3 user_skills/skill-forge-pipeline/scripts/cloud_publish.py \
 - Wiki 存量清单同步：默认开启（`--skip-wiki-sync` 才跳过）；失败降级为 WARNING，不阻断 forge
 - Wiki 存量清单 upsert 主键默认：技能名称列；缺链接占位符 `⚠️[待补链接]`，使用次数占位符 `-`
 - 写后即读 RAW 校验：默认开启（任何不一致必须熔断）
+- 文档标题改写通道默认：`lark-cli drive +update-title`（禁用 `docs +update --command str_replace` 改标题）
+- 幽灵 h1 断言（`assert_no_phantom_h1`）：默认开启，检测到即自动删除 + 回读断言 count == 0
 - 说明文档正文版本回读断言：默认开启（`--skip-ssot-doc-sync` 才跳过，仅限调试）
 - 版本号形态：保留来源形态（两段进两段出、三段进三段出，patch 位不得截断）；`--bump` 支持 `major|minor|patch`
 - **`--initial-version` 默认：`1.1`**（首次发布起始版本号）
@@ -499,6 +505,12 @@ python3 scripts/test_doc_zones.py
 > 调试开关：`--skip-doc-zones`（正式发布默认必须执行，它同时承担 Preserve Zone 的保护断言）。
 
 ## 更新日志 (Changelog)
+
+- **V5.26**: 根治「双大标题」复现的 P2 级残留缺陷（标题改写路径错位）。
+  - **根因**：`register_skill.py::sync_version_to_skill_doc_via_mcp()` 改文档标题时，把 `<title>...</title>` 剥掉标签后走 `lark-cli docs +update --command str_replace --doc-format markdown` 下发。V5.25 已删除写死的正文 h1，于是这条 markdown str_replace 在正文找不到目标文本时**重新物化了一个同名 h1 block**，「双大标题」每次版本号变化都会复发（手工删除只是治标）。
+  - **Plan A（主修复）**：新增 `update_doc_title_via_drive_api(doc_url, new_title)`，标题改写改走独立重命名 API `lark-cli drive +update-title --as user --url <docx_url> --title <新标题> --format json`（只改文档元数据，不触碰正文；wiki 节点标题自动同步；注意 99991400 限流，禁止并行批量）。正文各行（labeled version / 正文 heading）仍走原 `str_replace` 路径不变。原「先改正文、最后改 title 以规避 degrade_code=1014 ambiguous」的顺序契约不再必需（注释已更新为「title 已走独立 API，不再有 ambiguous 风险」），顺序保留仅作历史习惯。
+  - **Plan B（收尾兜底断言，双保险）**：新增 `assert_no_phantom_h1(doc_url, doc_title)` —— `docs +fetch --doc-format xml --detail with-ids` 读带 id 结构（复用 `doc_zone_manager.sanitize_doc_xml()` 处理未转义裸 `&`），在 Overwrite Zone（Preserve 锚点 `## 📝 使用案例 & 踩坑记录` 之前）范围内查找与文档 title 同名（空白归一化）的 h1 block；命中即 `block_delete` 自动纠正 + 打印 `⚠️ [L3-autocorrect] deleted phantom h1: <block_id>` + sleep 2s 回读断言 count == 0，仍存在即 `raise GuardrailViolation`。fetch 抖动只允许降级为醒目 WARNING 并标记 `phantom_h1_check="degraded"`，禁止静默 return success。该断言在 `assert_doc_body_version_synced()` 之后调用，结果并入返回 dict（`phantom_h1_check` / `phantom_h1_removed`）。
+  - CDA L1：Red Flags 新增 2 条（标题走 markdown str_replace / 幽灵 h1 只 WARNING 不熔断）；Verification 新增第 17 条「文档标题改写路径与幽灵 h1 断言验收」；Defaults 新增标题改写通道与幽灵 h1 断言默认值。
 
 - **V5.25**: 根治说明文档「双大标题」冗余，并强化三个 Zone 的入口引导语。
   - **根因**：`doc_zone_manager.py::build_new_doc_markdown()` 的新建文档骨架第一行写死 `# 【技能说明】<name> (V<version>)`，而飞书文档原生 `title` 已承载同一标题 —— 于是文档顶部出现两个一模一样的大标题（本轮 forge 说明文档实测到冗余 h1 `doxcn9YTJXtImUhzmRHmBQPFaEg`）。Overwrite Zone 的职责只应是「高亮框 / 版本信息 / 触发词 / 接口契约」，标题不属于它。

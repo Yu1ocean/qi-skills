@@ -11,6 +11,7 @@ import tempfile
 import time
 import uuid
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 from urllib.parse import quote, urlparse
@@ -24,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from doc_zone_manager import (  # noqa: E402
     APPEND_ANCHOR_TITLE,
     PRESERVE_ANCHOR_TITLE,
+    sanitize_doc_xml,
     build_changelog_entry_from_skill_md,
     build_new_doc_markdown,
     sync_doc_zones,
@@ -1332,6 +1334,143 @@ def assert_doc_body_version_synced(doc_url: str, new_version: str) -> Dict[str, 
     return {"expected": expected, "checked_lines": len(found)}
 
 
+def _strip_title_tag(line: str) -> str:
+    return re.sub(r"^\s*<title>|</title>\s*$", "", line).strip()
+
+
+def update_doc_title_via_drive_api(doc_url: str, new_title: str) -> Dict[str, Any]:
+    """Rename the doc via the dedicated `drive +update-title` API (V5.26 Plan A).
+
+    历史缺陷（V5.25 及之前）：文档标题的改写走 `docs +update --command str_replace
+    --doc-format markdown`，把 `<title>` 剥标签后当正文文本下发。当正文里已不存在
+    同名 h1 时，这条 markdown str_replace 会**在正文重新物化一个同名 h1 block**，
+    「双大标题」由此复现。`drive +update-title` 是独立的重命名 API，只改文档元数据
+    标题，不触碰正文，且 wiki 节点标题会自动同步。
+    注意：重命名有限流（99991400），禁止并行批量调用。
+    """
+
+    if not new_title.strip():
+        raise GuardrailViolation("拒绝把说明文档标题改写为空字符串。")
+
+    print(f"🏷️ Renaming doc title via drive +update-title -> {new_title!r}")
+    output = run_subprocess(
+        [
+            "lark-cli",
+            "drive",
+            "+update-title",
+            "--as",
+            "user",
+            "--url",
+            doc_url,
+            "--title",
+            new_title,
+            "--format",
+            "json",
+        ],
+        "update doc title via drive +update-title",
+    )
+    payload: Dict[str, Any] = {}
+    try:
+        payload = json.loads(output or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    code = payload.get("code", payload.get("data", {}).get("code", 0)) if payload else 0
+    ok = payload.get("ok", True)
+    if code not in (0, None) or ok is False:
+        raise GuardrailViolation(
+            f"drive +update-title 返回非成功结果，拒绝宣称标题已同步：{output[:400]}"
+        )
+    return {"title": new_title, "raw": output[:400]}
+
+
+def _normalize_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "")).strip()
+
+
+def assert_no_phantom_h1(doc_url: str, doc_title: str = "") -> Dict[str, Any]:
+    """L3 gate + autocorrect: 正文中不允许存在与文档 title 同名的 h1（幽灵大标题）。
+
+    Plan B 兜底（V5.26）：即使 Plan A 已把标题改写切到独立 API，任何历史残留或
+    未来回归都会在此被抓住 —— 检测到即自动 `block_delete`，删后 sleep 2s 回读断言
+    count == 0，仍存在则 `raise`。fetch 链路抖动允许降级为醒目 WARNING，但必须在
+    返回值里显式标记 `phantom_h1_check="degraded"`，禁止静默 return success。
+    """
+
+    def _fetch() -> str:
+        return run_subprocess(
+            [
+                "lark-cli",
+                "docs",
+                "+fetch",
+                "--as",
+                "user",
+                "--doc",
+                doc_url,
+                "--doc-format",
+                "xml",
+                "--detail",
+                "with-ids",
+                "-q",
+                ".data.document.content",
+            ],
+            "fetch doc xml for phantom h1 assertion",
+        )
+
+    try:
+        raw = _fetch()
+    except Exception as exc:  # noqa: BLE001 - degrade loudly, never silently
+        print(f"⚠️ WARNING: phantom h1 断言降级（fetch 失败）：{exc}")
+        return {"phantom_h1_check": "degraded", "phantom_h1_removed": []}
+
+    def _scan(doc_xml: str) -> Tuple[str, list[str]]:
+        sanitized = sanitize_doc_xml(doc_xml)
+        try:
+            root = ET.fromstring(f"<root>{sanitized}</root>")
+        except ET.ParseError as exc:
+            raise GuardrailViolation(
+                f"无法解析文档 XML，幽灵 h1 断言不可信，拒绝静默放行。原因：{exc}"
+            ) from exc
+
+        title_text = ""
+        ordered: list[Tuple[str, str, str]] = []
+        for child in root:
+            tag = (child.tag or "").lower()
+            text = _normalize_ws("".join(child.itertext()))
+            if tag == "title":
+                title_text = text
+                continue
+            ordered.append((child.get("id") or "", tag, text))
+
+        expected_title = _normalize_ws(doc_title) or title_text
+        hits: list[str] = []
+        for block_id, tag, text in ordered:
+            # 只在 Overwrite Zone（Preserve 锚点之前）范围内判定
+            if text == PRESERVE_ANCHOR_TITLE:
+                break
+            if tag in {"h1", "heading1"} and block_id and text and text == expected_title:
+                hits.append(block_id)
+        return expected_title, hits
+
+    expected_title, hits = _scan(raw)
+    if not hits:
+        print(f"✅ 幽灵 h1 断言 PASS：正文中不存在与 title 同名的 h1（title={expected_title!r}）。")
+        return {"phantom_h1_check": "pass", "phantom_h1_removed": []}
+
+    delete_doc_blocks(doc_url, hits)
+    for block_id in hits:
+        print(f"⚠️ [L3-autocorrect] deleted phantom h1: {block_id}")
+
+    time.sleep(2)
+    _, remaining = _scan(_fetch())
+    if remaining:
+        raise GuardrailViolation(
+            "幽灵 h1 断言 FAILED：删除后仍存在与文档 title 同名的正文 h1 -> "
+            f"{remaining}。doc={doc_url}"
+        )
+    print("✅ 幽灵 h1 已清除并回读断言 count == 0。")
+    return {"phantom_h1_check": "autocorrected", "phantom_h1_removed": hits}
+
+
 def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[str, Any]:
     """Sync point #3: rewrite EVERY version marker inside the Feishu skill doc.
 
@@ -1352,23 +1491,27 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[st
         )
 
     updated_count = 0
-    # 顺序契约（V5.20.1 真机踩坑）：文档标题的内层文字常与正文 H1 完全相同，
-    # 若先改标题，str_replace 会命中两处并报 degrade_code=1014（ambiguous）。
-    # 因此先改正文各行，最后才改 <title> —— 那时旧文案只剩标题一处，唯一可命中。
+    doc_title = ""
+    # 顺序说明（V5.26 更新）：文档标题的改写已切换到独立的 `drive +update-title`
+    # API，不再经由正文 str_replace 通道，因此**不再有** degrade_code=1014
+    # （ambiguous，标题文案与正文 H1 同时命中）的风险，也不再会在正文物化同名 h1。
+    # 保留「正文优先、<title> 最后」的顺序无害，仅作历史习惯保留。
     ordered = sorted(found, key=lambda item: 1 if DOC_TITLE_TAG_RE.match(item[0]) else 0)
     for line, _versions in ordered:
         updated_line = _rewrite_doc_version_line(line, expected)
+        if DOC_TITLE_TAG_RE.match(line):
+            doc_title = _strip_title_tag(updated_line)
+            if updated_line == line:
+                continue
+            # Plan A（V5.26）：标题走独立重命名 API，绝不再走 markdown str_replace。
+            update_doc_title_via_drive_api(doc_url, doc_title)
+            updated_count += 1
+            continue
+
         if updated_line == line:
             continue
 
         pattern, replacement = line, updated_line
-        title_m = DOC_TITLE_TAG_RE.match(line)
-        if title_m:
-            # `<title>` 的标签本身不是文档正文文本，str_replace 只能匹配到内层文字，
-            # 整行下发会命中 degrade_code=1013（pattern not found）。故剥掉标签再替换。
-            pattern = re.sub(r"^\s*<title>|</title>\s*$", "", line)
-            replacement = re.sub(r"^\s*<title>|</title>\s*$", "", updated_line)
-
         print(f"📝 Syncing doc version marker: {pattern.strip()[:80]!r} -> {expected}")
         run_subprocess(
             [
@@ -1399,7 +1542,9 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[st
 
     time.sleep(2)
     assertion = assert_doc_body_version_synced(doc_url, expected)
-    return {"updated_lines": updated_count, **assertion}
+    # Plan B 收尾兜底（V5.26）：正文不得存在与文档 title 同名的幽灵 h1。
+    phantom = assert_no_phantom_h1(doc_url, doc_title)
+    return {"updated_lines": updated_count, **assertion, **phantom}
 
 
 def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
