@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.13
+version: 5.14
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.13)
+# 技能锻造流水线 (Forge Pipeline V5.14)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -185,6 +185,10 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 ## 更新日志 (Changelog)
 
+- **V5.14**: 修复 forge 回执落点错位与版本号 patch 位截断两项 P1 缺陷。
+  - **Task 1（回执落点）**：`register_skill.py` 的 `metadata_path = Path.cwd() / "metadata.json"` 硬编码执行目录，导致回执散落在流水线的当前工作目录而非目标技能目录，并生成一批「看起来像权威元数据、实际内容错位」的幽灵 `metadata.json`。现改为写入 `skill_dir / ".forge_receipt.json"`（无 `--skill-dir` 时才回落 `Path.cwd()`），并同步改名与全部日志文案（`✅ Forge receipt written to ...`），消除「元数据 vs 回执」语义误导。仓库根 `.gitignore` 全局黑名单区追加 `**/.forge_receipt.json`，回执作为可再生产物永不入 Git。
+  - **Task 1 配套**：清理 `skill-forge-pipeline-v4` / `skill-forge-pipeline` 目录下 5 个错位幽灵 `metadata*.json`（内容实为 info-miner / video-script / heatmap / interview / live-perf）。**Skill ID 唯一事实来源是飞书台账【专属技能清单】，禁止从目录内 `metadata.json` 读取。**
+  - **Task 2（版本 patch 位）**：移植 plain 版已验证方案，`_normalize_version_to_int_pair` / `_format_version_pair` 升级为 `_parse_version` / `_format_version` / `normalize_version_text`，**保留 patch 位**（`v1.6.1` 不再被截断成 `1.6` 写进台账）；`bump_version` 新增 `patch` 档且三段版本 minor/major 升迁自动补 `.0`；`is_initial_version` 适配三元组；`--bump` 新增 `patch` 选项与交互式第 3 项。
 - **V5.13**: 正式写入 Git 自动归档 SOP 与自举约束。
   - 在 Archive 后新增「Git 自动归档」步骤，明确 hook 调用命令、GitHub 仓库、commit message 格式与失败汇报口径。
   - 在约束条件中固化每次 forge/upsert 后必须触发 Git push hook，且 `skill-forge-pipeline-v4` 自举迭代同样适用。

@@ -366,18 +366,34 @@ def ensure_bytedcli_auth() -> None:
     run_subprocess(["bash", str(auth_script)], "bytedcli-auth")
 
 
-def _normalize_version_to_int_pair(raw: str) -> Tuple[int, int]:
-    raw = (raw or "").strip()
-    raw = raw.lstrip("vV")
+def _parse_version(raw: str) -> Tuple[int, int, Optional[int]]:
+    """Parse a version string into (major, minor, patch|None).
 
-    m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?$", raw)
+    V5.14 fix: the legacy `_normalize_version_to_int_pair()` truncated the patch
+    segment (`v1.6.1` -> `1.6`), so every forge run silently downgraded
+    three-segment versions before they reached the Feishu inventory sheet.
+    Patch is now preserved verbatim; `None` means the source version was
+    two-segment and must stay two-segment.
+    """
+
+    text = (raw or "").strip().lstrip("vV").strip()
+    m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?$", text)
     if not m:
         raise ValueError(f"Unsupported version format: {raw!r} (expected X.Y or X.Y.Z)")
-    return int(m.group(1)), int(m.group(2))
+    patch = int(m.group(3)) if m.group(3) is not None else None
+    return int(m.group(1)), int(m.group(2)), patch
 
 
-def _format_version_pair(major: int, minor: int) -> str:
-    return f"{major}.{minor}"
+def _format_version(major: int, minor: int, patch: Optional[int] = None) -> str:
+    if patch is None:
+        return f"{major}.{minor}"
+    return f"{major}.{minor}.{patch}"
+
+
+def normalize_version_text(raw: str) -> str:
+    """Normalize any version literal while PRESERVING the patch segment."""
+
+    return _format_version(*_parse_version(raw))
 
 
 def read_skill_version_from_skill_md(skill_dir: Path) -> str:
@@ -392,20 +408,28 @@ def read_skill_version_from_skill_md(skill_dir: Path) -> str:
     if not m:
         raise ValueError(f"version field not found in SKILL.md: {skill_md}")
 
-    major, minor = _normalize_version_to_int_pair(m.group(1).strip())
-    return _format_version_pair(major, minor)
+    return normalize_version_text(m.group(1).strip())
 
 
 def bump_version(current_version: str, bump_type: str) -> str:
-    major, minor = _normalize_version_to_int_pair(current_version)
+    """Bump version while preserving the three-segment shape when present.
+
+    - major: X.Y[.Z] -> X+1.0[.0]
+    - minor: X.Y[.Z] -> X.Y+1[.0]
+    - patch: X.Y[.Z] -> X.Y.Z+1  (two-segment input is treated as .0)
+    """
+
+    major, minor, patch = _parse_version(current_version)
     bump_type = (bump_type or "").strip().lower()
 
     if bump_type == "major":
-        return _format_version_pair(major + 1, 0)
+        return _format_version(major + 1, 0, 0 if patch is not None else None)
     if bump_type == "minor":
-        return _format_version_pair(major, minor + 1)
+        return _format_version(major, minor + 1, 0 if patch is not None else None)
+    if bump_type == "patch":
+        return _format_version(major, minor, (patch or 0) + 1)
 
-    raise ValueError(f"Unsupported bump type: {bump_type!r} (expected major/minor)")
+    raise ValueError(f"Unsupported bump type: {bump_type!r} (expected major/minor/patch)")
 
 
 def is_initial_version(current_version: str) -> bool:
@@ -414,7 +438,7 @@ def is_initial_version(current_version: str) -> bool:
     """
 
     try:
-        major, _minor = _normalize_version_to_int_pair(current_version)
+        major, _minor, _patch = _parse_version(current_version)
     except ValueError:
         return False
     return major == 0
@@ -1098,7 +1122,7 @@ def main() -> int:
     # SSOT version sync bus
     parser.add_argument(
         "--bump",
-        choices=["major", "minor"],
+        choices=["major", "minor", "patch"],
         help="SSOT 版本升迁：major(+1.0) / minor(+0.1)。若未提供且为交互式终端，会提示选择；非交互式将直接报错。",
     )
     parser.add_argument(
@@ -1167,12 +1191,10 @@ def main() -> int:
             new_version = ""
 
             if args.new_version:
-                major, minor = _normalize_version_to_int_pair(args.new_version)
-                new_version = _format_version_pair(major, minor)
+                new_version = normalize_version_text(args.new_version)
             elif is_initial_version(current_version):
                 # First publish: ignore --bump, jump straight to initial version (default 1.1).
-                major, minor = _normalize_version_to_int_pair(args.initial_version)
-                new_version = _format_version_pair(major, minor)
+                new_version = normalize_version_text(args.initial_version)
                 print(
                     f"🚌 SSOT initial publish detected (current={current_version}). "
                     f"Forcing initial version: {new_version}"
@@ -1186,11 +1208,12 @@ def main() -> int:
                         print("choose bump type:")
                         print("  1) minor (+0.1)")
                         print("  2) major (+1.0)")
+                        print("  3) patch (+0.0.1)")
                         choice = (input("Select (default=1): ") or "1").strip()
-                        bump_type = "major" if choice == "2" else "minor"
+                        bump_type = {"2": "major", "3": "patch"}.get(choice, "minor")
                     else:
                         raise RuntimeError(
-                            "SSOT version sync requires --bump {major|minor} or --new-version X.Y in non-interactive mode."
+                            "SSOT version sync requires --bump {major|minor|patch} or --new-version X.Y[.Z] in non-interactive mode."
                         )
                 new_version = bump_version(current_version, bump_type)
 
@@ -1318,12 +1341,18 @@ def main() -> int:
             lambda: ensure_skill_inventory_updated_at_formatter(row_number, metadata.get("updated_at", "")),
         )
 
-    metadata_path = Path.cwd() / "metadata.json"
-    metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
+    # Forge receipt lands INSIDE the target skill dir (never Path.cwd()).
+    # Historical bug: `Path.cwd() / "metadata.json"` scattered ghost receipts
+    # into whatever directory the pipeline happened to run from, and the
+    # "metadata" name made them look like authoritative skill metadata
+    # (they are not — Skill ID must come from the Feishu inventory sheet).
+    receipt_dir = skill_dir if skill_dir else Path.cwd()
+    receipt_path = receipt_dir / ".forge_receipt.json"
+    receipt_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
 
     print("🚀 Metadata packaged for omni-asset-archiver:")
     print(json.dumps(metadata, indent=4, ensure_ascii=False))
-    print(f"\n✅ Metadata written to {metadata_path.resolve()}")
+    print(f"\n✅ Forge receipt written to {receipt_path.resolve()}")
 
     if skill_dir:
         print("🚀 Running post-forge git push hook...")

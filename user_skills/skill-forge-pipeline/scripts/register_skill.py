@@ -238,6 +238,8 @@ ZIP_SKIP_DIR_NAMES = {
     "outputs",
 }
 ZIP_SKIP_SUFFIXES = {".zip", ".mp4", ".part", ".pyc"}
+# `download_doc_markdown()` 会把 <token>.lark.md 落到 cwd（常常就是技能目录），不入包。
+ZIP_SKIP_NAME_SUFFIXES = (".lark.md",)
 ZIP_SIZE_WARN_BYTES = 50 * 1024 * 1024
 
 
@@ -252,6 +254,8 @@ def create_skill_zip(skill_dir: Path, output_zip: Path) -> Path:
             if any(part in ZIP_SKIP_DIR_NAMES for part in path.parts):
                 continue
             if path == output_zip:
+                continue
+            if path.is_file() and path.name.endswith(ZIP_SKIP_NAME_SUFFIXES):
                 continue
             if path.is_file() and path.suffix.lower() in ZIP_SKIP_SUFFIXES:
                 # 运行时产物（缓存 zip / 媒体 / 下载残片）一律不入包，
@@ -1162,10 +1166,14 @@ DOC_LABELED_VERSION_RE = re.compile(
     r"(?i)((?:version|版本号|版本)\s*`?\s*[:：]\s*\**\s*`?\s*)([vV]?)(\d+(?:\.\d+){1,2})"
 )
 DOC_TITLE_VERSION_RE = re.compile(r"(?i)(?<![A-Za-z0-9])([vV])(\d+(?:\.\d+){1,2})")
+# 文档标题元数据行：`<title>【技能说明】... (Forge Pipeline V5.19)</title>`
+# 真机踩坑（V5.20.1）：文档标题与正文 H1 是两个独立对象，只同步 H1 会留下
+# 「正文 V5.20 / 标题仍 V5.19」的半同步幽灵，必须一并纳入改写与断言。
+DOC_TITLE_TAG_RE = re.compile(r"^\s*<title>.*</title>\s*$")
 
 
 def _is_heading_line(line: str) -> bool:
-    return bool(re.match(r"^\s{0,3}#{1,6}\s", line))
+    return bool(re.match(r"^\s{0,3}#{1,6}\s", line)) or bool(DOC_TITLE_TAG_RE.match(line))
 
 
 def collect_doc_version_lines(text: str) -> list[Tuple[str, list[str]]]:
@@ -1257,11 +1265,24 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[st
         )
 
     updated_count = 0
-    for line, _versions in found:
+    # 顺序契约（V5.20.1 真机踩坑）：文档标题的内层文字常与正文 H1 完全相同，
+    # 若先改标题，str_replace 会命中两处并报 degrade_code=1014（ambiguous）。
+    # 因此先改正文各行，最后才改 <title> —— 那时旧文案只剩标题一处，唯一可命中。
+    ordered = sorted(found, key=lambda item: 1 if DOC_TITLE_TAG_RE.match(item[0]) else 0)
+    for line, _versions in ordered:
         updated_line = _rewrite_doc_version_line(line, expected)
         if updated_line == line:
             continue
-        print(f"📝 Syncing doc version marker: {line.strip()[:80]!r} -> {expected}")
+
+        pattern, replacement = line, updated_line
+        title_m = DOC_TITLE_TAG_RE.match(line)
+        if title_m:
+            # `<title>` 的标签本身不是文档正文文本，str_replace 只能匹配到内层文字，
+            # 整行下发会命中 degrade_code=1013（pattern not found）。故剥掉标签再替换。
+            pattern = re.sub(r"^\s*<title>|</title>\s*$", "", line)
+            replacement = re.sub(r"^\s*<title>|</title>\s*$", "", updated_line)
+
+        print(f"📝 Syncing doc version marker: {pattern.strip()[:80]!r} -> {expected}")
         run_subprocess(
             [
                 "lark-cli",
@@ -1278,9 +1299,9 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[st
                 "--doc-format",
                 "markdown",
                 "--pattern",
-                line,
+                pattern,
                 "--content",
-                updated_line,
+                replacement,
             ],
             "sync doc version marker",
         )

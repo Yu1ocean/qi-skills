@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.20
+version: 5.20.1
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.20)
+# 技能锻造流水线 (Forge Pipeline V5.20.2)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -378,6 +378,11 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py \
 
 ## 更新日志 (Changelog)
 
+- **V5.20.2**: 修复 forge 回执落点错位（Path.cwd() 硬编码）。
+  - `register_skill.py` 的 `metadata_path = Path.cwd() / "metadata.json"` 把回执写到流水线执行目录而非目标技能目录，产生散落且内容错位的幽灵 `metadata.json`（曾被误当成 Skill ID 权威来源）。现统一改为 `skill_dir / ".forge_receipt.json"`（无 `--skill-dir` 时才回落 `Path.cwd()`），Cloud Publish 阶段的二次落盘与日志文案同步改名，杜绝「一处改名、日志仍喊 metadata.json」的不一致。
+  - 仓库根 `.gitignore` 全局黑名单区追加 `**/.forge_receipt.json`：回执是每次 forge 可再生产物，永不入 Git（与 `*.zip` 只上飞书云盘同口径）。
+  - 清理目录内 5 个错位幽灵 `metadata*.json`；重申 **Skill ID 唯一事实来源为飞书台账【专属技能清单】**。
+  - 版本 patch 位保留方案（V5.20 引入的 `_parse_version` / `_format_version` / `normalize_version_text` / `bump_version patch` 档）本轮回归验证通过，并已移植到 `skill-forge-pipeline-v4`。
 - **V5.20**: 堵死「说明文档正文版本未同步」的连续两轮假成功缺陷，并修复版本号 patch 位截断。
   - **Task 1（L3 断言）**：`register_skill.py` 重写 `sync_version_to_skill_doc_via_mcp()`，新增 `collect_doc_version_lines()` / `_rewrite_doc_version_line()` / `assert_doc_body_version_synced()`。标题内嵌版本 + 带标签版本全量改写，写后 2s RAW 回读断言，Wiki Mount 后再断言一次；找不到版本标识或仍为旧版即 `raise GuardrailViolation("【文档版本未同步】...")`，删除原 `skip SSOT doc sync` 静默分支。结果落 `metadata.json` 的 `doc_version_synced` / `doc_version_sync`。
   - **Task 1 根因（三重叠加）**：旧正则只认 `version:` 标签认不出标题 `V5.19`；替换串误写 `r"\\1"` 导致即便命中也写成字面量；`.lark.md` 兜底下载无 `<!-- BLOCK_n -->` 标记使按块遍历永不进入替换分支。
