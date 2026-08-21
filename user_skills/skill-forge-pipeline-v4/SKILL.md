@@ -1,6 +1,6 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.15
+version: 5.16
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
@@ -35,6 +35,9 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 涉及本地 SSOT + 飞书镜像双轨写入，但只验证了单轨。
 - 写入后没有做 RAW read-after-write 双轨 ID 一致性断言。
 - 双轨断言失败却未写入孤儿待修复死信队列（`.ephemeral_pool/orphan_decisions.jsonl`）。
+- Archive 阶段只 append ZIP 文件块、未清理同名旧块（导致说明文档堆积历史版本 ZIP）。
+- 未做「本技能 ZIP 块数量 == 1」回读断言，就宣称文件块回挂完成。
+- 自动删除了非本技能的 ZIP 文件块（异物块属他人资产，只允许报告 + 人工确认）。
 
 ## Verification（强制验收清单）
 
@@ -50,6 +53,7 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 8. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
 9. **文件块位置断言验收**：ZIP 原生 File Block 必须位于说明文档**第一个正文块**（BLOCK_BEGIN，标题正下方）。`register_skill.py` 在 `+media-insert` 之后必须执行 `block_move_after`（anchor = 文档 root token）归位，并回读文档 XML 断言首个正文块 id == 新建文件块 id；不一致立刻 `raise` 熔断。
 10. **双轨原子写入验收**：凡涉及「决策台账写入飞书镜像」的节点，本地 SSOT `memory/topics/decision-registry.md` 末条决策 ID 与飞书镜像末行 ID **必须一致**，且必须输出双轨回读证据（`assert_local_track` / `assert_mirror_track` 的 evidence）。任一轨失败即 `raise` 熔断并落孤儿死信队列，禁止宣称完成。
+11. **文件块唯一性断言**：Archive 阶段回挂 ZIP 后，必须回读说明文档并断言「属于本技能的 ZIP 文件块数量恰好为 1」且其 block_id/file_token 等于本次新块。不满足时必须显式输出残留清单与人工解法（允许非熔断，禁止静默）。异物块（其他技能的 ZIP）必须列出 block_id + 文件名交由人工拍板，严禁自动删除。
 
 ## 适用场景
 
@@ -157,6 +161,13 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 - **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并通过 `feishu-doc-writing-guide` 的 MCP / personal-space 修复链路为 `yuqinan@bytedance.com` 恢复可管理访问权；严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API。
 - **文档挂载**：`scripts/register_skill.py` 必须调用 `inner_skills/lark/mcp_lark_update_lark_doc.py`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式插入到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。
   - **位置归位与断言（V5.14 新增）**：实际链路使用 `lark-cli docs +media-insert`，其默认行为是**追加到文档末尾**，会静默违反「标题正下方」契约。因此插入后必须：① 从输出解析新文件块 `block_id`；② 执行 `lark-cli docs +update --command block_move_after --block-id <文档 root token> --src-block-ids <block_id>` 将其移到 index 0；③ 回读文档 XML，断言首个正文块 id 等于该 `block_id`，否则 `raise` 熔断。
+- **Archive 步骤文件块替换规则（V5.16 新增，幂等替换而非 append）**：ZIP 回挂必须是**幂等替换**，同一说明文档在任意时刻只允许存在 1 个属于本技能的 ZIP 文件块。执行顺序不可颠倒：
+  1. **插入前枚举**：调用 `list_doc_zip_file_blocks(doc_url)`（走 `lark-cli docs +fetch --doc-format xml --detail with-ids`，解析 `<figure><source name=... token=...>`）快照现有全部 ZIP 文件块。
+  2. **插新块 → 归位 → 断言**：先 `+media-insert` 插入新块，再 `move_block_to_doc_begin` 移到 index 0，再 `assert_zip_block_at_doc_begin` 断言通过。**必须先确认新块落位成功，再进入删除环节**，避免「删完插失败」导致文档裸奔。
+  3. **删同名旧块**：用 `is_own_skill_zip()` 识别属于本技能的旧 ZIP（文件名匹配 skill 名，允许 `_v1.2` / `-1.2` / ` (1)` 等版本后缀变体），且 block_id ≠ 本次新块；用 `lark-cli docs +update --command block_delete --block-id <逗号分隔>` 批量物理删除。
+  4. **删除后 RAW 回读断言**：`sleep 2s` 后重新枚举，断言属于本技能的 ZIP 块**数量恰好为 1** 且 block_id == 新块。不一致时打印醒目 WARNING 并输出残留清单（此处非熔断，但**严禁静默**）。
+  5. **异物块只报告不删除**：文件名与当前 skill 名不符的 ZIP 块视为「异物块」（他人资产）。本流水线既不为其他技能往本文档插块，也**不自动删除**异物块，只输出 block_id + 文件名清单交由人工拍板。
+  6. **枚举失败降级**：若枚举链路因权限/scope/接口变更失败，降级为「只插入不删除」并打印醒目 WARNING，**不熔断整条流水线**；同时禁止把失败静默成空列表（枚举接口返回非 0 code 必须 `raise`）。
 - **Wiki Mount Phase**：在 ZIP 原生文件块回挂完成后、`metadata.json` 落盘前，必须调用飞书 Wiki MCP 挂载链路（如 `mcp_lark_move_lark_doc.py`），将说明文档迁入「Aime 技能库」根节点或 `--wiki-node-token` 指定节点。该步骤属于发布成功的强契约；一旦迁移失败，必须立刻熔断，禁止继续 metadata 落盘、归档写台账或宣称发布完成。
 - **元数据打包**：收集并打包新技能或更新技能的元数据（技能编号、名称、功能描述、技能说明文档链接、技能目录路径、zip 路径、飞书云盘文件链接、Wiki 链接、Wiki 节点 token、创建/更新日期）。
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
@@ -257,6 +268,12 @@ python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
 
 ## 更新日志 (Changelog)
 
+- **V5.16**: 修复 Archive 阶段 ZIP 文件块「无限 append」缺陷（说明文档堆积 8 个历史版本 ZIP）。
+  - `register_skill.py` 的 ZIP 回挂链路由 append 改为**幂等替换**：新增 `list_doc_zip_file_blocks()`（走 `docs +fetch --doc-format xml --detail with-ids` 解析 `<figure><source>`，替代已失效的 `docx.v1.document_block.list` 内部代理）、`is_own_skill_zip()`（同名旧块识别，兼容 `_v1.2` / `-1.2` / ` (1)` 版本后缀变体）、`delete_doc_blocks()`（`block_delete` 批量删除）、`prune_stale_zip_blocks()`（编排 + 回读断言）。
+  - 执行顺序锁定为「插新块 → `block_move_after` 归位 → 位置断言 → 再删同名旧块 → `sleep 2s` 回读断言唯一性」，确保新块落位成功后才删旧块，杜绝「删完插失败导致文档裸奔」。
+  - 异物块（非本技能 ZIP）只报告 block_id + 文件名，**不自动删除**（删他人资产属破坏性操作，需人工拍板）；本流水线也绝不为其他技能往本文档插块。
+  - 枚举/删除失败降级为「只插入不删除」+ 醒目 WARNING，不熔断整条流水线；同时修掉 `list_doc_file_blocks()` 在代理返回非 0 code 时静默返回空列表的隐患（改为 `raise`），避免清理动作静默变 no-op。
+  - Red Flags 新增 3 条（只 append 不清理 / 未做数量==1 断言 / 自动删除异物块）；Verification 新增第 11 条「文件块唯一性断言」；Archive 章节新增「Archive 步骤文件块替换规则」。
 - **V5.15**: 落地 DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」到执行层（Layer 2）。
   - 新增 L3 断言层熔断脚本 `scripts/dual_track_atomic_write.py`：事务块绑定「飞书镜像写入 → 立刻本地 SSOT append」，写后 2s 执行 RAW read-after-write 双轨 ID 一致性断言（`assert_local_track` / `assert_mirror_track` / `assert_dual_track`），任一轨失败即 `raise` 熔断。
   - 失败即孤儿标记：自动写入死信队列 `.ephemeral_pool/orphan_decisions.jsonl`（`decision_id` / `failed_track` / `error` / `timestamp` / `suggested_fix`），标记 `⚠️[孤儿待修复]`。

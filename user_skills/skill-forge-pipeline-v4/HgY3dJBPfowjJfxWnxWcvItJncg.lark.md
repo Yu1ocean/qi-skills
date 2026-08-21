@@ -1,22 +1,6 @@
 # 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OWM3MjMwMjJmMWE3ZTI5MGVmZjllYzBhOTVmNTNmMWVfMDlhZjAyYjI1OTYwZWE3ZjExMWYwZWY1NzM2OTZiZTdfSUQ6NzY3NjQyNjk4ODMyMTQ0Mjc1Ml8xNzg3MzA3NDQwOjE3ODczMTEwNDBfVjM" mime="application/zip" size="2992417" token="Pv8pb2EqUohusCxnUmXctrScnNg"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Y2MwMTk0YTRjNmQ1MWNhZTBlYmMwY2Y5ZmVmZmQ5YzNfMTlmYmQ1NjU3Njk0YjQ4M2ZkNzg1ZjJjMjE5ZjRhYjZfSUQ6NzY3NjQyNjc4NTc2MTc0MTc5M18xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2992393" token="PezVbYUyPoAcVNxi6QzcL8sHn4b"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MGE0M2RhODY5ZTEzNjEzYTNhM2EwY2VhZjA4Y2FjYzhfYTRkNWM0NDk0OWFlNmI4NjQzMjVmZTIxOWJkODc0YjdfSUQ6NzY3NDg3NTE2OTUyMTA5MzkyMl8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2953585" token="T3nsb2CdzoeJfLxeXQ5c8qlonge"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NGYyNzA4MzgwZWVmNjcxOWIyOGMxNDk5NDgxZTNkZWZfYmQyOGM1MTg3MzdiZTk5NWU0MTRlNzJjZjc1MDU3NzlfSUQ6NzY3NDg3MjMzMjYzMjE4MTcyMF8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2951668" token="PCyabnm5qoL7inxuCtIceK6Xnmc"/></figure>
-
-<figure view-type="Card"><source name="team-travel-dashboard-generator.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZWQyOTBiOGFiMjAwN2UyYTBlYTZiMGMyZWQxZThjYjdfYzc4NzBiODVhNGIyZDAyYmNlM2I0MmU2MjYzNjQ3NDJfSUQ6NzY1MDM3NjQxMDAwNzYyMDg1MV8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="1191362" token="I2E1bAxLbo8CaZxsvLAc0UgvnTc"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YTljMTVhODEzZjY4NmYwMzUwZjRiMTQ3MDhjYzI0MjNfMjE5Mzc3MjQyMWY1M2JhMjAyMzFmZjQ0YzU1MDY1YmJfSUQ6NzY0MTY2ODk5MjUxNzI2MjI2Nl8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2894261" token="Y5G2bPYojolKSXxeWo4cIOchnP4"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YjliMzQxZTYyYWY3NzAyOTNiMjEwZDhiMTE5YzM5ZGZfNzcxMDg0Mjk0YWRjOWE4ZThmN2MzODI3YWFhNjI4MGZfSUQ6NzYzMzM4NTg3NDA3MzYxOTQwNF8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2884412" token="PR9wbJKIsoD82UxOvMPcveyQnNb"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NTQ0ZjI5OTQ3YjI2OTVjMTVhODIwMDRlMjRlMGM3YmVfYzQzYWI5MDMxN2E4NWVhZGZkOGIyOTM3ZDBhMmZhOTRfSUQ6NzYzMjY0MDY4NTIxMjAyNzgzNV8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="10765" token="LIaXbTYCaoiF8lxjkRFcUF1rn6v"/></figure>
-
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NGUwODViNDk2ZWVlY2QxYzkwMzNjYWNjNjlmZTFkNDVfOGQ1MmI1ZTQ0MmIwZmI4NjI0MmZlZTgzMmYyZGYxNjlfSUQ6NzYzMjYzOTgyODQ4NzkxNjQ4Ml8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="10453" token="UHDrbkr2rov5U1xt6d6caKi3n3c"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDMwOTdhMmJmMTRkZGVmMWU4YjlkZjE5YWQwOWJkMjNfYjcxZTdhZjEzYWM2MjRjYjIwMmIyZjFmYmZiZDlkMTdfSUQ6NzY3NjQzMTk2ODIxNjgxMjgzMV8xNzg3MzA4NjAwOjE3ODczMTIyMDBfVjM" mime="application/zip" size="2996941" token="OCADbKSVGo9aNOxZFwzcX8SLnMe"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -100,6 +84,30 @@
   
   ```
 
-<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YTc2OTdiNTYxZThmNGU5MzUyOWQ1YjQyZDRiZmQ1MDZfNWVjNGU4NDhmYzlhYWI2Mzk2MTJhZDZhZGY1OTFhMDVfSUQ6NzY2OTYwNDI5Mzg2Njk2NTk5NF8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="11833238" token="Bi5XbVhjro9GR1xh7txcy1VNn9f"/></figure>
+## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.15 新增
 
-<figure view-type="Card"><source name="weekly-top3-patrol.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=M2RjMWQ2YWE1Mzc1MDIzZDllMzA2MzY2ZTM5NzMyYzBfNDcxYjRiOTE4OWM5YTJiNWVmM2I3MzRmM2Q0YmExMmRfSUQ6NzY2OTYwNDM4NTQ5MjEyNjk0Ml8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="11833238" token="B4gCbJ8L1oHom6xxfKVcaj50nqf"/></figure>
+关联决策：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」。事故起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见。
+
+**适用范围**：凡 forge 流程中涉及「决策台账写入飞书镜像」的节点（决策录入、护栏升格、复盘沉淀带出的新决策），一律适用。
+
+**事务块绑定顺序**：① 飞书镜像写入成功 → ② 立刻执行本地 SSOT append → ③ 双轨断言。两步绑定为一个事务，中间不允许插入任何其他动作，不允许等待用户确认。
+
+**双轨断言规则**：写后等待 2 秒执行 RAW read-after-write —— 轨道 A 回读本地末条 `- id: DEC-...`、轨道 B 回读飞书镜像末行 ID，两者都必须等于目标 ID；任一轨失败或不一致立刻 raise 熔断，严禁静默成功。
+
+**失败即孤儿标记**：断言或写入失败时，条目写入死信队列 `.ephemeral_pool/orphan_decisions.jsonl`（含 decision_id / failed_track(local|mirror) / error / timestamp / suggested_fix），标记 ⚠️[孤儿待修复]，随后由 `tools/sync_decision_registry.py` 以本地为准修复镜像，或补 append 本地后重跑断言收敛。
+
+**调用示例**（均需 include_secrets=true）：
+
+```
+# 零副作用前置校验
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --dry-run --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+
+# 双轨原子写入
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+
+# 事后巡检（只做双轨回读断言）
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001
+
+# 故障注入自测（验证 raise + 死信队列链路）
+python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001 --inject-failure mirror
+```

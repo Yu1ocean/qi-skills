@@ -844,7 +844,173 @@ def assert_zip_block_at_doc_begin(doc_url: str, block_id: str) -> None:
         )
 
 
-def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
+ZIP_FIGURE_RE = re.compile(
+    r'<figure\s+id="(?P<block_id>[^"]+)"[^>]*>\s*<source\s+id="[^"]*"\s+name="(?P<file_name>[^"]*)"'
+    r'[^>]*?token="(?P<file_token>[^"]+)"',
+    re.S,
+)
+
+
+def list_doc_zip_file_blocks(doc_url: str) -> list[Dict[str, str]]:
+    """Enumerate every ZIP file block (figure/source) in the doc via `docs +fetch`.
+
+    The former `docx.v1.document_block.list` internal proxy path is no longer
+    supported (`unsupported lark method_name`), and it degraded *silently* to an
+    empty list — which is exactly how 8 stale ZIP blocks could pile up unnoticed.
+    Parsing the authoritative `--doc-format xml --detail with-ids` payload keeps
+    the enumeration on the same channel we already use for the position gate.
+    """
+
+    output = run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+fetch",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--doc-format",
+            "xml",
+            "--detail",
+            "with-ids",
+            "-q",
+            ".data.document.content",
+        ],
+        "enumerate doc zip file blocks",
+    )
+    blocks: list[Dict[str, str]] = []
+    for match in ZIP_FIGURE_RE.finditer(output):
+        file_name = match.group("file_name") or ""
+        if not file_name.lower().endswith(".zip"):
+            continue
+        blocks.append(
+            {
+                "block_id": match.group("block_id"),
+                "file_name": file_name,
+                "file_token": match.group("file_token"),
+            }
+        )
+    return blocks
+
+
+def is_own_skill_zip(file_name: str, skill_name: str) -> bool:
+    """Does this ZIP file name belong to the skill currently being published?
+
+    Accepts version-suffixed variants such as `skill-x.zip`, `skill-x_v1.2.zip`,
+    `skill-x-1.2.zip`, `skill-x (1).zip`.
+    """
+
+    name = (file_name or "").strip()
+    if not name.lower().endswith(".zip") or not skill_name:
+        return False
+    stem = name[: -len(".zip")]
+    if stem == skill_name:
+        return True
+    return bool(re.fullmatch(re.escape(skill_name) + r"[\s_\-.(]*[vV]?[\d.\-_() ]*", stem))
+
+
+def delete_doc_blocks(doc_url: str, block_ids: list[str]) -> str:
+    """Physically delete top-level blocks by id (`block_delete` supports batch)."""
+
+    if not block_ids:
+        return ""
+    return run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+update",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--command",
+            "block_delete",
+            "--block-id",
+            ",".join(block_ids),
+        ],
+        "delete stale zip file blocks",
+    )
+
+
+def prune_stale_zip_blocks(
+    doc_url: str,
+    skill_name: str,
+    new_block_id: str,
+) -> Dict[str, Any]:
+    """Idempotent replacement: keep exactly ONE ZIP block for this skill.
+
+    Ordering is deliberate — the caller must have already inserted, relocated and
+    asserted the NEW block before pruning, so a failed insert can never leave the
+    doc without any package. Foreign ZIP blocks (other skills) are reported only,
+    never auto-deleted: deleting someone else's asset is destructive and needs a
+    human call.
+    """
+
+    report: Dict[str, Any] = {
+        "enumerated": [],
+        "deleted": [],
+        "foreign": [],
+        "degraded": "",
+        "unique_ok": None,
+        "residual": [],
+    }
+    try:
+        blocks = list_doc_zip_file_blocks(doc_url)
+    except Exception as exc:  # noqa: BLE001 - degrade, never break the pipeline
+        report["degraded"] = f"enumerate failed: {exc}"
+        print(
+            "⚠️ WARNING: 无法枚举文档现有 ZIP 文件块，降级为「只插入不删除」；"
+            f"旧版本文件块可能残留，请人工清理。原因：{exc}"
+        )
+        return report
+
+    report["enumerated"] = blocks
+    own_stale = [
+        b for b in blocks if is_own_skill_zip(b["file_name"], skill_name) and b["block_id"] != new_block_id
+    ]
+    report["foreign"] = [b for b in blocks if not is_own_skill_zip(b["file_name"], skill_name)]
+
+    if report["foreign"]:
+        print("⚠️ 检测到非本技能的 ZIP 文件块（异物块，仅报告不自动删除，需人工确认）：")
+        for b in report["foreign"]:
+            print(f"   - block_id={b['block_id']} file={b['file_name']}")
+
+    if own_stale:
+        print(f"🧹 Deleting {len(own_stale)} stale ZIP file block(s) of {skill_name}...")
+        try:
+            delete_doc_blocks(doc_url, [b["block_id"] for b in own_stale])
+            report["deleted"] = own_stale
+        except Exception as exc:  # noqa: BLE001
+            report["degraded"] = f"delete failed: {exc}"
+            print(f"⚠️ WARNING: 旧 ZIP 文件块删除失败，需人工清理。原因：{exc}")
+    else:
+        print("ℹ️ No stale ZIP file block of this skill found; nothing to prune.")
+
+    # RAW read-after-write uniqueness assertion (report-only, never silent).
+    time.sleep(2)
+    try:
+        after = list_doc_zip_file_blocks(doc_url)
+    except Exception as exc:  # noqa: BLE001
+        report["degraded"] = f"{report['degraded']}; readback failed: {exc}".strip("; ")
+        print(f"⚠️ WARNING: 删除后回读断言失败，无法确认唯一性。原因：{exc}")
+        return report
+
+    mine = [b for b in after if is_own_skill_zip(b["file_name"], skill_name)]
+    report["residual"] = mine
+    report["unique_ok"] = len(mine) == 1 and mine[0]["block_id"] == new_block_id
+    if report["unique_ok"]:
+        print(f"✅ ZIP block uniqueness verified: exactly 1 block ({new_block_id}) for {skill_name}.")
+    else:
+        print(
+            "⚠️ WARNING: 本技能 ZIP 文件块唯一性断言未通过，残留清单如下（需人工清理）："
+        )
+        for b in mine:
+            print(f"   - block_id={b['block_id']} file={b['file_name']} token={b['file_token']}")
+    return report
+
+
+def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path, skill_name: str = "") -> str:
     result = subprocess.run(
         [
             "lark-cli",
@@ -884,6 +1050,11 @@ def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
     time.sleep(2)
     assert_zip_block_at_doc_begin(doc_url, block_id)
     print("✅ Zip file block verified at BLOCK_BEGIN (right below the doc title).")
+
+    # Idempotent replacement instead of blind append: only after the NEW block is
+    # verified in place do we prune this skill's stale ZIP blocks.
+    effective_skill_name = skill_name or zip_path.stem
+    prune_stale_zip_blocks(doc_url, effective_skill_name, block_id)
 
     return attach_output
 
@@ -1082,6 +1253,11 @@ def list_doc_file_blocks(doc_url: str) -> list[Dict[str, str]]:
         path={"document_id": document_id},
         query={"page_size": "500"},
     )
+
+    if isinstance(response, dict) and response.get("code") not in (0, None):
+        # Never degrade silently: an unsupported/failed proxy call used to return an
+        # empty list, which made stale-block pruning a no-op without any signal.
+        raise RuntimeError(f"docx.v1.document_block.list failed: {response}")
 
     items = response.get("data", {}).get("items") or response.get("items") or []
     file_blocks: list[Dict[str, str]] = []
@@ -1390,7 +1566,7 @@ def main() -> int:
             print("🚀 Inserting native File Block into skill doc via Lark MCP...")
             attach_output = call_with_retry(
                 "insert file block into skill doc",
-                lambda: attach_zip_to_doc_via_mcp(args.path, zip_path),
+                lambda: attach_zip_to_doc_via_mcp(args.path, zip_path, skill_dir.name),
             )
             verified = call_with_retry(
                 "verify attached file block via lark MCP download",

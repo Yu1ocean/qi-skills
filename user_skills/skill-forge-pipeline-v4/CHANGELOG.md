@@ -1,5 +1,16 @@
 # Changelog - skill-forge-pipeline-v4
 
+## v5.16 (2026-08-21)
+- **修复 Archive 阶段 ZIP 文件块「无限 append」缺陷**：`attach_zip_to_doc_via_mcp` 每次只调 `lark-cli docs +media-insert` 追加新块、从不清理同名旧块，导致说明文档累积多个历史版本 `skill-forge-pipeline-v4*.zip` 文件块（并混入 1 个无关技能 ZIP）。
+- `scripts/register_skill.py` 新增：
+  - `list_doc_zip_file_blocks(doc_url)`：走 `lark-cli docs +fetch --doc-format xml --detail with-ids` 解析 `<figure><source name/token>` 枚举 ZIP 文件块，替代已失效的 `docx.v1.document_block.list` 内部代理（该代理现返回 `unsupported lark method_name`）。
+  - `is_own_skill_zip(file_name, skill_name)`：同名旧块识别，兼容 `_v1.2` / `-1.2` / ` (1)` 等版本后缀变体，拒绝误判 `skill-x-extra.zip` / 其他技能。
+  - `delete_doc_blocks(doc_url, block_ids)`：`docs +update --command block_delete --block-id <逗号分隔>` 批量物理删除。
+  - `prune_stale_zip_blocks(doc_url, skill_name, new_block_id)`：编排「删同名旧块 → sleep 2s → 回读断言本技能 ZIP 块数量 == 1 且 block_id == 新块」，异物块只报告不删除，枚举/删除失败降级为「只插入不删除」+ 醒目 WARNING（不熔断流水线）。
+- 执行顺序锁定：插新块 → `move_block_to_doc_begin` 归位 → `assert_zip_block_at_doc_begin` 断言 → 再删旧块，避免「删完插失败导致文档裸奔」。
+- 修掉 `list_doc_file_blocks()` 在代理返回非 0 code 时静默返回 `[]` 的隐患（改为 `raise`），防止清理动作静默变 no-op。
+- **`SKILL.md` 升级至 V5.16**：Archive 章节新增「Archive 步骤文件块替换规则」6 条子款；Red Flags 新增 3 条；Verification 新增第 11 条「文件块唯一性断言」。
+
 ## v5.15 (2026-08-21)
 - **关联决策**：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」（起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见）。
 - **新增 L3 断言层熔断脚本** `scripts/dual_track_atomic_write.py`：
