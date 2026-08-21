@@ -60,6 +60,9 @@ top3_W*.xlsx
 # forge 打包产物（zip 一律走飞书云盘，不入 Git）
 *.zip
 
+# forge 回执（register_skill.py 每次运行可再生产物，不入 Git）
+**/.forge_receipt.json
+
 # 媒体大文件
 *.mp4
 *.mp4.part
@@ -72,8 +75,9 @@ top3_W*.xlsx
 # 允许保留目录占位文件
 !**/.gitkeep
 
-# 根目录必须保留的元数据（覆盖上面的 *.json 全局忽略）
-!/metadata.json
+# forge 发布回执 metadata.json（AGENT.md R4：仅为单次发布 receipt，含绝对路径等环境耦合字段，禁止入 Git）
+metadata.json
+user_skills/**/metadata.json
 
 # ---------- prism flush 写前快照（本地灾备，永不入库） ----------
 tools/backups/
