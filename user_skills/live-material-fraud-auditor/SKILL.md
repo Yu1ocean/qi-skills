@@ -428,12 +428,3 @@ v1.x 实战记录见 [pearl-case-2026-08.md](references/pearl-case-2026-08.md)�
     飞书五段报告结构全部保持不变；第 ② 段命中表列头升级为六列。
   - Verification 新增第 10–13 条；Common Rationalizations / Red Flags 同步加固。
 - 1.1（2026-08-21）：首版发布。固化 Pearl 20 小时回放实战经验：m3u8 降级 probe、60 秒切片 ASR、绝对时间戳、材质/品牌双词库与邻近 3 句升级规则、ASR 误识别隔离、五段报告结构、RAW 回读与断点续跑；配套 `risk_keyword_scanner.py`（命中召回）与 `audit_guard.py`（L3 运行时熔断）。
-
-## ☁️ 云端发布记录
-
-- `cloud_publish_status`: **SUCCESS**
-- `skill_name`: `live-material-fraud-auditor`
-- `version`: `2.1`
-- `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 20:48`
-- `cloud_skill_id`: `92c6fb61-607c-4073-8bdd-9e7172fa27bc`
