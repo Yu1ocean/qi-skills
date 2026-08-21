@@ -24,4 +24,6 @@ cp "$source_hook" "$target_hook"
 chmod +x "$target_hook"
 
 echo "✅ pre-push hook installed: $repo_root/$target_hook"
-echo "   Guard: blocks files larger than 50MB before git push."
+echo "   Guard 1: blocks any single file larger than 50MB."
+echo "   Guard 2: circuit-breaks when one push adds more than 100MB in total."
+echo "   Bypass:  ALLOW_BIG_PUSH=1 git push ..."

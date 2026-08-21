@@ -53,6 +53,7 @@ projects/
 lark_sheet_export_*.xlsx
 top3_export_*.xlsx
 top3_W*.xlsx
+**/weekly-top3-patrol/*.xlsx
 
 # forge 打包产物（zip 一律走飞书云盘，不入 Git）
 *.zip

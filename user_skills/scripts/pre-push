@@ -1,18 +1,28 @@
 #!/bin/bash
-# qi-skills pre-push guard: block files larger than 50MB.
+# qi-skills pre-push guard v2
+#   Rule 1: block any single new/modified file larger than 50MB
+#   Rule 2: circuit-break when a single push adds more than 100MB in total
 # Tracked template. Install with: bash user_skills/scripts/install_hooks.sh
+# Emergency bypass: ALLOW_BIG_PUSH=1 git push ...
 
 set -u
 
-THRESHOLD_KB=51200
-THRESHOLD_BYTES=$((THRESHOLD_KB * 1024))
-violations=""
+SINGLE_THRESHOLD_MB=50
+TOTAL_THRESHOLD_MB=100
+SINGLE_THRESHOLD_BYTES=$((SINGLE_THRESHOLD_MB * 1024 * 1024))
+TOTAL_THRESHOLD_BYTES=$((TOTAL_THRESHOLD_MB * 1024 * 1024))
+
+if [ "${ALLOW_BIG_PUSH:-0}" = "1" ]; then
+  echo "⚠️  pre-push guard bypassed via ALLOW_BIG_PUSH=1"
+  exit 0
+fi
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 cd "$repo_root" || exit 0
 
 tmp_files="$(mktemp)"
-trap 'rm -f "$tmp_files"' EXIT
+sized_files="${tmp_files}.sized"
+trap 'rm -f "$tmp_files" "$sized_files"' EXIT
 
 add_paths_from_diff() {
   local range="$1"
@@ -45,6 +55,7 @@ if [ ! -s "$tmp_files" ]; then
   git diff --cached --name-only --diff-filter=AM 2>/dev/null >> "$tmp_files" || true
 fi
 
+# Collect "<size_bytes>\t<path>" for every candidate file.
 sort -u "$tmp_files" | while IFS= read -r file; do
   [ -z "$file" ] && continue
 
@@ -57,24 +68,47 @@ sort -u "$tmp_files" | while IFS= read -r file; do
   fi
   [ -z "$size_bytes" ] && continue
 
-  if [ "$size_bytes" -gt "$THRESHOLD_BYTES" ]; then
-    size_kb=$(( (size_bytes + 1023) / 1024 ))
-    printf '%s\t%s KB\n' "$file" "$size_kb" >> "${tmp_files}.violations"
-  fi
+  printf '%s\t%s\n' "$size_bytes" "$file" >> "$sized_files"
 done
 
-if [ -f "${tmp_files}.violations" ] && [ -s "${tmp_files}.violations" ]; then
-  echo "❌ pre-push blocked: files larger than 50MB (${THRESHOLD_KB} KB) detected."
+[ -s "$sized_files" ] || exit 0
+
+total_bytes="$(awk -F'\t' '{s+=$1} END{printf "%d", s+0}' "$sized_files")"
+file_count="$(wc -l < "$sized_files" | tr -d ' ')"
+blocked=0
+
+# ---- Rule 1: single oversized file ----
+oversized="$(awk -F'\t' -v lim="$SINGLE_THRESHOLD_BYTES" '$1>lim' "$sized_files" | sort -rn)"
+if [ -n "$oversized" ]; then
+  blocked=1
+  echo "❌ pre-push blocked [Rule 1]: single file larger than ${SINGLE_THRESHOLD_MB}MB detected."
   echo ""
-  while IFS=$'\t' read -r file size; do
-    echo "- ${file} (${size})"
-    echo "  fix: git rm --cached \"${file}\""
-  done < "${tmp_files}.violations"
+  printf '%s\n' "$oversized" | while IFS=$'\t' read -r size file; do
+    printf -- '- %s (%.1f MB)\n' "$file" "$(awk -v b="$size" 'BEGIN{print b/1048576}')"
+    echo "  fix: git rm --cached \"$file\""
+  done
   echo ""
-  echo "Please remove oversized files from Git history/staging before pushing."
-  rm -f "${tmp_files}.violations"
+fi
+
+# ---- Rule 2: total payload of this push ----
+if [ "$total_bytes" -gt "$TOTAL_THRESHOLD_BYTES" ]; then
+  blocked=1
+  printf '❌ pre-push blocked [Rule 2]: this push adds %.1f MB in %s files (limit %s MB).\n' \
+    "$(awk -v b="$total_bytes" 'BEGIN{print b/1048576}')" "$file_count" "$TOTAL_THRESHOLD_MB"
+  echo ""
+  echo "Top 10 offenders:"
+  sort -rn "$sized_files" | head -10 | while IFS=$'\t' read -r size file; do
+    printf -- '- %s (%.1f MB)\n' "$file" "$(awk -v b="$size" 'BEGIN{print b/1048576}')"
+  done
+  echo ""
+  echo "Likely cause: runtime artifacts leaked into Git (.tmp/, snapshots/, output/, downloads/, *.zip, *_export_*.xlsx)."
+  echo "fix: check .gitignore, then 'git rm --cached <path>' the generated files."
+  echo ""
+fi
+
+if [ "$blocked" = "1" ]; then
+  echo "Bypass (only if you are sure): ALLOW_BIG_PUSH=1 git push ..."
   exit 1
 fi
 
-rm -f "${tmp_files}.violations"
 exit 0
