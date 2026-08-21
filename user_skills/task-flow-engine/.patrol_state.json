@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-19",
+  "updated_at": "2026-08-21",
   "tasks": {
     "r10:BD重点专项（5月）": {
       "last_seen": "2026-05-08",
@@ -33,7 +33,7 @@
       "consecutive_days": 2
     },
     "r19:US头商沟通入驻": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
@@ -43,7 +43,7 @@
       "consecutive_days": 2
     },
     "r20:CNOB协同": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
@@ -58,12 +58,12 @@
       "consecutive_days": 1
     },
     "r22:大商认证/打标流程提效": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r23:6.23新市场上线商家大会": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
@@ -78,17 +78,17 @@
       "consecutive_days": 1
     },
     "r26:chinamaxxing可以研究下": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r28:623大会协助": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r29:【建立靶向商家入驻追踪表并持续优化效率】": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
@@ -103,27 +103,27 @@
       "consecutive_days": 3
     },
     "r30:BD考核方案确定并GTM": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r31:Leads管理系统选型完成": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r32:BD/POP weekly数据落为看板，每周二更新": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r33:【制定ECCU、BCCU商家指引】": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
     "r34:【拿下入驻环节SKM、HIPO自动识别率数据及提升办法】": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "missing_ddl",
       "consecutive_days": 1
     },
@@ -133,12 +133,12 @@
       "consecutive_days": 10
     },
     "r45:【HIPO 规则迭代覆盖四大友商平台头部商家识别规则】": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "format_error",
       "consecutive_days": 1
     },
     "r46:【黑灰产治理定义高危服务商标准、后验指标与处罚机制】": {
-      "last_seen": "2026-08-19",
+      "last_seen": "2026-08-21",
       "issue_type": "format_error",
       "consecutive_days": 1
     },

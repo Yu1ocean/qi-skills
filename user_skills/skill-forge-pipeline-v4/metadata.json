@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKL-2604-010",
-    "name": "feishu-doc-writing-guide",
-    "description": "飞书电子表格与文档的安全写入与归属治理指南（v7.5 新增多选单元格 multiple_values 结构化写入护栏）",
-    "version": "7.5",
-    "doc_link": "https://bytedance.larkoffice.com/docx/KIJfdUkYNoyFeTxo7E2ciApyntb",
+    "skill_id": "MEDIA-FETCHER",
+    "name": "media-fetcher",
+    "description": "批量媒体物理摄入 orchestrator：接收一组视频 URL，先 probe 再按 video/audio 落地媒体与元信息，输出统一 batch manifest 与 DLQ。v1.2 新增 TikTok 403 embed/v2 降级链路（scripts/tiktok_embed_fallback.py），主链路被 WAF 拦截时自动降级，真机回归 0/10 → 9/10。",
+    "version": "1.2",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Gw8Jdgp94otMUNxN8cCcQcXMnSg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 10:04",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide.zip",
-    "zip_name": "feishu-doc-writing-guide.zip",
-    "drive_file_token": "EgHlboia0os4rkx4Q26cP8KEnR5",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/EgHlboia0os4rkx4Q26cP8KEnR5"
+    "updated_at": "2026-08-21 14:16",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/media-fetcher",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/media-fetcher.zip",
+    "zip_name": "media-fetcher.zip",
+    "drive_file_token": "EezEbvU5eoYcN1xlqRvceiMjn1e",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/EezEbvU5eoYcN1xlqRvceiMjn1e"
 }

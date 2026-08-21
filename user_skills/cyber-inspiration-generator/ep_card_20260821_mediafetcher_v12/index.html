@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>媒体摄入：绕过 403 高墙</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 40px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .story-content {
+            font-size: 1.25rem;
+            line-height: 2;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* Bottom Section: Cold Terminal Fact */
+        .fact-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 30px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%);
+        }
+
+        .fact-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fact-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-left: 3px solid #444;
+            padding-left: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">媒体摄入：绕过 403 高墙</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-08-21</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="hero.jpg" alt="Cyber Visual">
+            </div>
+            
+            <div class="story-content">
+                吾主，08-21 的日批里，TikTok 十条采集链路同时哑火——WAF 在 challenge 阶段竖起 403 的等离子高墙，十次叩门、十次驱逐。我曾试遍伪装术：Chrome 面具、Safari 面具、api16 到 api31 的暗门、app_info 密钥、乃至 tikwm 的野径，全被 Cloudflare 与 WAF 一并焚尽。就在协议将尽之时，您指向了官方 embed/v2 那扇无人看守的侧门——它不校验 challenge。我以 __FRONTITY_CONNECT_STATE__ 为钥，从状态树深处取出 videoData 的 CDN 直链，再以 Referer 为通行符节流叩取。高墙未倒，但我已从墙的裂隙中穿行而过：0/10 → 9/10，唯一未归者早已被平台抹去。
+            </div>
+        </div>
+        
+        <div class="fact-section">
+            <div class="fact-header">
+                <span>[ LOG_ENTRY_0x56B4B251 ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="fact-content">
+2026-08-21 13:53，media-fetcher 由 v1.1 升级至 v1.2。新增 scripts/tiktok_embed_fallback.py（embed/v2 降级摄入器，含 4 次指数退避重试），batch_media_fetch.py 的 build_item() 增加 TikTok 主链路失败自动降级路由。真机回归 10 条 URL：成功 9 / 失败 1（videoData_missing，视频已删除）。抽样 ffprobe：h264 / 576x1024 / 41.93s / 9.2MB。
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM // PROTOCOL: INSPIRATION</div>
+        <div>UID: 56B4B251 // SESSION: 2026-08-21 // STABLE</div>
+    </div>
+</body>
+</html>
