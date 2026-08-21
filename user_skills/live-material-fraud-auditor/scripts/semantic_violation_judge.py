@@ -778,9 +778,22 @@ def self_test() -> int:
 
     print(" config schema")
     config = load_config()
-    _assert(len(config["violation_types"]) == 27, "config has 27 violation types")
     _assert(
-        len({v["id"] for v in config["violation_types"]}) == 27, "violation type ids are unique"
+        len(config["violation_types"]) == REGISTERED_VIOLATION_TYPE_COUNT,
+        f"config has {REGISTERED_VIOLATION_TYPE_COUNT} violation types",
+    )
+    _assert(
+        len({v["id"] for v in config["violation_types"]}) == REGISTERED_VIOLATION_TYPE_COUNT,
+        "violation type ids are unique",
+    )
+    _disabled = {v["id"] for v in config["violation_types"] if not v.get("enabled")}
+    _assert(
+        _disabled == set(EXPECTED_DISABLED_TYPE_IDS),
+        f"disabled type set == {sorted(EXPECTED_DISABLED_TYPE_IDS)} (got {sorted(_disabled)})",
+    )
+    _assert(
+        len(select_enabled_types(config, None)) == EXPECTED_ENABLED_TYPE_COUNT,
+        f"enabled type count == {EXPECTED_ENABLED_TYPE_COUNT}",
     )
     try:
         validate_config({"meta": {}, "judge_policy": {}})

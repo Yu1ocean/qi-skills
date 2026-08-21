@@ -49,6 +49,11 @@ DEFAULT_WINDOW_LINES = 24
 DEFAULT_OVERLAP_LINES = 3
 DEFAULT_JUDGE_PROGRESS = "temp_data/judge_progress.json"
 
+# 注册总类数 / 默认禁用集合（v2.1：拍卖类按用户 2026-08-21 指令关闭）
+REGISTERED_VIOLATION_TYPE_COUNT = 27
+EXPECTED_DISABLED_TYPE_IDS = frozenset({"static_content", "auction_violation"})
+EXPECTED_ENABLED_TYPE_COUNT = REGISTERED_VIOLATION_TYPE_COUNT - len(EXPECTED_DISABLED_TYPE_IDS)
+
 CONFIG_REQUIRED_SECTIONS = ("meta", "judge_policy", "violation_types")
 CONFIG_REQUIRED_TYPE_FIELDS = ("id", "name", "enabled", "modality", "judge_prompt", "risk_rubric")
 SEMANTIC_RISK_LEVELS = ("高", "中", "低")
@@ -404,11 +409,30 @@ def self_test() -> int:
     print(" audit config (v2.0)")
     _expect_pass("真实 audit_config.yaml", validate_audit_config, DEFAULT_AUDIT_CONFIG)
     real_config = validate_audit_config(DEFAULT_AUDIT_CONFIG)
-    if len(real_config["violation_types"]) != 27:
+    if len(real_config["violation_types"]) != REGISTERED_VIOLATION_TYPE_COUNT:
         raise SystemExit(
-            f"  [FAIL] audit_config.yaml should register 27 types, got {len(real_config['violation_types'])}"
+            f"  [FAIL] audit_config.yaml should register {REGISTERED_VIOLATION_TYPE_COUNT} types, "
+            f"got {len(real_config['violation_types'])}"
         )
-    print("  [ok] audit_config.yaml registers 27 violation types")
+    print(f"  [ok] audit_config.yaml registers {REGISTERED_VIOLATION_TYPE_COUNT} violation types")
+    disabled_ids = {
+        item["id"] for item in real_config["violation_types"] if not item.get("enabled")
+    }
+    if disabled_ids != set(EXPECTED_DISABLED_TYPE_IDS):
+        raise SystemExit(
+            f"  [FAIL] disabled type set drifted: expected {sorted(EXPECTED_DISABLED_TYPE_IDS)}, "
+            f"got {sorted(disabled_ids)}"
+        )
+    enabled_count = len(real_config["violation_types"]) - len(disabled_ids)
+    if enabled_count != EXPECTED_ENABLED_TYPE_COUNT:
+        raise SystemExit(
+            f"  [FAIL] enabled type count drifted: expected {EXPECTED_ENABLED_TYPE_COUNT}, "
+            f"got {enabled_count}"
+        )
+    print(
+        f"  [ok] enabled={enabled_count}/{REGISTERED_VIOLATION_TYPE_COUNT}, "
+        f"disabled={sorted(disabled_ids)}"
+    )
     good_type = {
         "id": "material_fraud",
         "name": "材质造假宣称",

@@ -1,6 +1,6 @@
 # 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
 
-<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NzJmODdhZGU4YTFlZDIwYjVjZjlkZjRmNzU2MTdlOWFfNGVkNDI2NmExYTUwYWM4NjA0ZDZkYzEwYWVjNDkyNmFfSUQ6NzY3NjQ1NzQxMzU1NzYzNjA2OV8xNzg3MzE0NTI0OjE3ODczMTgxMjRfVjM" mime="application/zip" size="3006537" token="HJZSb9B9CoEKfWxutRec0NkHn2g"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZmZmN2ZkOTU2ZjA5NzY3NmM5OWU5ZDRhNTA3ZjZjNTJfMWYzMmEyMzM5ZjM1YWU2NmMyOTFhMThhOGI4YTY5NzhfSUQ6NzY3NjQ2NDEyNDY5OTg4ODYwMV8xNzg3MzE2MDg3OjE3ODczMTk2ODdfVjM" mime="application/zip" size="3020515" token="H4SxbuOICo8IKFx7h4lcpoNXnJh"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
