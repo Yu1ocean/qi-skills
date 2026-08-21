@@ -1,10 +1,10 @@
 ---
 name: periodic-report-generator
 description: 生成周期性日报或周报并整理成结构化汇报文档。适用于每日工作日报、周报复盘、固定节奏汇报与自动归档场景。
-version: 6.2
+version: 6.3
 ---
 
-# 赛博周期性汇报生成器 (periodic-report-generator) V6.2
+# 赛博周期性汇报生成器 (periodic-report-generator) V6.3
 
 ## Common Rationalizations（常见借口）
 
@@ -15,6 +15,10 @@ version: 6.2
 - “表格只有四列，直接裸调 lark 写进去也没事。”
 - “RAW 回捞慢，看到写入成功就算完成。”
 - “GMV、实验、决策类型差不多，可以混成一个总结字段。”
+- “append 到表尾也能看到，先不改插入位置。”
+- “只有断言 B（降序）失败，问题不大，先算完成。”
+- “插行接口麻烦，先追加到最后一行，回头人工排序。”
+- “三断言太慢，写完看到 ok=true 就收工。”
 
 ## Red Flags（危险信号）
 
@@ -25,6 +29,11 @@ version: 6.2
 - 事项类型不属于 `GMV` / `实验` / `决策`。
 - 使用裸 lark 写入绩效素材池，而不是调用 `feishu-doc-writing-guide` 包装器。
 - 宣称写入完成，但没有输出 RAW 回捞行号。
+- `Daily_Logs` 写入仍在使用 append-to-tail（`+append` / `safe_insert_sheet_row.py` 追加表尾）路径。
+- 未在第 2 行执行 `+dim-insert` 物理插行，直接写 A2:C2（会覆盖上一条日报）。
+- 未执行写入后三断言（A 置顶 / B 降序 / C 非空）就宣称完成。
+- 任一断言失败却继续流程、或把断言降级为 WARNING 静默通过。
+- 在真实 `Daily_Logs` 表上做写入实验验证新逻辑（污染线上数据）。
 
 ## Verification（强制验收清单）
 
@@ -36,6 +45,8 @@ version: 6.2
 4. 每条素材均包含日期、事项类型、内容摘要和来源报告链接，且事项类型在允许枚举内。
 5. 写入动作通过 `feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py` 完成。
 6. 写入后等待 ≥2 秒并 RAW 回捞，输出新写入行号；不一致立即熔断。
+7. **降序插入法验收**：`Daily_Logs` 写入必须先在第 2 行 `+dim-insert` 插空行，再写 A2:C2；日志中必须出现 `[DescendingInsert]` 证据，且不得出现任何 append-to-tail 调用。
+8. **三断言验收**：写后回读必须输出 `assert_top_row_is_today` / `assert_date_desc` / `assert_no_empty_cells` 三条 PASS 证据（`assert_daily_logs_invariants()` 统一入口）；任一 FAIL 必须 `raise` 熔断并落 DLQ。
 
 本 Skill 专门用于自动化生成数据驱动的极简工作日报与高度结构化的周报，并确保所有记录安全归档至飞书台账。
 
@@ -64,7 +75,17 @@ version: 6.2
   - **Schema 合同验证（必须先读）**：必须先通过 MCP 下载台账，读取 `Daily_Logs` 的表头（第 1 行），确认存在且按顺序包含：`[编号, 日期, 日报内容]`。
   - **编号列主键生成（必须）**：当表头包含【编号】列时，自动生成主键：`DL-YYYYMMDD`（如当日已存在则追加递增后缀：`DL-YYYYMMDD-02`）。
   - **插入内容（严格三列）**：`[[编号, 日期, 日报内容]]`（日期格式：`YYYY-MM-DD`）。
-  - **写后即读 RAW 原子锁（必须）**：写入后等待 ≥2 秒，再次通过 MCP 下载台账，读回刚写入行的原始数组并逐字段核对；不一致立即熔断并落 DLQ。
+  - **【规则 1】降序插入法（Descending Insert，治本）**：写入 `Daily_Logs` 时**必须在表头（第 1 行）下方插入新行，严禁追加到表尾**。实现链路固定为两步：
+    1. 通过 lark MCP / `lark-cli sheets +dim-insert --position 2 --count 1 --inherit-style after` 在第 2 行物理插入空行；
+    2. 通过 `lark-cli sheets +cells-set --range "Daily_Logs!A2:C2"` 把 `[编号, 日期, 日报内容]` 写入置顶行。
+    由此最新日报永远置顶、天然维持日期降序。**append-to-tail 路径（`+append` / `safe_insert_sheet_row.py` 表尾追加）已废弃并禁止使用**——它是本次 P1 事故（最新日报被埋到第 108 行）的直接根因。
+  - **【规则 2】写入后三断言熔断（治表）**：写入完成后 `sleep ≥2s` 做 RAW 回读，并强制执行三条断言，任意一条失败即 `raise` 熔断报错并落 DLQ，绝不允许静默通过：
+    - **断言 A** `assert_top_row_is_today()`：`B2 == 当日日期`（最新行置顶）。
+    - **断言 B** `assert_date_desc()`：`B 列（排除表头）严格降序`（无乱序，且不允许出现无法解析的日期单元格）。
+    - **断言 C** `assert_no_empty_cells()`：`A2 / B2 / C2 均非空`（无错列 / 半行写入）。
+    - 统一入口：`assert_daily_logs_invariants(rows, expected_date)`，返回三条 PASS 证据并原样打印。
+  - **写后即读 RAW 原子锁（必须）**：写入后等待 ≥2 秒，通过 `lark-cli sheets +cells-get --include value` 回读 `A1:C{N}`，先逐字段核对置顶行与期望值，再执行上述三断言；任一不一致立即熔断并落 DLQ。
+  - **验证禁令**：严禁在真实 `Daily_Logs` 表上做写入实验。验证新逻辑只允许使用 `--dry-run` 或临时影子 Sheet，且用完必须清理。
   - **推荐一键脚本**：直接运行本 Skill 自带的 `scripts/daily_logs_zero_trust_insert.py`（脚本内部会完成：任务库统计预拉取 → 占位符/字段回填 → MCP Schema 回捞 → 主键生成 → 安全插入 → 写后即读校验）。
   - **执行示例（必须 include_secrets=true）**：
 
@@ -139,6 +160,13 @@ version: 6.2
 ...
 
 ## 更新日志 (Changelog)
+
+### V6.3 (2026-08-21)
+- **根因（P1）**：`Daily_Logs` 归档链路长期走 append-to-tail（`safe_insert_sheet_row.py` → `lark-sheets +append`），最新日报被追加到表尾（实测埋到第 108 行）；历史表同时积累列错位、格式不统一、重复编号等脏数据，且无任何写后结构断言，脏写可长期不可见。
+- **修复 1（治本 · 降序插入法）**：写入路径改为「第 2 行物理插行 + 写 A2:C2」。新增 `insert_top_blank_row()`（`lark-cli sheets +dim-insert --position 2`）、`write_top_row()`（`+cells-set` 结构化 value 通道）与统一入口 `descending_insert_daily_log()`；彻底移除 `+append` 依赖，最新日报永远置顶。
+- **修复 2（治表 · 三断言熔断）**：新增独立可复用断言 `assert_top_row_is_today()` / `assert_date_desc()` / `assert_no_empty_cells()` 及统一入口 `assert_daily_logs_invariants()`，写后 `sleep 2s` RAW 回读（`+cells-get --include value`）后强制执行，任一失败即 `raise` 熔断并落 DLQ。
+- **配套**：新增 `read_daily_logs_rows()` RAW 回读器与 `_run_lark_cli()`（非 0 退出 / `ok=false` 即 raise，禁止静默）；`--dry-run` 增强为「模式声明 + 现存表体降序预检」；保留 Schema 合同校验与 `DL-YYYYMMDD` 主键生成能力；`--row-index` 降级为兼容入参。
+- **护栏加固**：Common Rationalizations 新增「append 到表尾也能看到」「只有断言 B 失败问题不大」等 4 条；Red Flags 新增「仍在使用 append-to-tail」「未执行三断言就宣称完成」等 6 条；Verification 新增第 7/8 条（降序插入法验收、三断言验收）。
 
 ### V6.2 (2026-07-25)
 - **新增绩效素材池同步**：周报生成链路支持可选 `--write-perf-pool` flag，将 GMV 增量、实验结论、关键决策写入 `Perf_Material_Pool`。

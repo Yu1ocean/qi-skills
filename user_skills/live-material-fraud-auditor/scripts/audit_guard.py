@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""L3 运行时护栏：直播材质造假 / 品牌授权审核链路的物理熔断闸门。
+"""L3 运行时护栏：直播违规语义审核链路（v2.0）的物理熔断闸门。
 
 设计原则：所有闸门在**副作用发生之前**调用，校验不通过一律 raise，
 禁止返回 False 让调用方自行决定要不要继续——那等于把护栏变成建议。
+
+v2.0 在 v1.x 六个 gate 之上新增五个语义链路 gate（配置合法性、语义命中契约、
+证据逐字可回溯、启用类型声明、判定覆盖如实），全部旧 gate 原样保留。
 
 可直接 import 使用，也可通过 CLI 单点校验：
 
     python3 scripts/audit_guard.py --self-test
     python3 scripts/audit_guard.py --check segment --seconds 75
     python3 scripts/audit_guard.py --check coverage --coverage-file coverage.md
+    python3 scripts/audit_guard.py --check config --config-file references/audit_config.yaml
 """
 
 from __future__ import annotations
@@ -18,6 +22,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -36,6 +41,25 @@ ALLOWED_RISK_LEVELS = ("🔴 高", "🟡 中-高", "🟢 低")
 
 # 覆盖说明必须自证的三件事：真实区间、总时长、尾段空 WAV 处置
 COVERAGE_REQUIRED_MARKERS = ("实际有效覆盖", "总时长", "空 WAV")
+
+# ---- v2.0 语义链路常量 ----
+
+DEFAULT_AUDIT_CONFIG = Path(__file__).resolve().parent.parent / "references" / "audit_config.yaml"
+DEFAULT_WINDOW_LINES = 24
+DEFAULT_OVERLAP_LINES = 3
+DEFAULT_JUDGE_PROGRESS = "temp_data/judge_progress.json"
+
+CONFIG_REQUIRED_SECTIONS = ("meta", "judge_policy", "violation_types")
+CONFIG_REQUIRED_TYPE_FIELDS = ("id", "name", "enabled", "modality", "judge_prompt", "risk_rubric")
+SEMANTIC_RISK_LEVELS = ("高", "中", "低")
+REQUIRED_SEMANTIC_HIT_FIELDS = (
+    "violation_type",
+    "timestamp",
+    "evidence_text",
+    "risk_level",
+    "need_human_review",
+    "judge_reason",
+)
 
 
 class AuditGuardError(RuntimeError):
@@ -167,6 +191,152 @@ def validate_progress_checkpoint(checkpoint: Mapping[str, Any]) -> Mapping[str, 
     return checkpoint
 
 
+# ------------------------------------------------- v2.0 语义链路 gate（新增） ---
+
+
+def _normalize_for_trace(value: Any) -> str:
+    """归一化：NFKC 统一全半角 + 去全部空白 + 小写。与判定器保持同一口径。"""
+    if value is None:
+        return ""
+    text = unicodedata.normalize("NFKC", str(value))
+    return "".join(text.split()).lower()
+
+
+def validate_audit_config(config: Any) -> Mapping[str, Any]:
+    """配置闸门：审核口径是全链路的合同，配置烂了后面全是幻觉。
+
+    熔断条件：缺 meta/judge_policy/violation_types；类型缺必填字段；id 重复；
+    risk_rubric 键不在 高/中/低。
+    """
+    if isinstance(config, (str, Path)):
+        try:
+            import yaml
+        except ImportError as exc:  # pragma: no cover
+            raise AuditGuardError("PyYAML required to validate audit config") from exc
+        config_path = Path(config)
+        if not config_path.exists():
+            raise AuditGuardError(f"audit config not found: {config_path}")
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    if not isinstance(config, Mapping):
+        raise AuditGuardError(f"audit config must be a mapping, got {type(config).__name__}")
+
+    missing = [section for section in CONFIG_REQUIRED_SECTIONS if section not in config]
+    if missing:
+        raise AuditGuardError(f"audit config missing sections {missing}")
+
+    types = config["violation_types"]
+    if not isinstance(types, list) or not types:
+        raise AuditGuardError("audit config violation_types must be a non-empty list")
+
+    seen: set[str] = set()
+    for item in types:
+        if not isinstance(item, Mapping):
+            raise AuditGuardError(f"violation type must be a mapping, got {type(item).__name__}")
+        lacking = [field for field in CONFIG_REQUIRED_TYPE_FIELDS if field not in item]
+        if lacking:
+            raise AuditGuardError(
+                f"violation type {item.get('id', '<no-id>')!r} missing fields {lacking}"
+            )
+        type_id = str(item["id"]).strip()
+        if not type_id:
+            raise AuditGuardError("violation type has empty id")
+        if type_id in seen:
+            raise AuditGuardError(f"duplicated violation type id: {type_id}")
+        seen.add(type_id)
+        rubric = item["risk_rubric"]
+        if not isinstance(rubric, Mapping) or not rubric:
+            raise AuditGuardError(f"{type_id}.risk_rubric must be a non-empty mapping")
+        illegal = [str(key) for key in rubric if str(key) not in SEMANTIC_RISK_LEVELS]
+        if illegal:
+            raise AuditGuardError(
+                f"{type_id}.risk_rubric has illegal level keys {illegal}, allowed {SEMANTIC_RISK_LEVELS}"
+            )
+    return config
+
+
+def validate_semantic_hit_row(row: Mapping[str, Any]) -> Mapping[str, Any]:
+    """语义命中行闸门：六要素缺一即无法取证（少了 judge_reason 就无法复核判定依据）。"""
+    if not isinstance(row, Mapping):
+        raise AuditGuardError(f"semantic hit row must be a mapping, got {type(row).__name__}")
+    missing = [
+        field
+        for field in REQUIRED_SEMANTIC_HIT_FIELDS
+        if field not in row or (field != "need_human_review" and not str(row.get(field, "")).strip())
+    ]
+    if missing:
+        raise AuditGuardError(f"semantic hit row missing required fields {missing}: {dict(row)!r}")
+    parse_absolute_timestamp(str(row["timestamp"]))
+    if str(row["risk_level"]) not in SEMANTIC_RISK_LEVELS:
+        raise AuditGuardError(
+            f"risk_level {row['risk_level']!r} not in {SEMANTIC_RISK_LEVELS}"
+        )
+    if not isinstance(row["need_human_review"], bool):
+        raise AuditGuardError(
+            f"need_human_review must be a bool, got {row['need_human_review']!r}"
+        )
+    return row
+
+
+def validate_evidence_traceable(evidence_text: str, transcript: str) -> str:
+    """反幻觉闸门：证据原文必须能在逐字稿中逐字定位。
+
+    「大意对得上」正是幻觉的典型形态——模型把没说过的话总结成像是说过的。
+    归一化只抹掉空白与全半角差异，不允许任何语义改写通过。
+    """
+    if not isinstance(evidence_text, str) or not evidence_text.strip():
+        raise AuditGuardError("evidence_text is empty; a hit without evidence is not evidence")
+    if not isinstance(transcript, str) or not transcript.strip():
+        raise AuditGuardError("transcript is empty; cannot verify evidence traceability")
+    needle = _normalize_for_trace(evidence_text)
+    haystack = _normalize_for_trace(transcript)
+    if needle not in haystack:
+        raise AuditGuardError(
+            f"evidence not verbatim in transcript (hallucination suspected): {evidence_text[:80]!r}"
+        )
+    return evidence_text
+
+
+def validate_enabled_types_declared(
+    reported_types: Iterable[str], enabled_types: Iterable[str]
+) -> set[str]:
+    """启用类型闸门：报告里出现没开的类型 = 审了个不存在的口径。"""
+    enabled = {str(item).strip() for item in enabled_types if str(item).strip()}
+    if not enabled:
+        raise AuditGuardError("enabled type set is empty; nothing was configured for this run")
+    reported = {str(item).strip() for item in reported_types if str(item).strip()}
+    undeclared = sorted(reported - enabled)
+    if undeclared:
+        raise AuditGuardError(
+            f"report contains violation types not enabled in this run: {undeclared}; "
+            f"enabled={sorted(enabled)}"
+        )
+    return reported
+
+
+def validate_judge_coverage(summary: Mapping[str, Any], *, claim_complete: bool = True) -> Mapping[str, Any]:
+    """判定覆盖闸门：有未判定窗口却宣称全量完成，等于伪造覆盖范围。"""
+    if not isinstance(summary, Mapping):
+        raise AuditGuardError(f"summary must be a mapping, got {type(summary).__name__}")
+    if "total_windows" not in summary:
+        raise AuditGuardError("summary missing total_windows; coverage is unverifiable")
+    unjudged = summary.get("unjudged_windows") or []
+    if not isinstance(unjudged, (list, tuple)):
+        raise AuditGuardError("summary.unjudged_windows must be a list")
+    if unjudged and claim_complete:
+        raise AuditGuardError(
+            f"{len(unjudged)} window(s) unjudged {list(unjudged)[:10]} but full coverage was claimed; "
+            "state them explicitly in the coverage section instead"
+        )
+    judged = int(summary.get("judged_windows", 0) or 0)
+    total = int(summary["total_windows"])
+    if judged + len(unjudged) < total:
+        raise AuditGuardError(
+            f"window accounting mismatch: judged={judged} + unjudged={len(unjudged)} < total={total}; "
+            "some windows silently vanished"
+        )
+    return summary
+
+
 # ---------------------------------------------------------------- Self test ---
 
 
@@ -228,6 +398,121 @@ def self_test() -> int:
     _expect_pass("完整断点", validate_progress_checkpoint, good_ckpt)
     _expect_raise("缺 revision_id", validate_progress_checkpoint, {**good_ckpt, "revision_id": ""})
     _expect_raise("未 RAW 校验", validate_progress_checkpoint, {**good_ckpt, "raw_verified": False})
+
+    # ------------------------------------------------ v2.0 语义链路 gate ----
+
+    print(" audit config (v2.0)")
+    _expect_pass("真实 audit_config.yaml", validate_audit_config, DEFAULT_AUDIT_CONFIG)
+    real_config = validate_audit_config(DEFAULT_AUDIT_CONFIG)
+    if len(real_config["violation_types"]) != 27:
+        raise SystemExit(
+            f"  [FAIL] audit_config.yaml should register 27 types, got {len(real_config['violation_types'])}"
+        )
+    print("  [ok] audit_config.yaml registers 27 violation types")
+    good_type = {
+        "id": "material_fraud",
+        "name": "材质造假宣称",
+        "enabled": True,
+        "modality": "audio",
+        "judge_prompt": "判断材质宣称是否成立",
+        "risk_rubric": {"高": "h", "中": "m", "低": "l"},
+    }
+    good_config = {"meta": {}, "judge_policy": {}, "violation_types": [good_type]}
+    _expect_pass("最小合法配置", validate_audit_config, good_config)
+    _expect_raise("缺 judge_policy", validate_audit_config, {"meta": {}, "violation_types": [good_type]})
+    _expect_raise(
+        "类型缺 judge_prompt",
+        validate_audit_config,
+        {**good_config, "violation_types": [{k: v for k, v in good_type.items() if k != "judge_prompt"}]},
+    )
+    _expect_raise(
+        "id 重复",
+        validate_audit_config,
+        {**good_config, "violation_types": [good_type, dict(good_type)]},
+    )
+    _expect_raise(
+        "risk_rubric 键非法",
+        validate_audit_config,
+        {**good_config, "violation_types": [{**good_type, "risk_rubric": {"严重": "x"}}]},
+    )
+
+    print(" semantic hit rows")
+    good_semantic = {
+        "violation_type": "counterfeit",
+        "timestamp": "00:12:34",
+        "evidence_text": "same quality as the authentic one, 1:1 replica",
+        "risk_level": "高",
+        "need_human_review": True,
+        "judge_reason": "明确的 1:1 仿冒表述",
+    }
+    _expect_pass("六要素齐备", validate_semantic_hit_row, good_semantic)
+    _expect_raise("缺 judge_reason", validate_semantic_hit_row, {**good_semantic, "judge_reason": ""})
+    _expect_raise("缺证据原文", validate_semantic_hit_row, {**good_semantic, "evidence_text": "  "})
+    _expect_raise("非法等级", validate_semantic_hit_row, {**good_semantic, "risk_level": "🔴 高"})
+    _expect_raise(
+        "need_human_review 非 bool",
+        validate_semantic_hit_row,
+        {**good_semantic, "need_human_review": "true"},
+    )
+
+    print(" evidence traceability (anti-hallucination)")
+    transcript = "[00:12:34] same quality as the authentic one, 1:1 replica\n[00:12:40] link in bio"
+    _expect_pass(
+        "逐字证据",
+        validate_evidence_traceable,
+        "same quality as the authentic one, 1:1 replica",
+        transcript,
+    )
+    _expect_pass(
+        "仅空白/全角差异",
+        validate_evidence_traceable,
+        "  same  quality as the authentic one，1:1 replica ".replace("，", ", "),
+        transcript,
+    )
+    _expect_raise(
+        "改写过的证据",
+        validate_evidence_traceable,
+        "主播说这个和正品一模一样，是 1:1 的",
+        transcript,
+    )
+    _expect_raise("空证据", validate_evidence_traceable, "", transcript)
+
+    print(" enabled types declared")
+    _expect_pass(
+        "全部已启用",
+        validate_enabled_types_declared,
+        ["material_fraud", "counterfeit"],
+        ["material_fraud", "counterfeit", "misleading_pricing"],
+    )
+    _expect_raise(
+        "报告出现未启用类型",
+        validate_enabled_types_declared,
+        ["material_fraud", "static_content"],
+        ["material_fraud", "counterfeit"],
+    )
+
+    print(" judge coverage")
+    _expect_pass(
+        "全量判定完成",
+        validate_judge_coverage,
+        {"total_windows": 10, "judged_windows": 10, "unjudged_windows": []},
+    )
+    _expect_raise(
+        "有未判定窗口却宣称完成",
+        validate_judge_coverage,
+        {"total_windows": 10, "judged_windows": 8, "unjudged_windows": [3, 7]},
+    )
+    _expect_pass(
+        "未判定窗口已显式列出",
+        validate_judge_coverage,
+        {"total_windows": 10, "judged_windows": 8, "unjudged_windows": [3, 7]},
+        claim_complete=False,
+    )
+    _expect_raise(
+        "窗口账目对不上",
+        validate_judge_coverage,
+        {"total_windows": 10, "judged_windows": 5, "unjudged_windows": []},
+    )
 
     print("SELF-TEST PASSED")
     return 0

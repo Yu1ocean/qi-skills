@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKILL-FORGE-PIPELINE",
-    "name": "skill-forge-pipeline-v4",
-    "description": "自动化技能创建、升级、打包发布与归档流水线（含 CDA Guardrails 自检 + ZIP 文件块幂等替换）",
-    "version": "5.16",
-    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
+    "skill_id": "SKL-2604-018",
+    "name": "periodic-report-generator",
+    "description": "赛博周期性汇报生成器：生成日报/周报并安全归档；V6.3 修复 P1 事故——Daily_Logs 写入由 append-to-tail 改为降序插入法（第 2 行 dim-insert 插行 + cells-set 写 A2:C2），并新增写后三断言（置顶/降序/非空）运行时熔断。",
+    "version": "6.3",
+    "doc_link": "https://bytedance.larkoffice.com/docx/ILsldnt22oXbMExLssccWmJendg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 18:36",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
-    "zip_name": "skill-forge-pipeline-v4.zip",
-    "drive_file_token": "OCADbKSVGo9aNOxZFwzcX8SLnMe",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/OCADbKSVGo9aNOxZFwzcX8SLnMe"
+    "updated_at": "2026-08-21 19:32",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator.zip",
+    "zip_name": "periodic-report-generator.zip",
+    "drive_file_token": "Bhovb0unEoPr98xQuHecbrNonTg",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Bhovb0unEoPr98xQuHecbrNonTg"
 }

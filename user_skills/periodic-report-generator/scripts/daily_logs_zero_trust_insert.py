@@ -4,18 +4,23 @@
 
 目标：把"写日报→归档到 Daily_Logs 台账"的流程固化为可执行脚本，避免脏写/错列。
 
-写入模式：
-- **底部追加（Append）**。MCP 当前不支持"插入空行"，故统一采用 +append 直接写入表尾。
-- 写后即读校验改为"按主键回捞最末一条匹配行"，不再依赖固定 row_index=2。
+写入模式（V6.3 起）：
+- **降序插入法（Descending Insert / 治本）**：在表头（第 1 行）下方物理插入空行（`lark-cli sheets +dim-insert
+  --position 2 --count 1`），再把 [编号, 日期, 日报内容] 写入 A2:C2。最新日报永远置顶，天然维持降序。
+- **禁止 append-to-tail**：历史 `+append` 路径会把最新日报埋到表尾（P1 事故：埋到第 108 行），已彻底移除。
 
 强约束：
-- 必须先通过 MCP 下载台账，读取表头 Schema（第 1 行）
+- 必须先通过 MCP / lark-cli 读取表头 Schema（第 1 行）
 - 当存在【编号】列时必须自动生成主键（DL-YYYYMMDD / DL-YYYYMMDD-02 ...）
 - 【治本封堵】必须写满 3 列：[[编号, 日期, 日报内容]]，任一字段为空即熔断。
-- 写后即读（RAW 原子锁）：写入后等待 >=2s，再次下载并按主键定位刚写行做逐字段核对
+- 写后即读（RAW 原子锁）：写入后等待 >=2s 回读，并强制执行三断言（治表）：
+  * 断言 A `assert_top_row_is_today()`：B2 == 当日日期（最新行置顶）
+  * 断言 B `assert_date_desc()`：B 列（排除表头）严格降序（无乱序）
+  * 断言 C `assert_no_empty_cells()`：A2 / B2 / C2 均非空（无错列）
+  统一入口 `assert_daily_logs_invariants()`，任一断言失败即 raise 熔断 + 落 DLQ，绝不静默通过。
 
 注意：
-- 本脚本依赖 feishu-doc-writing-guide 的 safe_insert_sheet_row.py 负责"安全写入/插行"。
+- 飞书读写一律走 MCP / lark-cli，严禁裸调 OpenAPI。
 - 本脚本不负责 bytedcli 登录；请在 Aime 执行时先挂载 bytedcli-auth 并 include_secrets=true。
 """
 
@@ -37,9 +42,10 @@ import openpyxl
 
 DEFAULT_SHEET_URL = "https://bytedance.larkoffice.com/sheets/ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
 DEFAULT_SHEET_NAME = "Daily_Logs"
-# 写入模式约定：底部追加（Append）。MCP 不支持“插入空行”，故采用 +append 直接追加到表尾。
-# row_index 仅作为兼容入参传给 safe_insert_sheet_row.py，底层会忽略它并改走 +append。
-DEFAULT_ROW_INDEX = 0  # 0 = ignored by safe_insert（append-only）
+# 写入模式约定（V6.3）：降序插入法。永远在表头下方（第 2 行）物理插入空行后写入 A2:C2。
+# 严禁 append-to-tail：那会把最新日报埋在表尾（P1 事故根因）。
+TOP_ROW_INDEX = 2
+DEFAULT_ROW_INDEX = TOP_ROW_INDEX  # 兼容历史入参；实际写入位置恒为第 2 行
 
 REQUIRED_HEADERS = ["编号", "日期", "日报内容"]
 
@@ -457,6 +463,201 @@ def find_row_by_primary_key_via_cli(
     return last_idx, last_row
 
 
+# ============================================================================
+# V6.3 规则 1：降序插入法（Descending Insert）
+# 走 lark-cli（MCP 同源通道）：+dim-insert 在第 2 行插空行 → +cells-set 写 A2:C2
+# ============================================================================
+
+LARK_CLI = "lark-cli"
+
+
+def _run_lark_cli(args: list[str]) -> dict:
+    """执行 lark-cli 并解析 JSON envelope；失败即 raise（禁止静默）。"""
+    import subprocess
+
+    cmd = [LARK_CLI] + args
+    print(f"[lark-cli] {' '.join(cmd)}")
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"lark-cli 执行失败（exit={res.returncode}）：\ncmd={' '.join(cmd)}"
+            f"\nstderr={res.stderr}\nstdout={res.stdout[:2000]}"
+        )
+    try:
+        obj = json.loads(res.stdout)
+    except Exception as exc:
+        raise RuntimeError(f"lark-cli 输出无法解析为 JSON：{exc}\nstdout={res.stdout[:2000]}")
+    if not obj.get("ok"):
+        raise RuntimeError(f"lark-cli 返回 ok=false：{json.dumps(obj, ensure_ascii=False)[:2000]}")
+    return obj
+
+
+def insert_top_blank_row(sheet_url: str, sheet_name: str) -> None:
+    """在表头（第 1 行）下方物理插入 1 个空行，为最新日报腾出置顶位置。"""
+    _run_lark_cli(
+        [
+            "sheets",
+            "+dim-insert",
+            "--url",
+            sheet_url,
+            "--sheet-name",
+            sheet_name,
+            "--position",
+            str(TOP_ROW_INDEX),
+            "--count",
+            "1",
+            "--inherit-style",
+            "after",
+        ]
+    )
+    print(f"[DescendingInsert] 已在第 {TOP_ROW_INDEX} 行插入空行（表头下方置顶位）。")
+
+
+def write_top_row(sheet_url: str, sheet_name: str, row_values: list[str]) -> None:
+    """把 [编号, 日期, 日报内容] 写入 A2:C2（结构化 value 通道，非 csv-put）。"""
+    if len(row_values) != 3:
+        raise ValueError(f"write_top_row 需要 3 列数据，当前：{row_values}")
+    cells = [[{"value": str(v)} for v in row_values]]
+    _run_lark_cli(
+        [
+            "sheets",
+            "+cells-set",
+            "--url",
+            sheet_url,
+            "--sheet-name",
+            sheet_name,
+            "--range",
+            f"{sheet_name}!A{TOP_ROW_INDEX}:C{TOP_ROW_INDEX}",
+            "--cells",
+            json.dumps(cells, ensure_ascii=False),
+        ]
+    )
+    print(f"[DescendingInsert] 已写入 A{TOP_ROW_INDEX}:C{TOP_ROW_INDEX}。")
+
+
+def descending_insert_daily_log(sheet_url: str, sheet_name: str, row_values: list[str]) -> None:
+    """降序插入法统一入口：插空行 → 写置顶行。禁止 append-to-tail。"""
+    insert_top_blank_row(sheet_url, sheet_name)
+    write_top_row(sheet_url, sheet_name, row_values)
+
+
+def read_daily_logs_rows(sheet_url: str, sheet_name: str, max_rows: int = 400) -> list[list[str]]:
+    """RAW 回读 A:C 全量（含表头），返回 [[a,b,c], ...]，索引 0 即表头行。"""
+    obj = _run_lark_cli(
+        [
+            "sheets",
+            "+cells-get",
+            "--url",
+            sheet_url,
+            "--sheet-name",
+            sheet_name,
+            "--range",
+            f"{sheet_name}!A1:C{max_rows}",
+            "--include",
+            "value",
+        ]
+    )
+    ranges = obj.get("data", {}).get("ranges", []) or []
+    if not ranges:
+        raise RuntimeError("RAW 回读失败：+cells-get 未返回任何 range。")
+    raw_cells = ranges[0].get("cells", []) or []
+    rows: list[list[str]] = []
+    for raw_row in raw_cells:
+        vals = []
+        for i in range(3):
+            cell = raw_row[i] if i < len(raw_row) and isinstance(raw_row[i], dict) else {}
+            vals.append(_normalize_cell(cell.get("value")))
+        rows.append(vals)
+    # 去掉尾部全空行
+    while rows and not any(rows[-1]):
+        rows.pop()
+    return rows
+
+
+# ============================================================================
+# V6.3 规则 2：写入后三断言熔断（治表）
+# ============================================================================
+
+
+def _parse_date(value: str) -> dt.date | None:
+    s = _normalize_cell(value)
+    if not s:
+        return None
+    s = s.split(" ")[0].replace(".", "-").replace("/", "-")
+    parts = s.split("-")
+    if len(parts) != 3:
+        return None
+    try:
+        return dt.date(int(parts[0]), int(parts[1]), int(parts[2]))
+    except Exception:
+        return None
+
+
+def assert_top_row_is_today(rows: list[list[str]], expected_date: str) -> dict:
+    """断言 A：B2 == 当日日期（最新日报必须置顶）。"""
+    if len(rows) < 2:
+        raise AssertionError(f"[断言A-FAIL] Daily_Logs 缺少数据行（rows={len(rows)}），无法验证置顶。")
+    b2 = rows[1][1]
+    got = _parse_date(b2)
+    want = _parse_date(expected_date)
+    if want is None:
+        raise AssertionError(f"[断言A-FAIL] 期望日期无法解析：{expected_date!r}")
+    if got is None or got != want:
+        raise AssertionError(
+            f"[断言A-FAIL] 最新日报未置顶：B2={b2!r}，期望={expected_date!r}。"
+            " 疑似仍在使用 append-to-tail 或插行位置错误。"
+        )
+    return {"assertion": "A_top_row_is_today", "result": "PASS", "b2": b2}
+
+
+def assert_date_desc(rows: list[list[str]]) -> dict:
+    """断言 B：B 列（排除表头）严格降序，不允许乱序。"""
+    dates: list[tuple[int, dt.date]] = []
+    unparsable: list[tuple[int, str]] = []
+    for offset, row in enumerate(rows[1:], start=2):
+        raw = row[1]
+        if not raw:
+            continue
+        d = _parse_date(raw)
+        if d is None:
+            unparsable.append((offset, raw))
+            continue
+        dates.append((offset, d))
+    if unparsable:
+        raise AssertionError(f"[断言B-FAIL] 存在无法解析的日期单元格（疑似错列/脏写）：{unparsable[:10]}")
+    violations = [
+        {"row": dates[i + 1][0], "prev": str(dates[i][1]), "curr": str(dates[i + 1][1])}
+        for i in range(len(dates) - 1)
+        if dates[i][1] < dates[i + 1][1]
+    ]
+    if violations:
+        raise AssertionError(f"[断言B-FAIL] B 列日期非降序，乱序点：{violations[:10]}")
+    return {"assertion": "B_date_desc", "result": "PASS", "checked_rows": len(dates)}
+
+
+def assert_no_empty_cells(rows: list[list[str]]) -> dict:
+    """断言 C：A2 / B2 / C2 均非空（防错列 / 半行写入）。"""
+    if len(rows) < 2:
+        raise AssertionError("[断言C-FAIL] Daily_Logs 缺少数据行，无法验证非空。")
+    a2, b2, c2 = rows[1][0], rows[1][1], rows[1][2]
+    empties = [name for name, val in (("A2", a2), ("B2", b2), ("C2", c2)) if not val]
+    if empties:
+        raise AssertionError(f"[断言C-FAIL] 置顶行存在空单元格（错列/半行写入）：{empties}")
+    return {"assertion": "C_no_empty_cells", "result": "PASS", "a2": a2, "b2": b2, "c2_len": len(c2)}
+
+
+def assert_daily_logs_invariants(rows: list[list[str]], expected_date: str) -> list[dict]:
+    """三断言统一入口：A/B/C 任一失败即 raise 熔断，绝不静默通过。"""
+    evidence = [
+        assert_top_row_is_today(rows, expected_date),
+        assert_date_desc(rows),
+        assert_no_empty_cells(rows),
+    ]
+    print("[Assertions] 三断言全部 PASS：")
+    print(json.dumps(evidence, ensure_ascii=False, indent=2))
+    return evidence
+
+
 def gen_daily_log_id(date_str: str, existing: set[str]) -> str:
     yyyymmdd = date_str.replace("-", "")
     base = f"DL-{yyyymmdd}"
@@ -552,7 +753,7 @@ def main() -> int:
         "--row-index",
         type=int,
         default=DEFAULT_ROW_INDEX,
-        help="（已废弃）兼容入参；底层强制走 +append 底部追加模式，此参数不再生效",
+        help="（已废弃）兼容入参；V6.3 起底层强制走「降序插入法」写入第 2 行，此参数不再生效",
     )
     parser.add_argument("--dry-run", action="store_true", help="只做 Schema 回捞与主键生成，不实际写入")
 
@@ -637,117 +838,48 @@ def main() -> int:
     print(f"[Snapshot] pre: {pre_snap}")
 
     if args.dry_run:
+        print(f"[DryRun] 写入模式=降序插入法（target_row={TOP_ROW_INDEX}，禁止 append-to-tail）")
+        try:
+            preflight_rows = read_daily_logs_rows(args.sheet_url, args.sheet_name)
+            print(json.dumps(assert_date_desc(preflight_rows), ensure_ascii=False))
+        except Exception as pre_err:
+            print(f"[DryRun][Preflight-WARN] 现存表体断言预检未通过：{pre_err}")
         print("[DryRun] 已跳过实际写入。")
         return 0
 
-    # 2) 安全写入（委托 feishu-doc-writing-guide）
-    safe_insert = (
-        workspace_root
-        / "user_skills"
-        / "feishu-doc-writing-guide"
-        / "scripts"
-        / "safe_insert_sheet_row.py"
-    )
-    if not safe_insert.exists():
-        raise RuntimeError(
-            "未找到 feishu-doc-writing-guide/scripts/safe_insert_sheet_row.py。"
-            "请确认该 Skill 已安装且路径可用。"
-        )
-
-    # 用 subprocess 调用，避免强耦合脚本内部实现。
-    import subprocess
-
-    cmd = [
-        sys.executable,
-        str(safe_insert),
-        args.sheet_url,
-        args.sheet_name,
-        str(args.row_index),
-        json.dumps(row_data, ensure_ascii=False),
-    ]
-
-    print("[Write] running:")
-    print(" ".join(cmd))
-
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
+    # 2) 降序插入写入（V6.3 规则 1）：第 2 行物理插入 + 写 A2:C2，禁止 append-to-tail
+    try:
+        descending_insert_daily_log(args.sheet_url, args.sheet_name, [row_id, args.date, resolved_content])
+    except Exception as write_err:
         dlq_file = write_dlq(
             skill_root,
             {
-                "type": "Daily_Logs_InsertFailed",
+                "type": "Daily_Logs_DescendingInsertFailed",
                 "timestamp": dt.datetime.now().isoformat(),
                 "sheet_url": args.sheet_url,
                 "sheet_name": args.sheet_name,
-                "row_index": args.row_index,
+                "mode": "descending_insert",
+                "target_row_index": TOP_ROW_INDEX,
                 "row_data": row_data,
-                "stderr": proc.stderr,
-                "stdout": proc.stdout,
-                "note": "⚠️[数据断链_待自愈] 写入失败，已落 DLQ。",
+                "error": str(write_err),
+                "note": "⚠️[数据断链_待自愈] 降序插入写入失败，已落 DLQ。",
             },
         )
         raise RuntimeError(
-            "safe_insert_sheet_row.py 执行失败，已熔断并落 DLQ："
-            f"\n- DLQ：{dlq_file}"
-            f"\n- stderr：\n{proc.stderr}"
+            f"降序插入写入失败，已熔断并落 DLQ：\n- DLQ：{dlq_file}\n- error：{write_err}"
         )
 
-    print("[Write] ok. stdout:")
-    print(proc.stdout)
-
-    # 3) 写后即读（RAW 原子锁）— 底部追加模式：通过 lark-sheets CLI 直读，按主键回捞最末一条匹配行
+    # 3) 写后即读（RAW 原子锁）+ 三断言熔断（V6.3 规则 2）
     time.sleep(2)
 
-    expected = [row_id, args.date, resolved_content]
-    expected_str = [str(x) for x in expected]
+    expected_str = [str(row_id), str(args.date), str(resolved_content)]
+    rows = read_daily_logs_rows(args.sheet_url, args.sheet_name)
 
-    # 优先 CLI 直读（绕开 MCP 下载缓存）
-    found = find_row_by_primary_key_via_cli(args.sheet_url, args.sheet_name, row_id, col_count=3)
+    print("[ReadAfterWrite] top row (raw array):")
+    print(json.dumps([rows[1]] if len(rows) > 1 else [], ensure_ascii=False))
 
-    # 同时仍保留 MCP 下载快照作为审计存证（可选；失败不阻塞主流程）
-    post_snap_path: str | None = None
-    try:
-        file_paths_after = mcp_download_lark_sheet(args.sheet_url)
-        xlsx_after = pick_xlsx(file_paths_after)
-        if not os.path.isabs(xlsx_after):
-            xlsx_after = str((workspace_root / xlsx_after).resolve())
-        post_snap = snapshot(skill_root, xlsx_after, stage="post")
-        post_snap_path = str(post_snap)
-        print("[Snapshot] post:")
-        print(post_snap_path)
-    except Exception as snap_err:  # 快照失败不影响主流程
-        print(f"[Snapshot] post 快照失败（不阻塞主流程）：{snap_err}")
-
-    if found is None:
-        dlq_file = write_dlq(
-            skill_root,
-            {
-                "type": "Daily_Logs_ReadAfterWriteMissing",
-                "timestamp": dt.datetime.now().isoformat(),
-                "sheet_url": args.sheet_url,
-                "sheet_name": args.sheet_name,
-                "mode": "append",
-                "expected": expected_str,
-                "primary_key": row_id,
-                "snapshots": {
-                    "pre": str(pre_snap),
-                    "post": post_snap_path,
-                },
-                "note": "⚠️[数据断链_待自愈] 写入后未在表中找到对应主键行，已熔断并落 DLQ。",
-            },
-        )
-        raise RuntimeError(
-            "写后即读 RAW 校验失败（主键未命中），已熔断并落 DLQ："
-            f"\n- expected：{expected_str}"
-            f"\n- primary_key：{row_id}"
-            f"\n- DLQ：{dlq_file}"
-        )
-
-    found_idx, read_back = found
-
-    print(f"[ReadAfterWrite] mode: append, located by primary_key='{row_id}' at row {found_idx}")
-    print("[ReadAfterWrite] read_back (raw array):")
-    print(json.dumps([read_back], ensure_ascii=False))
-
+    # 3.1 逐字段核对置顶行
+    read_back = rows[1] if len(rows) > 1 else []
     if read_back != expected_str:
         dlq_file = write_dlq(
             skill_root,
@@ -756,27 +888,45 @@ def main() -> int:
                 "timestamp": dt.datetime.now().isoformat(),
                 "sheet_url": args.sheet_url,
                 "sheet_name": args.sheet_name,
-                "mode": "append",
-                "located_row_index": found_idx,
+                "mode": "descending_insert",
+                "located_row_index": TOP_ROW_INDEX,
                 "primary_key": row_id,
                 "expected": expected_str,
                 "read_back": read_back,
-                "snapshots": {
-                    "pre": str(pre_snap),
-                    "post": post_snap_path,
-                },
+                "snapshots": {"pre": str(pre_snap)},
                 "note": "⚠️[数据断链_待自愈] 写后即读不一致，已熔断并落 DLQ。",
             },
         )
         raise RuntimeError(
-            "写后即读 RAW 校验失败（不一致），已熔断并落 DLQ："
-            f"\n- located_row_index：{found_idx}"
-            f"\n- expected：{expected_str}"
-            f"\n- read_back：{read_back}"
-            f"\n- DLQ：{dlq_file}"
+            "写后即读 RAW 校验失败（置顶行不一致），已熔断并落 DLQ："
+            f"\n- expected：{expected_str}\n- read_back：{read_back}\n- DLQ：{dlq_file}"
         )
 
-    print("[OK] 写入并核对一致（底部追加 + 按主键定位 + RAW 原子锁）。")
+    # 3.2 三断言（A 置顶 / B 降序 / C 非空），任一失败即 raise
+    try:
+        evidence = assert_daily_logs_invariants(rows, args.date)
+    except AssertionError as assert_err:
+        dlq_file = write_dlq(
+            skill_root,
+            {
+                "type": "Daily_Logs_InvariantAssertionFailed",
+                "timestamp": dt.datetime.now().isoformat(),
+                "sheet_url": args.sheet_url,
+                "sheet_name": args.sheet_name,
+                "mode": "descending_insert",
+                "primary_key": row_id,
+                "expected_date": args.date,
+                "top_rows_preview": rows[:5],
+                "error": str(assert_err),
+                "note": "⚠️[数据断链_待自愈] 三断言熔断，已落 DLQ。",
+            },
+        )
+        raise RuntimeError(
+            f"Daily_Logs 三断言熔断，已落 DLQ：\n- DLQ：{dlq_file}\n- {assert_err}"
+        )
+
+    print("[OK] 写入并核对一致（降序插入置顶 + RAW 原子锁 + 三断言 PASS）。")
+    print("[Evidence] " + json.dumps(evidence, ensure_ascii=False))
     return 0
 
 
