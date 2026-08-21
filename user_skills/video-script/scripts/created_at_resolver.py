@@ -89,6 +89,8 @@ _PUBLISH_TIME_KEYS = (
 )
 
 _URL_KEYS = ("video_url", "source_url", "url")
+# 合法来源标签（用于上游 created_at_source 溯源继承校验）
+_VALID_SOURCES = ("publish_time", "metadata", "snowflake")
 
 
 # --------------------------------------------------------------------------- #
@@ -180,6 +182,13 @@ def resolve_created_at(
     绝不返回空串 / None / 0 / 今天 —— 见模块头 NULL 契约。
     """
     meta = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
+
+    # 0) 上游已解析结果：继承其 created_at_source，避免二次归档丢失溯源
+    upstream = _parse_date_like(record.get("created_at"))
+    if upstream is not None:
+        upstream_source = record.get("created_at_source") or meta.get("created_at_source")
+        if isinstance(upstream_source, str) and upstream_source.strip() in _VALID_SOURCES:
+            return upstream.strftime(DEFAULT_DATE_FORMAT), upstream_source.strip()
 
     # 1) 记录自带的 publish_time 家族
     for key in _PUBLISH_TIME_KEYS:

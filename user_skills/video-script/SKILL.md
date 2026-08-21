@@ -20,6 +20,10 @@ version: 1.2
 - “情绪曲线太抽象，随便写个高潮点就行。”
 - “先给模板，回头再补证据和时间轴。”
 - “这个视频属于玄学爆款，没法拆。”
+- “先出拆解结论，创建时间以后补。”
+- “拿不到发布时间就先留空，反正拆解的是脚本结构不是时效。”
+- “publish_time 是 NULL，那就填今天 / 填 0 / 留空串。”
+- “视频是哪年发的不影响方法论，下游归档自己去查。”
 
 ## Red Flags（危险信号）
 
@@ -30,6 +34,10 @@ version: 1.2
 - 只给笼统结论（如“节奏好”“很有共鸣”），没有拆到具体句子、片段或结构作用。
 - 把平台分发、题材红利、投流影响全部误归因为脚本优势。
 - 没有给出可复用模板或下一轮实验建议，只做描述性复盘。
+- 输出结构缺 `created_at` 字段（视频原始发布时间）。
+- `created_at` 解析失败时填了空串 / `None` / `0` / 今天，而不是字符串 `NULL`。
+- `publish_time` 为 NULL 时未尝试 video_id snowflake 反解就直接判定不可知。
+- 输出的 `created_at` 字段名或格式与下游 `script-archive` 不一致，导致二次清洗。
 
 ## Verification（强制验收清单）
 
@@ -40,6 +48,10 @@ version: 1.2
 3. **证据可回溯**：关键判断能回到原句、原片段或明确的时间段。
 4. **结论可复用**：沉淀出可迁移的方法论，而不是只描述这个视频本身。
 5. **行动可执行**：给出脚本模板、可替换写法或 AB 实验建议。
+6. **created_at 与时效状态字段完整性验收**：输出结构必须含 `created_at`
+   （`YYYY-MM-DD` 或字符串 `NULL`）、`created_at_source` 与 `freshness_status`
+   （`✅ 时效内` / `⚠️ 历史存量` / `❓ 待核实` 三态之一），且已通过
+   `assert_case_created_at()` 断言；缺失或格式非法即熔断，不得交付给下游归档。
 
 ## 何时使用
 
@@ -72,8 +84,46 @@ version: 1.2
 - `DEFAULT_EXPERIMENT_VARIABLES = 1`：每轮 AB 实验默认只改 1 个变量。
 - `DEFAULT_METRICS = ["3秒留存", "完整播放率", "互动率", "点击率/转化率"]`：默认观察指标。
 - `DEFAULT_CONFIDENCE_LABEL = "基于有限样本判断"`：素材不完整时默认显式打标。
+- `DEFAULT_CREATED_AT_NULL = "NULL"`：`created_at` 解析失败时的唯一合法填充值（字符串 `NULL`，非空串 / None / 0）。
+- `DEFAULT_FRESH_CUTOFF_DAYS = 90`：≤90 天判 `✅ 时效内`，>90 天判 `⚠️ 历史存量`。
+- `DEFAULT_DATE_FORMAT = "%Y-%m-%d"`：`created_at` 统一日期格式，与下游 `script-archive` 对齐。
 
 ## 默认输出结构
+
+### 时效元数据（强制字段）
+
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
+
+每条拆解结果的输出结构都必须携带以下三个字段，作为脚本案例的**时效元数据**：
+
+| 字段 | 含义 | 取值 |
+|---|---|---|
+| `created_at` | 视频原始发布时间 | `YYYY-MM-DD`；解析失败为字符串 `NULL` |
+| `created_at_source` | 时间来源溯源 | `publish_time` / `metadata` / `snowflake` / `NULL` |
+| `freshness_status` | 时效状态 | `✅ 时效内`（≤90 天）/ `⚠️ 历史存量`（>90 天）/ `❓ 待核实` |
+
+解析优先级（由技能自包含模块 `scripts/created_at_resolver.py` 承接，口径与
+`hot-radar/pub_date_guard.py` 同源）：
+
+1. 平台 `publish_time`（含 `publish_date` / `pub_date` / `timestamp` / `upload_date`）；
+2. `metadata` 内同名字段；
+3. **缺失时走 snowflake 反解**：从 `video_id` 或视频 URL 抽取 ID，取高 32 位反解 unix 秒；
+4. 仍失败 → 字符串 `NULL`。**严禁**空串 / `None` / `0` / 今天。
+
+为什么必须在拆解阶段就带上：下游 `script-archive` 归档时需要按时效分层。若这里
+留空，归档端只能拿到「不知道多久以前」的案例 —— 这正是本轮 P0 审计发现的
+「入库样本中位年龄 436 天、74.4% 超 90 天」的根因之一。字段名与格式两侧已对齐，
+下游可直接消费，无需二次清洗。
+
+注入与校验脚本：
+
+```bash
+# 注入（原地 / 输出到新目录）
+python3 scripts/attach_created_at.py --input-dir output/cases --in-place
+
+# 只校验（缺字段即非 0 退出）
+python3 scripts/attach_created_at.py --input-dir output/cases --verify-only
+```
 
 始终优先输出以下六段：
 
@@ -177,6 +227,9 @@ AB 实验建议遵循两条原则：
 {
   "analysis_mode": "segmented_fallback",
   "source_video": "<video_path_or_url>",
+  "created_at": "2026-08-01",
+  "created_at_source": "snowflake",
+  "freshness_status": "✅ 时效内",
   "duration_seconds": null,
   "segments": [
     {
@@ -218,6 +271,18 @@ def validate_claims(has_timestamps, confidence_label):
     allowed_degraded_labels = {"基于有限样本判断", "基于切片分析合成"}
     if not has_timestamps and confidence_label not in allowed_degraded_labels:
         raise ValueError("缺少时间轴证据时，必须显式降级口径")
+
+
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
+# 实现位于 scripts/created_at_resolver.py / scripts/attach_created_at.py
+def assert_case_created_at(case):
+    value = case.get("created_at")
+    if value is None or str(value).strip() in {"", "0", "None"}:
+        raise ValueError("created_at 为空/None/0，必须为 YYYY-MM-DD 或字符串 NULL")
+    if str(value) != "NULL" and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(value)):
+        raise ValueError("created_at 格式非法，必须为 YYYY-MM-DD")
+    if not str(case.get("freshness_status", "")).strip():
+        raise ValueError("缺少 freshness_status 字段")
 
 
 def validate_segmented_fallback(analysis_mode, segments, missing_segments):
@@ -288,8 +353,20 @@ def validate_segmented_fallback(analysis_mode, segments, missing_segments):
 
 - `references/analysis-checklist.md`：需要更细颗粒度拆解时读取。
 - `references/script-templates.md`：需要直接输出脚本模板、钩子公式或 AB 实验模板时读取。
+- `scripts/created_at_resolver.py`：创建时间解析与时效分类的技能自包含实现。
+- `scripts/attach_created_at.py`：给 case JSON 注入 / 校验 `created_at` 元数据。
 
 ## Changelog
+
+- **v1.3 (2026-08-21)**：输出结构新增「创建时间（created_at）」时效元数据字段。
+  - 新增技能自包含模块 `scripts/created_at_resolver.py`（`resolve_created_at` /
+    `classify_freshness` / `extract_video_id` / `decode_snowflake_date`），snowflake
+    反解口径与 `hot-radar/pub_date_guard.py` 同源。
+  - 新增 `scripts/attach_created_at.py`：给 case JSON 注入并断言 `created_at` /
+    `created_at_source` / `freshness_status`，支持 `--in-place` / `--output-dir` / `--verify-only`。
+  - 字段名与格式与下游 `script-archive` 两侧对齐（`YYYY-MM-DD`，缺失为字符串 `NULL`），
+    避免二次清洗。
+  - 来源：`ledger_year_audit_20260821 / DEC-20260821（热门剧本沉淀 P0 治理）`。
 
 - **v1.2 (2026-06-14)**：补齐“超长视频自动切片分析兜底”SOP。直接分析遇到 `AIME Server exit status 1`、超时、空结果或超出稳定窗口时，自动转为切片分析 → 片段级 JSON → 合成 case JSON，避免同类样本反复卡死。
 - **v1.1 (2026-06-08)**：首发版本。定义“视频画像 → 时间轴拆解 → 方法论抽象 → 模板重构 → 实验建议”的主流程，补齐前三秒钩子、情绪曲线、CTA 与复用模板口径。

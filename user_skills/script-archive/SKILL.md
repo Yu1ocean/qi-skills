@@ -2,7 +2,7 @@
 name: script-archive
 description: 视频脚本知识归档器，负责聚合多条 video-script 拆解结果与基础元信息，生成可直接写入飞书的案例合集 Docx 内容稿、视频脚本台账 CSV，以及批次级摘要 JSON。适用于爆款案例沉淀、方法论复盘、案例合集出文档、脚本台账持续更新等场景。
 ---
-version: 1.1
+version: 1.2
 # 知识归档（script-archive）
 
 把零散的单条视频拆解结果，压成团队能长期翻出来复用的“案例合集 + 台账 + 方法论总结”。
@@ -16,6 +16,10 @@ version: 1.1
 - “写飞书太麻烦，先给本地 markdown / csv 路径就算归档完成。”
 - “拆解结果格式不统一，先复制粘贴成大段文字。”
 - “方法论总结先凭印象写，不必回到原始拆解证据。”
+- “先归档，创建时间以后补。”
+- “拿不到发布时间就先留空，反正不影响方法论结论。”
+- “publish_time 是 NULL，那就填今天 / 填 0 / 留空串，反正是占位。”
+- “时效状态是运营口径的事，归档器不用管。”
 
 ## Red Flags（危险信号）
 
@@ -26,6 +30,10 @@ version: 1.1
 - 写飞书时没有遵守 `feishu-doc-writing-guide` 的 MCP-only / RAW 回读约束。
 - 台账里没有主键或 `source_json`，导致后续无法幂等更新。
 - 聚合结论与单条拆解证据对不上。
+- 归档产物（Sheet / 台账 CSV）缺 `created_at` 字段。
+- `created_at` 解析失败时填了空串 / `None` / `0` / 今天，而不是 `⚠️[数据断链_待自愈]`。
+- 只写 `created_at` 不写「时效状态」，或时效标签不在 `✅ 时效内 / ⚠️ 历史存量 / ❓ 待核实` 三态内。
+- `publish_time` 为 NULL 时未尝试 video_id snowflake 反解就直接判定断链。
 
 ## Verification（强制验收清单）
 
@@ -36,6 +44,9 @@ version: 1.1
 3. **方法论可追溯**：总结能回到单条案例或结构化字段。
 4. **主键幂等**：台账中每行都有稳定主键。
 5. **飞书链路合规**：若执行写入，必须走 MCP + `feishu-doc-writing-guide`。
+6. **created_at 与时效状态字段完整性验收**：台账 CSV / 飞书 Sheet 每一行都必须同时具备
+   `created_at`（`YYYY-MM-DD` 或 `⚠️[数据断链_待自愈]`）与 `freshness_status`（三态标签之一），
+   且已通过 `assert_created_at_fields()` 运行时断言；任一行缺失或格式非法即熔断，不得写入。
 
 ## 📌 技能简介
 
@@ -72,6 +83,9 @@ version: 1.1
 - `DEFAULT_SUMMARY_FILE = "script_archive_summary.json"`
 - `DEFAULT_BATCH_ID_PREFIX = "SAR"`
 - `DEFAULT_NULL = "NULL"`
+- `DEFAULT_CREATED_AT_SENTINEL = "⚠️[数据断链_待自愈]"`：`created_at` 解析失败时的唯一合法填充值
+- `DEFAULT_FRESH_CUTOFF_DAYS = 90`：≤90 天判 `✅ 时效内`，>90 天判 `⚠️ 历史存量`
+- `DEFAULT_DATE_FORMAT = "%Y-%m-%d"`：`created_at` 统一日期格式
 
 ## ⚙️ 核心架构 / SOP / 约束条件
 
@@ -100,9 +114,39 @@ version: 1.1
 - `methodology_summary`
 - `risk_summary`
 - `experiment_summary`
+- `created_at`（创建时间，来源平台 `publish_time`）
+- `freshness_status`（时效状态）
+- `created_at_source`（时间来源溯源：`publish_time` / `metadata` / `snowflake` / `NULL`）
 - `source_json`
 
 不存在的字段统一写 `NULL`，不要隐式留空。
+
+### Step 2.5：解析创建时间与时效状态（强制）
+
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
+
+归档写入飞书 Sheet / 台账 CSV 时**必须**包含「创建时间」字段。解析链路由
+`scripts/created_at_resolver.py`（技能自包含模块）统一承接，口径与 `hot-radar`
+的 `pub_date_guard` 同源：
+
+1. **首选 `publish_time`**（含 `publish_date` / `pub_date` / `created_at` / `timestamp` / `upload_date`），
+   统一格式化为 `YYYY-MM-DD`。
+2. **`publish_time` 为 NULL 时走 snowflake 反解**：从 `video_id` 或 `video_url` 抽取 ID，
+   取高 32 位反解 unix 秒（sanity 区间 2011-03-13 ~ 2030-03-18）。
+3. **反解仍失败**：填 `⚠️[数据断链_待自愈]`。**严禁**空串 / `None` / `0` / 今天 ——
+   那会让断链行伪装成正常数据，永久失去自愈机会。
+
+同时写入「时效状态」列 `freshness_status`：
+
+| 距今 | 标签 |
+|---|---|
+| ≤ 90 天 | `✅ 时效内` |
+| > 90 天 | `⚠️ 历史存量` |
+| 无法判断（断链 / 未来日期 / 非法格式） | `❓ 待核实` |
+
+上游 `video-script` 已输出的 `created_at` 会被直接复用（字段名与格式两侧对齐，
+无需二次清洗）；若上游写的是字符串 `NULL`，本技能会重新尝试 snowflake 反解，
+最终仍失败才落 `⚠️[数据断链_待自愈]`。
 
 ### Step 3：先本地成包
 
@@ -131,6 +175,7 @@ version: 1.1
 - 批次号 `batch_id`
 - 视频链接 / 标题 / 账号 / 类型
 - 方法论摘要 / 风险摘要 / 实验建议
+- **创建时间 `created_at` 与时效状态 `freshness_status`（强制，见 Step 2.5）**
 - `source_json`
 
 ## Runtime Assertions（运行时断言）
@@ -152,6 +197,17 @@ def validate_archive_outputs(report_path, ledger_path):
         raise ValueError("报告主产物必须是 .lark.md")
     if not ledger_path.endswith(".csv"):
         raise ValueError("台账主产物必须是 .csv")
+
+
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
+# 实现位于 scripts/created_at_resolver.py，写盘前对每一行强制执行
+def assert_created_at_fields(row):
+    if "created_at" not in row:
+        raise ValueError("缺少 created_at 字段，禁止归档")
+    if str(row["created_at"]).strip() in {"", "0", "None"}:
+        raise ValueError("created_at 为空串/None/0，必须写 ⚠️[数据断链_待自愈]")
+    if str(row.get("freshness_status")) not in {"✅ 时效内", "⚠️ 历史存量", "❓ 待核实"}:
+        raise ValueError("freshness_status 非三态合法标签")
 ```
 
 ## 推荐脚本
@@ -185,6 +241,16 @@ python3 scripts/build_archive_bundle.py \
   ```
 
 ## Changelog
+
+- **v1.2 (2026-08-21)**：把「创建时间（created_at）」字段契约固化进技能本体。
+  - 新增技能自包含模块 `scripts/created_at_resolver.py`：`resolve_created_at()` / `classify_freshness()`
+    / `extract_video_id()` / `decode_snowflake_date()` / `assert_created_at_fields()`，snowflake
+    反解口径与 `hot-radar/pub_date_guard.py` 同源。
+  - 台账 schema 新增 `created_at` / `freshness_status` / `created_at_source` 三列；
+    批次摘要新增 `freshness_distribution` / `broken_link_count` / `created_at_source_distribution`。
+  - L3 断言：`normalize_case()` 与 `write_csv()` 双点强制 `assert_created_at_fields()`，
+    空串 / `None` / `0` / 非法格式 / 非三态标签一律 `raise`。
+  - 来源：`ledger_year_audit_20260821 / DEC-20260821（热门剧本沉淀 P0 治理）`。
 
 - **v0.1 (2026-06-14)**：首版发布，固化“多案例读取 → 字段归一化 → 报告/台账成包 → 飞书落地约束”的知识归档流程。
 
