@@ -29,6 +29,15 @@ from doc_zone_manager import (  # noqa: E402
     sync_doc_zones,
 )
 
+# --- Wiki「技能存量清单」Upsert 钩子（V5.24） ---
+# 历史缺口：forge 只同步「专属技能清单」Sheet，Wiki 上给人看的存量清单表无人维护
+# （三个月未更新、覆盖率一度只有 31.4%）。本钩子把该表纳入 forge 闭环。
+from wiki_skill_list_sync import (  # noqa: E402
+    DEFAULT_WIKI_URL as DEFAULT_WIKI_REGISTRY_URL,
+    WikiSyncError,
+    sync_wiki_skill_list,
+)
+
 DEFAULT_EMAIL = "yuqinan@bytedance.com"
 DEFAULT_OPEN_API_BASE = "https://fsopen.bytedance.net"
 DEFAULT_UPLOAD_API_BASE = "https://open.feishu.cn"
@@ -795,6 +804,39 @@ def sync_skill_inventory_via_omni(metadata: Dict[str, Any]) -> Dict[str, Any]:
         f"status={result.get('status')}, sheet={result.get('sheet_name')}, row={result.get('row_number')}"
     )
     return result
+
+
+def run_wiki_skill_list_sync(metadata: Dict[str, Any], wiki_registry_url: str = "") -> Dict[str, Any]:
+    """Sync point #3（V5.24）：把本次 forge 的技能 upsert 进 Wiki「技能存量清单」表格。
+
+    定位：**增强项**。Wiki 表是给人扫读的导航索引，权威版本号仍在 SKILL.md（SSOT）
+    与「专属技能清单」Sheet。因此整段用 try/except 包裹，失败只打 WARNING 不阻断 forge。
+
+    ⚠️ 边界：这里的「不阻断」仅限本步骤。Wiki 同步**内部**的写后回读断言失败会 raise
+    WikiSyncError，并在此被如实降级为 WARNING —— 绝不允许把断言失败包装成 success。
+    """
+
+    report: Dict[str, Any] = {"status": "", "detail": {}}
+    try:
+        detail = sync_wiki_skill_list(
+            metadata.get("name", ""),
+            doc_url=metadata.get("doc_link", ""),
+            desc=metadata.get("description", ""),
+            version=metadata.get("version", ""),
+            wiki_url=wiki_registry_url or DEFAULT_WIKI_REGISTRY_URL,
+        )
+        report["status"] = "success"
+        report["detail"] = detail
+        print(
+            "✅ Wiki 技能存量清单同步完成："
+            f"action={detail.get('action')}, rows={detail.get('rows_after')}, "
+            f"assert={detail.get('assert')}"
+        )
+    except (WikiSyncError, Exception) as exc:  # noqa: BLE001 - 增强项，禁止阻断主流程
+        report["status"] = "failed"
+        report["error"] = str(exc)
+        print(f"⚠️ WARNING: Wiki sync failed: {exc}")
+    return report
 
 
 def _run_lark_sheets_json(args: list[str], step_name: str) -> dict:
@@ -1658,6 +1700,16 @@ def main() -> int:
         action="store_true",
         help="调试用：跳过 Wiki Mount Phase（正式发布默认必须执行）。",
     )
+    parser.add_argument(
+        "--wiki-registry-url",
+        default=DEFAULT_WIKI_REGISTRY_URL,
+        help="Wiki「技能存量清单」表格所在页面 URL（默认 Aime 技能库首页）。",
+    )
+    parser.add_argument(
+        "--skip-wiki-sync",
+        action="store_true",
+        help="调试用：跳过 Wiki 技能存量清单表格 Upsert（增强项，失败本身也只降级为 WARNING）。",
+    )
 
     # SSOT version sync bus
     parser.add_argument(
@@ -1972,6 +2024,18 @@ def main() -> int:
             "sync skill inventory updated_at formatter",
             lambda: ensure_skill_inventory_updated_at_formatter(row_number, metadata.get("updated_at", "")),
         )
+
+    # ---------- Wiki 技能存量清单 Upsert（V5.24） ----------
+    # 顺序契约：Sheet 台账写入完成之后、Celebrate（cyber-inspiration-generator）之前。
+    # 失败降级为 WARNING，不阻断 forge 主流程（增强项）。
+    if skill_dir and (not args.skip_remote) and (not args.skip_wiki_sync):
+        print("🚌 Syncing Wiki skill registry table (技能存量清单)...")
+        wiki_sync_report = run_wiki_skill_list_sync(metadata, args.wiki_registry_url)
+        metadata["wiki_registry_sync_status"] = wiki_sync_report.get("status", "")
+        metadata["wiki_registry_sync"] = wiki_sync_report
+    elif args.skip_wiki_sync:
+        print("⚠️ Wiki 技能存量清单同步被 --skip-wiki-sync 跳过（调试用）。")
+        metadata["wiki_registry_sync_status"] = "skipped"
 
     # Forge receipt lands INSIDE the target skill dir (never Path.cwd()).
     # Historical bug: `Path.cwd() / "metadata.json"` scattered ghost receipts

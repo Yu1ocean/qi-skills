@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.23
+version: 5.24
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.23)
+# 技能锻造流水线 (Forge Pipeline V5.24)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -36,6 +36,9 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - “Preserve Zone 我只是 update 了一下措辞，没删算保留吧。”
 - “Changelog 我直接覆盖成最新一条，历史版本没人看。”
 - “Zone 断言失败大概是接口抖动，重试不了就先跳过。”
+- “Sheet 台账同步了就行，Wiki 那张表让人手动补。”
+- “Wiki 同步反正不阻断，回读断言就顺手 return success 吧。”
+- “Wiki 表没有版本列？那我加一列 / 塞进简介里就好了。”
 
 ## Red Flags（危险信号）
 
@@ -78,6 +81,10 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - 老文档缺失 Zone 锚点标题时，**猜测**边界并照旧覆盖，而不是安全降级（末尾补建锚点 + 显式告知）。
 - 三分区写入后没有 RAW 回读断言（锚点各 1 次 + Preserve 正文存在性），或断言失败后降级为 WARNING 继续。
 - 写入前没有先 `docs +fetch --detail with-ids` 读取真实结构，就直接下发 block 级写指令。
+- forge 只同步了「专属技能清单」Sheet，却没有同步 Wiki「技能存量清单」表格（Wiki 长期腐化、覆盖率下滑的历史根因）。
+- Wiki 存量清单同步**内部**的写后回读断言失败（行数不符 / 技能名出现次数 != 1），却被包装成 success 上报。
+- Wiki 存量清单 upsert 未以「技能名称」为主键，导致同一技能重复 forge 追加出重复行。
+- 为了写版本号擅自给 Wiki 存量清单表增列，或覆盖人工撰写的「简介」列文案。
 
 ## Verification（强制验收清单）
 
@@ -111,6 +118,8 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
     - ④ **Append Zone**（更新日志）只在末尾追加本版本条目，禁止覆盖历史条目。
     - ⑤ **RAW 回读断言**：两个锚点标题各出现**恰好 1 次**；写前采样的 Preserve Zone 正文在回读结果中**仍然存在**。任一不满足即 `raise GuardrailViolation`，禁止静默 WARNING。
     - ⑥ 老文档无锚点时必须**安全降级**（末尾补建锚点章节 + 日志显式告知 `[ZONE-DEGRADED]`），绝不误删既有正文。
+
+16. **Wiki 技能存量清单 Upsert 验收（V5.24 新增）**：Sheet 台账写入完成后必须调用 `sync_wiki_skill_list()`（`scripts/wiki_skill_list_sync.py`）：以**技能名称**为主键 upsert Wiki「一、技能存量清单 (Skill Registry)」表格 → `block_replace` 整表 → `sleep 2s` → `docs +fetch --doc-format markdown` 回读断言（行数 == 预期、目标技能名在表格行中**恰好出现 1 次**）。断言失败必须 `raise WikiSyncError`；调用侧允许把该步骤降级为 `⚠️ WARNING: Wiki sync failed: <原因>` 并继续 forge（Wiki 同步是增强项），但**禁止**把断言失败伪装成成功。表格 block id 每次 `block_replace` 后都会变化，必须动态解析，禁止硬编码。
 
 ## 适用场景
 
@@ -255,6 +264,12 @@ python3 user_skills/skill-forge-pipeline/scripts/celebrate_skill.py \
 - **调用归档员**：**直接调用 `omni-asset-archiver` 技能**，将上述元数据作为参数传递给归档员。
 - **执行目标**：由 `omni-asset-archiver` 作为“唯一物理写入网关”完成向【专属技能清单】或【图书馆】台账的写入。**强制要求归档员遵循 `feishu-doc-writing-guide` 的 RAW 原子锁规范。**
 - **本技能自升级额外要求**：本次升级的版本号与变更说明必须同步写入 `CHANGELOG.md`，并追加更新到对应飞书 Wiki 说明文档。
+- **Wiki 技能存量清单 Upsert（V5.24 新增）**：Sheet 台账写入完成之后、Celebrate 之前，`register_skill.py` 必须调用 `run_wiki_skill_list_sync()` → `scripts/wiki_skill_list_sync.py::sync_wiki_skill_list()`，把本次 forge 的技能 upsert 进 Wiki 页面（默认 `--wiki-registry-url` = Aime 技能库首页）的「一、技能存量清单 (Skill Registry)」6 列表格。
+  - **主键 = 技能名称列**（精确匹配，去空白）。已存在 → 只更新「访问链接」（若本次有说明文档 URL）与「归档日期」（本次 forge 日期）；不存在 → tbody 末尾追加一行，序号 = 现有最大序号 + 1，缺链接填 `⚠️[待补链接]`，使用次数填 `-`。
+  - **不破坏现有列结构为最高优先级**：现表无独立版本列，故**不写版本号、不增列、不覆盖人工撰写的「简介」列**（版本号权威载体是 `SKILL.md` frontmatter + 专属技能清单 Sheet 的【版本号】列）。若未来表头新增「版本号」列，脚本会自动识别并写入。
+  - **执行链路**：`docs +fetch --detail with-ids` 读真实结构（禁止盲写）→ 解析表格（block id 动态解析）→ 按主键 upsert → 重建整表 XML（不带 id）→ `block_replace` → `sleep 2s` → markdown 回读断言。
+  - **幂等**：同一技能重复 forge 只更新原行；解析到重复行会直接熔断，要求人工先去重。
+  - **失败边界**：整步用 `try/except` 包裹，失败打印 `⚠️ WARNING: Wiki sync failed: <原因>` 后继续 forge 主流程；`--skip-wiki-sync` 可显式跳过。内部回读断言失败**必须**让该步判定为 failed（写入 `metadata` 的 `wiki_registry_sync_status`），不得假装成功。
 - **Post-Forge Git Push Hook**：`scripts/register_skill.py` 在 metadata 写入完成后必须自动调用 `user_skills/scripts/post_forge_git_push.sh <skill_name> <version>`，将 `user_skills/` 最新变更 commit+push 到 `https://github.com/Yu1ocean/qi-skills`。若需要调试跳过，可显式设置 `SKIP_POST_FORGE_GIT_PUSH=1`，否则缺失 hook 或 push 失败均视为发布链路失败。
   - **推送语义（`HEAD:main`）**：hook 必须执行 `git push origin HEAD:main`，把**当前 HEAD** 显式推到远端 `main`。**严禁** `git push origin main` —— 工作副本 HEAD 常处于特性分支（如 `aime/*`），此时该命令推送的是本地陈旧的 `main` ref，退出码仍为 0，会形成「宣称已同步、GitHub 上却没有新版本」的幽灵资产。
   - **远端 SHA 回读断言（核心护栏）**：push 之后必须执行 `git rev-parse HEAD` 与 `git ls-remote origin refs/heads/main`（或 `git fetch origin main` + `git rev-parse origin/main`）比对两个 commit SHA。**一致才算 PASS；不一致即判定 push 未真正生效，必须以非 0 退出码退出并输出醒目错误。** 禁止仅凭 `git push` 的退出码判定成功。
@@ -333,6 +348,9 @@ python3 user_skills/skill-forge-pipeline/scripts/cloud_publish.py \
 - `--user-email` 默认：`yuqinan@bytedance.com`（ZIP 资产访问修复默认目标用户；经 MCP personal-space 链路恢复可管理权限）
 - 文档挂载默认插入点：`BLOCK_BEGIN`（标题正下方）
 - `--wiki-node-token` 默认：`GU0ewkyaGi4i5nkwBtNcM3aPn9g`（Aime 技能库根节点）
+- `--wiki-registry-url` 默认：`https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g`（Wiki 技能存量清单表所在页面）
+- Wiki 存量清单同步：默认开启（`--skip-wiki-sync` 才跳过）；失败降级为 WARNING，不阻断 forge
+- Wiki 存量清单 upsert 主键默认：技能名称列；缺链接占位符 `⚠️[待补链接]`，使用次数占位符 `-`
 - 写后即读 RAW 校验：默认开启（任何不一致必须熔断）
 - 说明文档正文版本回读断言：默认开启（`--skip-ssot-doc-sync` 才跳过，仅限调试）
 - 版本号形态：保留来源形态（两段进两段出、三段进三段出，patch 位不得截断）；`--bump` 支持 `major|minor|patch`
@@ -482,6 +500,15 @@ python3 scripts/test_doc_zones.py
 
 ## 更新日志 (Changelog)
 
+- **V5.24**: 新增 Wiki「技能存量清单」Upsert 钩子，补齐 forge 台账同步的第二条轨道。
+  - **根因**：forge 长期只同步「专属技能清单」Sheet，Wiki 上给人扫读的「一、技能存量清单 (Skill Registry)」表格无人维护，导致 Wiki 三个月未更新、覆盖率一度只有 31.4%。
+  - 新增 `scripts/wiki_skill_list_sync.py`：`sync_wiki_skill_list()` 为唯一编排入口，链路为「`docs +fetch --detail with-ids` 读真实结构 → `locate_registry_table()` 动态解析表格 block id（每次 `block_replace` 后都会变，禁止硬编码）→ `_upsert_rows()` 按**技能名称**主键 upsert → `render_table_xml()` 重建整表（不带 id）→ `block_replace` → sleep 2s → `assert_wiki_registry_synced()` markdown 回读断言」。
+  - 断言口径：行数 == 预期 + 目标技能名在表格行中**恰好出现 1 次**；不满足即 `raise WikiSyncError`。解析到同名重复行同样熔断（要求人工先去重），保证幂等。
+  - 版本号取舍：现表固定 6 列且无版本列，为「不破坏现有 51 行结构」，选择**不写版本号 / 不增列 / 不覆盖人工「简介」文案**（版本号权威载体是 `SKILL.md` frontmatter + Sheet 的【版本号】列）；未来若表头出现「版本号」列则自动写入。
+  - `register_skill.py`：新增 `run_wiki_skill_list_sync()`（Sheet 台账写入之后、Celebrate 之前调用）、`--wiki-registry-url` 与 `--skip-wiki-sync` 开关；结果落 `.forge_receipt.json` 的 `wiki_registry_sync_status` / `wiki_registry_sync`。
+  - 失败边界：Wiki 同步是增强项，失败打印 `⚠️ WARNING: Wiki sync failed: <原因>` 后继续 forge 主流程；但同步**内部**的回读断言失败必须判定该步为 failed，禁止伪装成功。
+  - 新增 `scripts/test_wiki_skill_list_sync.py` 离线自检（21 例全绿）：覆盖表格定位、主键更新、幂等二次 forge、序号递增、占位符、重复行熔断、`&` 转义、缺标题熔断。
+
 - **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。
   - **根因**：说明文档写入逻辑此前只有「全量覆盖」或「纯 append」两种形态，没有区分可覆盖区与人工沉淀区。全量覆盖会抹平人工写的使用案例 / 踩坑 / 注意事项；纯 append 又让版本号、触发词、接口契约堆叠旧版无人收敛。
   - **设计原则**：飞书文档是「对人」的（人工沉淀不可覆盖）；`SKILL.md` 是「对机器」的 SSOT（版本 / 描述 / 触发词 / 接口契约由它渲染，文档对应章节可覆盖）。
@@ -611,5 +638,5 @@ cd user_skills/skill-forge-pipeline \
 - `skill_name`: `skill-forge-pipeline`
 - `version`: `5.23`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 22:28`
+- `cloud_published_at`: `2026-08-21 22:26`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`

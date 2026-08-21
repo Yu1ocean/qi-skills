@@ -2,6 +2,14 @@
 
 > 说明：v5.19 起技能更名为 `skill-forge-pipeline`（Skill ID `SKILL-FORGE-PIPELINE` 不变）。以下历史条目中的旧名 `skill-forge-pipeline-v4` 保留原样以保持记录保真。
 
+## v5.24 (2026-08-22)
+
+- 新增 Wiki「技能存量清单」Upsert 钩子 `scripts/wiki_skill_list_sync.py`：以**技能名称**为主键 upsert Wiki「一、技能存量清单 (Skill Registry)」表格（读真实结构 → 动态解析表格 block id → upsert → 重建整表 XML → `block_replace` → sleep 2s → markdown 回读断言：行数符合预期 + 技能名恰好出现 1 次）。
+- `register_skill.py` 新增 `run_wiki_skill_list_sync()`（Sheet 台账写入之后、Celebrate 之前调用）与 `--wiki-registry-url` / `--skip-wiki-sync` 开关；结果落 `.forge_receipt.json` 的 `wiki_registry_sync_status`。
+- 失败边界：Wiki 同步为增强项，失败降级为 `⚠️ WARNING: Wiki sync failed: <原因>` 不阻断 forge；但内部回读断言失败必须判 failed，禁止伪装成功。
+- 版本号取舍：不破坏现有 6 列结构 —— 不写版本号、不增列、不覆盖人工「简介」文案。
+- 新增离线自检 `scripts/test_wiki_skill_list_sync.py`（21 例全绿）。
+
 ## v5.22 (2026-08-21)
 
 - 收紧 `is_own_skill_zip()` 版本后缀匹配：剩余后缀仅允许为空 / 带点号数字版本（`_5.21`、`_v5.22`）/ `(1)` 去重后缀 / `_latest`；`-v4`、`_v4`、`-beta`、`_old` 等含字母语义后缀改判「异物块，只报告不删除」，防止父技能 forge 误删同名前缀独立技能的 ZIP 块。
