@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKILL-FORGE-PIPELINE",
-    "name": "skill-forge-pipeline-v4",
-    "description": "自动化技能创建、升级、打包发布与归档流水线（含 CDA Guardrails 自检 + ZIP 文件块幂等替换）；V5.17 修复 Celebrate 阶段幽灵 V3 资产与静默降级，celebrate_skill.py 升格正式入口并新增依赖存在性断言",
-    "version": "5.17",
-    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
+    "skill_id": "SKL-2604-010",
+    "name": "feishu-doc-writing-guide",
+    "description": "飞书电子表格与文档的安全写入与归属治理指南（v7.6：云盘资产赋权改走 lark-cli drive +member-add + member-list RAW 回读断言，弃用已下线的 move_lark_doc 链路）",
+    "version": "7.6",
+    "doc_link": "https://bytedance.larkoffice.com/docx/KIJfdUkYNoyFeTxo7E2ciApyntb",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 20:01",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
-    "zip_name": "skill-forge-pipeline-v4.zip",
-    "drive_file_token": "Xg01bj4MNo5yclx6ODNcINB8n3v",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/Xg01bj4MNo5yclx6ODNcINB8n3v"
+    "updated_at": "2026-08-21 20:14",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide.zip",
+    "zip_name": "feishu-doc-writing-guide.zip",
+    "drive_file_token": "Rhjubyvw1oaLFJxaPYRcV2sDnBg",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Rhjubyvw1oaLFJxaPYRcV2sDnBg"
 }

@@ -322,26 +322,23 @@ def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str
     if not repair_script.exists():
         raise FileNotFoundError(f"grant_doc_permissions wrapper not found: {repair_script}")
 
-    try:
-        return run_subprocess(
-            [
-                "python3",
-                str(repair_script),
-                drive_file_url,
-                "--email",
-                email,
-                "--perm",
-                perm,
-            ],
-            "repair drive asset access via MCP personal flow",
-        )
-    except RuntimeError as exc:
-        if "move_lark_doc" not in str(exc):
-            raise
-        return (
-            "⚠️ drive asset access repair skipped: legacy move_lark_doc path is unavailable; "
-            "file block was inserted via lark-cli docs +media-insert as user identity."
-        )
+    # V5.18: NO silent-WARNING fallback. The legacy `move_lark_doc` shim was removed from the
+    # runtime, and swallowing its FileNotFoundError turned this step into a permanent fake
+    # success (users received ZIP assets they could view but not manage). The grant now runs
+    # through `lark-cli drive +member-add` + `+member-list` RAW assertion; any failure must
+    # circuit-break the release per the anti-fake-success rule.
+    return run_subprocess(
+        [
+            "python3",
+            str(repair_script),
+            drive_file_url,
+            "--email",
+            email,
+            "--perm",
+            perm,
+        ],
+        "grant drive asset access via lark-cli drive +member-add (with member-list RAW assertion)",
+    )
 
 
 def run_subprocess(command: list[str], action: str) -> str:

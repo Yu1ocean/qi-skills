@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Ensure an existing Lark/Feishu document is moved into the current user's personal space.
+"""[DEPRECATED / BROKEN since v7.6] Move a Lark/Feishu document into personal space.
+
+⚠️ 失效说明（v7.6）：本脚本依赖的 MCP 脚本
+`inner_skills/lark/mcp_lark_move_lark_doc.py` **已从运行时下线**，任何调用都会
+FileNotFoundError。脚本保留仅作历史存档，**禁止在任何链路中调用**。
+云盘/文档资产赋权请改用 `grant_doc_permissions.py`
+（`lark-cli drive +member-add` + `+member-list` RAW 回读断言）。
+
+Ensure an existing Lark/Feishu document is moved into the current user's personal space.
 
 This helper is the v7.3 replacement for legacy "grant permission after create" logic.
 Instead of calling Drive Permission APIs with JWT, it delegates to the Lark MCP

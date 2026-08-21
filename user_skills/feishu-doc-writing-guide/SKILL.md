@@ -1,12 +1,14 @@
 ---
 name: feishu-doc-writing-guide
 description: 飞书电子表格（Sheets）与文档（Docs）的安全写入与归属治理指南，包含执行人身份穿透法则、个人空间优先创建、MCP 迁移兜底、三级防爆破自检机制、反合理化四件套、公式与多选单元格结构化写入护栏、标题去重、元数据标头及幽灵对象清除 SOP。适用于生成/更新飞书文档、写入台账、写入多选/公式单元格、处理权限与数据安全。
-version: 7.5
+version: 7.6
 ---
 
-# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.5
+# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.6
 
 本 Skill 汇总了 Aime 系统及团队在处理飞书文档与电子表格时的血泪经验，规定了写入、更新及维护操作的权威标准。
+
+**v7.6 关键升级：云盘资产赋权改走 `lark-cli drive +member-add` + `+member-list` RAW 回读断言，并正式弃用 `move_lark_doc` 链路。** 运行时已下线 `inner_skills/lark/mcp_lark_move_lark_doc.py`，导致 `ensure_doc_in_personal.py` 必然 FileNotFoundError，而调用方（如 forge 流水线）把该异常静默降级成一条 WARNING —— 赋权从未真正发生，用户拿到的是「只能看不能管」的孤儿资产。从本版本起：`scripts/grant_doc_permissions.py` 改为通过 AIME 定制版 `lark-cli drive +member-add` 赋权，写后必须 `lark-cli drive +member-list` 回读断言目标身份存在且 `perm >= 目标权限`，不一致即 `raise` 熔断；`ensure_doc_in_personal.py` 标记为**失效/已弃用**（保留存档，禁止调用）。详见「0.2 云盘资产赋权法则」。
 
 **v7.5 关键升级：新增「多选单元格结构化写入护栏」。** 飞书多选（Multi-Select）单元格的值本质是**选项数组**而非字符串，用逗号串（如 `"EU,UK,JP"`）经 `+csv-put` 或 `value` 文本通道写入，会被引擎当作**一个整体文本**去匹配选项列表，导致药丸（Pill/Tag）不渲染并触发右上角红色校验失败角标。从本版本起，多选列写入必须走 `+cells-set` 的 `multiple_values` 结构化数组，写后必须 `+cells-get --include value,multiple_values` 回读断言，并可用 `scripts/multiselect_write_guard.py` 做 L3 运行时熔断预检。详见「陷阱6」。
 
@@ -25,7 +27,8 @@ version: 7.5
   - 飞书文档创建
   - 飞书表格写入
   - 个人空间
-  - move_lark_doc
+  - 云盘资产赋权
+  - member-add
   - 幽灵块
 - 典型指令示例：
   > 生成一份飞书文档并写入报告，确保直接落到我的个人空间
@@ -46,6 +49,8 @@ version: 7.5
 - “先按默认参数创建，回头再补权限。”
 - “MCP 创建已经成功了，我就顺手拿 JWT 直接调一下 Permission API。”
 - “反正 `grant_doc_permissions.py` 能跑，我就不管底层是不是 Drive OpenAPI 了。”
+- “赋权那步报错了，但只是个 WARNING，文档已经生成了就算成功。”
+- “member-add 调完退出码是 0，就不用再 member-list 回读了。”
 - “先把文档留在系统云盘，等用户来报错时再迁移到个人空间。”
 - “表格写入量不大，我就不做 Schema 校验和 RAW 回读了。”
 - “幽灵块先不处理，反正文档还能打开。”
@@ -69,7 +74,9 @@ version: 7.5
 
 - 调用 `mcp_lark_create_lark_doc` 时没有显式传 `target_type=personal`。
 - 文档创建成功后，仍然试图使用 `requests` / Drive Permission API / `AIME_USER_CLOUD_JWT` 去补 `full_access`。
-- 声称“已修复权限”，但没有 `move_lark_doc -> personal` 或 `ensure_doc_in_personal.py` 的执行日志。
+- 声称“已修复权限/已赋权”，但没有 `lark-cli drive +member-list` 的 RAW 回读证据（目标身份 + perm）。
+- 仍在调用 `ensure_doc_in_personal.py` / `mcp_lark_move_lark_doc.py`（**已下线**，必然 FileNotFoundError）。
+- 赋权步骤失败被 `try/except` 吞掉并转成 WARNING 字符串，流程却继续宣称发布成功。
 - 表格写入动作没有展示 **写入参数**（sheet_url、sheet_name、row_index、data_json）或 **读回原始数组**。
 - 遇到 404/无权限后没有熔断告警，却继续“新建/复制/换 token”完成任务。
 - 提到“修复”但没有给出 **幽灵块信标**（如 `GHOST_TARGET_001`）与对应 block 定位证据。
@@ -89,11 +96,12 @@ version: 7.5
 
 3. **创建默认落个人空间（Personal-First）**
    - 调用 `mcp_lark_create_lark_doc` 时，必须显式传入 `target_type=personal`。
-   - 如果是迁移已有文档，也必须优先使用 `mcp_lark_move_lark_doc` 到 `personal`。
+   - 已有文档的归属/访问权修复，走 `scripts/grant_doc_permissions.py`（`lark-cli drive +member-add`）；`mcp_lark_move_lark_doc` 已下线，禁止调用。
 
 4. **归属兜底（Move to Personal）**
-   - 新建文档若未直接落到用户空间，必须立刻执行 `scripts/ensure_doc_in_personal.py "<document_url>"`。
-   - `scripts/grant_doc_permissions.py` 仅允许作为兼容包装器存在，不再允许直调 Permission API。
+   - 新建文档/云盘资产若用户无管理权，必须立刻执行 `python3 scripts/grant_doc_permissions.py "<url>" --email <email> --perm full_access`。
+   - 该脚本底层为 `lark-cli drive +member-add`，写后 `+member-list` RAW 回读断言；失败即 `raise`，**禁止降级成 WARNING**。
+   - `scripts/ensure_doc_in_personal.py` 已失效（依赖的 MCP 脚本下线），仅作历史存档，禁止调用。
 
 5. **Schema 合同验证（全列对齐）**
    - 写入前拉取并确认表头 Schema。
@@ -118,7 +126,12 @@ version: 7.5
    - 同时用 `+cells-get --include value,formula` 回读目标单元格，确认存在 `formula` 字段（防伪公式文本）。
    - 可用本地断言脚本预检：`python3 scripts/formula_write_guard.py --formula "=INDEX('明细'!J:J,COUNTA('明细'!J:J))" --sheet-names '明细,US行业统计' --field formula`
 
-10. **多选单元格结构化写入收敛（Multi-Select Structured Write）**
+10. **云盘资产赋权收敛（Drive Access Grant）**
+   - 任何“把资产赋权给用户”的动作，必须走 `scripts/grant_doc_permissions.py`（`lark-cli drive +member-add`）。
+   - 必须输出 `lark-cli drive +member-list` 的 RAW 回读证据（member_id/owner_id + perm）。
+   - 赋权失败**必须熔断**，禁止转成 WARNING 后继续宣称成功。
+
+11. **多选单元格结构化写入收敛（Multi-Select Structured Write）**
    - 任何写入多选（Multi-Select）列的动作，必须走 `+cells-set` 的 `multiple_values` 结构化数组，禁止 `value` 逗号串与 `+csv-put`。
    - 写后必须回读断言：`lark-cli sheets +cells-get --url "<sheet_url>" --range "<Sheet名>!G2" --include value,multiple_values`。
    - 断言口径：`multiple_values` 数组必须存在，长度与预期标签数一致，且每个 `value` 命中选项列表；只有 `value` 字符串而无 `multiple_values` 数组即判定为逗号串污染，立刻熔断重写。
@@ -155,6 +168,25 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 ```
 
 - `scripts/grant_doc_permissions.py` 仍保留同名入口，是为了兼容旧调用方；但它已经不再调用 Permission API，而是转发到 `ensure_doc_in_personal.py`。任何继续把它当成“JWT 赋权脚本”使用的行为，都属于错误认知。
+
+### 0.2 云盘资产赋权法则 (Drive Asset Access Grant) — v7.6
+
+- 云盘文件（ZIP/附件）、文档、表格的**协作者赋权**，唯一合规通道是 AIME 定制版 `lark-cli`（认证由运行时注入，非裸调 OpenAPI）：
+
+```bash
+# 赋权 + RAW 回读断言（推荐主入口，已封装幂等与断言）
+python3 scripts/grant_doc_permissions.py "https://<host>/file/<token>" --email "yuqinan@bytedance.com" --perm full_access
+
+# 底层等价命令
+lark-cli drive +member-add  --token "<url>" --member-type email --member-id "<email>" --perm full_access --as user --yes
+lark-cli drive +member-list --token "<url>" --as user --fields '*'
+```
+
+- **幂等规则**：写入前先 `+member-list` / `drive metas batch_query`；若目标身份已是 **owner**（owner 天然具备 full_access，飞书会以 `code=1063003 Invalid operation` 拒绝重复添加）或已有 `perm >= 目标权限`，直接判 PASS，不做写入。
+- **断言口径（L3 熔断）**：`+member-add` 之后等待 2s，再 `+member-list` 回读；必须存在 `member_id == 目标 open_id`（或 owner_id 命中）且 `perm >= 目标权限`。不满足即 `raise`，**严禁把失败转成 WARNING 继续走流程**。
+- **email → open_id 解析**：`lark-cli contact +search-user --query "<email>" --as user`，按 `email` / `enterprise_email` 精确匹配取 `open_id`（`+member-list` 返回的是 open_id 而非 email）。
+- **常见错误码**：`1063003 Invalid operation` = 目标已是 owner / 已持有该权限（按幂等处理，落到回读断言）；`1063001 Invalid parameter` = email 不存在或无法解析（必须熔断）。
+- **禁止行为**：禁止调用 `ensure_doc_in_personal.py` / `mcp_lark_move_lark_doc.py`（已下线）；禁止用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API；禁止只看 `+member-add` 退出码就宣称赋权成功。
 
 ### 1. 飞书表格三级防爆破与自检机制 (Lark Sheets 3-Level Defense System)
 
@@ -310,7 +342,9 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 ## Defaults（合规默认值）
 
 - 新建飞书文档默认：`target_type=personal`
-- 归属修复默认：`scripts/ensure_doc_in_personal.py "<document_url>"`
+- 资产赋权默认：`python3 scripts/grant_doc_permissions.py "<url>" --email yuqinan@bytedance.com --perm full_access`（底层 `lark-cli drive +member-add`）
+- 赋权写后回读默认：`lark-cli drive +member-list --token "<url>" --as user --fields '*'`，`perm` 必须 >= 目标权限
+- 归属迁移默认：**已弃用**（`ensure_doc_in_personal.py` / `move_lark_doc` 均已失效）
 - 兼容入口默认用户：`yuqinan@bytedance.com`
 - 写后即读 RAW 校验：默认开启
 - 公式写入通道默认：`+cells-set --cells '[[{"formula":"=..."}]]'`（禁用 `value` / `+csv-put`）
@@ -321,16 +355,16 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 
 ## 脚本工具箱（可选，但遇到对应场景必须用）
 
-- **迁移文档到个人空间（推荐主入口）**：
+- **云盘/文档资产赋权（推荐主入口，v7.6）**：
 
   ```bash
-  python3 scripts/ensure_doc_in_personal.py "<document_url>"
+  python3 scripts/grant_doc_permissions.py "<url>" --email "yuqinan@bytedance.com" --perm full_access
   ```
 
-- **兼容旧入口（已废弃 JWT 直调，仅做 MCP 转发）**：
+- **迁移文档到个人空间（⚠️ 已失效，禁止调用）**：
 
   ```bash
-  python3 scripts/grant_doc_permissions.py "<document_url>"
+  # scripts/ensure_doc_in_personal.py —— 依赖的 inner_skills/lark/mcp_lark_move_lark_doc.py 已下线
   ```
 
 - **表格安全 upsert 单行**：
@@ -378,11 +412,17 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
   ```text
   1. 先执行 bytedcli-auth，确保后续 MCP 写入以用户身份运行。
   2. 创建文档时显式传 target_type=personal，让文档直接落到用户个人空间。
-  3. 若文档为历史资产或落点异常，立即执行 scripts/ensure_doc_in_personal.py 做 MCP 迁移。
+  3. 若用户对资产无管理权，执行 scripts/grant_doc_permissions.py 走 lark-cli drive +member-add，并以 +member-list 回读断言。
   4. 禁止再用 AIME_USER_CLOUD_JWT 直调 Drive Permission API。
   ```
 
 ## 变更记录
+
+- **v7.6**: 修复云盘资产赋权链路断裂导致的「假成功」。
+  - 根因：`inner_skills/lark/mcp_lark_move_lark_doc.py` 已从运行时下线 → `ensure_doc_in_personal.py` 必然 FileNotFoundError → 调用方静默降级为 WARNING，赋权从未发生。
+  - `scripts/grant_doc_permissions.py` 完全重写：改走 `lark-cli drive +member-add` 赋权 + `lark-cli drive +member-list` RAW 回读断言，失败即 `raise`；新增 owner 短路与 `1063003` 幂等处理、`contact +search-user` 做 email→open_id 解析。
+  - `scripts/ensure_doc_in_personal.py` 标记为失效/已弃用（保留存档，禁止调用）。
+  - 新增「0.2 云盘资产赋权法则」章节；Verification / Red Flags / Common Rationalizations / Defaults 同步加固「赋权失败禁止降级为 WARNING」条款。
 
 - **v7.5**: 新增多选单元格结构化写入护栏。
   - 新增「陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标」，明确飞书多选值是**选项数组**而非字符串，逗号串会被当作整串文本匹配选项列表而必然校验失败。
@@ -409,7 +449,7 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 
 - 表格写入优先使用 MCP 类型能力（如 `lark`、`lark_sheets_update`）。
 - 文档创建默认必须显式传 `target_type=personal`。
-- 历史文档归属修复必须使用 `move_lark_doc -> personal` 链路，不得再使用 Drive Permission API 直调兜底。
+- 资产赋权必须使用 `lark-cli drive +member-add` + `+member-list` 回读断言；`move_lark_doc -> personal` 链路已失效，不得调用，也不得用 Drive Permission API 直调兜底。
 - 台账写入遵循三级防线 + RAW 原子锁（写后即读）。
 - 多选（Multi-Select）列写入必须走 `+cells-set` 的 `multiple_values` 结构化数组，并以 `+cells-get --include value,multiple_values` 回读断言。
 - 涉及飞书脚本或 MCP 操作时，必须设置 `include_secrets=true`。

@@ -1,8 +1,8 @@
 # 【技能说明】飞书文档写入指南
 
-<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDBkMDBiYTM3ODRiN2U5NjNjNGEyMzQzOTMzNDM4NWNfNGRhNzliZGU5ODRkNjkwMjU0ZGYyYzhmNmIyN2M4NThfSUQ6NzY3NjI5OTk4OTY4OTY5OTI2Nl8xNzg3Mjc3ODcyOjE3ODcyODE0NzJfVjM" mime="application/zip" size="1861427" token="EgHlboia0os4rkx4Q26cP8KEnR5"/></figure>
+<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ODc5OWM5MzJhNmNiNmQ3ODVlYjkxZmM4MjVkMTdlNThfZjJmZDQzZTVhMmRmYzUzNzRlYjM0NzA0YmNhZDYwNjNfSUQ6NzY3NjQ1NzEzMDQ3MTI0NzA2N18xNzg3MzE0NDU4OjE3ODczMTgwNThfVjM" mime="application/zip" size="1865315" token="Rhjubyvw1oaLFJxaPYRcV2sDnBg"/></figure>
 
-> 📄 **文档编号**：[SYS-2604-003] 📅 **归档日期**：[2026-04-07]
+> 📄 **文档编号**：[SYS-2604-003] 📅 **归档日期**：[2026-04-07] 🏷️ **当前版本**：v7.5 🔄 **最近更新**：[2026-08-21]
 
 ---
 
@@ -66,8 +66,6 @@ python3 scripts/delete_ghost_block.py <document_url> <markdown_file_path> GHOST_
 
 ## 四、 附件
 
-<figure view-type="Card"><source name="feishu-doc-writing-guide_v7.1.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=N2IyM2FhN2ZkODBlZGJiZTM1ZTA0MzAyNGE1MTg5Y2RfMGQ5ZWIxNmYxOWRiNjMzZjU1YTA4NzczMTFjMjlkYjVfSUQ6NzYzMzA5NzQwNTM3NTYzMDI4MV8xNzg3Mjc3ODY4OjE3ODcyODE0NjhfVjM" mime="application/zip" size="56401" token="Z3wibm50RoxQSyxEfXecAVHInab"/></figure>
-
 ---
 
 **本文档由 Aime 系统自动生成，遵循 SYS-2604 系列归档标准。**
@@ -123,6 +121,30 @@ python3 scripts/delete_ghost_block.py <document_url> <markdown_file_path> GHOST_
 - 新增 L3 断言脚本 `scripts/formula_write_guard.py`，对三类违规运行时熔断。
 - 合规默认值新增：公式写入通道 `+cells-set --cells '[[{"formula":"=..."}]]'`；写后必须 `+formula-verify` 且 total_errors=0。
 
+## ⚙️ v7.5 新增：多选单元格结构化写入护栏
+
+### 陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标
+
+- 现象：向多选列（如「覆盖区域」G 列）写入 `"EU,UK,JP"` 后，单元格不渲染多选药丸（Pill/Tag），右上角出现红色校验失败角标；而单值场景（如只写 `"EU"`）恰好命中选项时不报错，造成「偶发正常」的假象，极易误判为已修复。
+- 根因：飞书多选单元格的值是**选项数组**，不是字符串。逗号串会被引擎当作**一个整体文本**去匹配选项列表，多值时匹配失败 → 判定为「不在选项列表内」→ 触发数据校验失败角标且不渲染药丸。
+- 正确做法：使用 `+cells-set` 的 `multiple_values` 字段，以结构化数组写入：`lark-cli sheets +cells-set --url "<sheet_url>" --range "<Sheet名>!G2" --cells '[[{"multiple_values":[{"value":"EU"},{"value":"UK"},{"value":"JP"}]}]]'`
+- 诊断命令：`lark-cli sheets +cells-get --url "<sheet_url>" --range "<Sheet名>!G2" --include value,multiple_values`；回读若只有 `value` 字符串、没有 `multiple_values` 数组，即判定为逗号串污染，必须重写。
+- 写后验收：写完必须回读断言 `multiple_values` 数组长度与预期标签数一致，且每个 `value` 命中选项列表；不一致立刻熔断。
+- 禁止行为：禁止用 `+csv-put` 批量灌多选列；禁止用 `value` 纯文本字段写多选单元格；禁止因「单值写成功」就推断多值也没问题。
+
+## ✅ Verification 补充条款（第 10 条）
+
+- **多选单元格结构化写入收敛**：任何写入多选（Multi-Select）列的动作，必须走 `+cells-set` 的 `multiple_values` 结构化数组，禁止 `value` 逗号串与 `+csv-put`；写后必须 `+cells-get --include value,multiple_values` 回读断言数组长度与选项命中，不一致立刻熔断。
+- 本地预检脚本：`python3 scripts/multiselect_write_guard.py --values "EU,UK,JP" --field multiple_values --allowed-options "EU,UK,JP,US,SEA"`
+
+## 变更记录 v7.5
+
+- 新增「陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标」，明确飞书多选值是**选项数组**而非字符串，逗号串会被当作整串文本匹配选项列表而必然校验失败。
+- 多选列写入通道锁定为 `+cells-set --cells '[[{"multiple_values":[{"value":"EU"},...]}]]'`，禁用 `value` 纯文本与 `+csv-put` 批量灌列。
+- 诊断法固化为 `+cells-get --include value,multiple_values`：只有 `value` 字符串而无 `multiple_values` 数组即判定为逗号串污染。
+- Verification 新增第 10 条「多选单元格结构化写入收敛」；Red Flags / Common Rationalizations / Why they fail 同步新增「逗号串写多选」「单值没报错就推断多值也行」的反合理化条款。
+- 新增 L3 断言脚本 `scripts/multiselect_write_guard.py`，对逗号串污染、`multiple_values` 结构缺失、选项越界三类违规运行时熔断（正例 exit=0，反例 exit=1）。
+
 ## 📖 案例实录 (Best Practice)
 
 - 🧑‍💻 用户输入：
@@ -140,5 +162,3 @@ python3 scripts/delete_ghost_block.py <document_url> <markdown_file_path> GHOST_
 4. A1 恢复表头文本 "US行业"；sleep 2s 回读 N2 = 2026-08-16。
 5. +formula-verify 返回 status=success, total_errors=0，方可宣称修复完成。
 ```
-
-<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MTJjOGRiNmQ4YjFlYmFkYmRiZWViZmI1MDM3MDcxOWNfMDA0NTczY2UxMGRiYmUwMjA3ZTViMWY1MWZiMDY1ODhfSUQ6NzY3NDc5MjkwNjA5MTE3MDc0Nl8xNzg3Mjc3ODY4OjE3ODcyODE0NjhfVjM" mime="application/zip" size="1856519" token="SXvqbrTUmoxQZXxNFwycFtX3nSd"/></figure>

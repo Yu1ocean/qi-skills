@@ -4,7 +4,7 @@ version: 5.17
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.17)
+# 技能锻造流水线 (Forge Pipeline V5.18)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -15,6 +15,8 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - “先把技能产出/打包传上去，回头再补说明文档。”
 - “这次只是小改动，版本号就不 bump 了。”
 - “飞书写入/赋权失败我先跳过，先给你本地路径就算交付。”
+- “赋权那步只是个 WARNING，不影响发布，照样报成功。”
+- “底层 MCP 脚本没了，我 try/except 兜一下打条提示就行。”
 - “自检脚本麻烦，先不跑。”
 - “我大概知道风险等级，就不做分级判断了。”
 - “飞书镜像写成功了，本地 SSOT 回头再补。”
@@ -37,6 +39,9 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 双轨断言失败却未写入孤儿待修复死信队列（`.ephemeral_pool/orphan_decisions.jsonl`）。
 - Archive 阶段只 append ZIP 文件块、未清理同名旧块（导致说明文档堆积历史版本 ZIP）。
 - 未做「本技能 ZIP 块数量 == 1」回读断言，就宣称文件块回挂完成。
+- **赋权失败被静默成 WARNING（如 `⚠️ drive asset access repair skipped: ...`）却仍宣称发布成功** —— 用户拿到的是「只能看不能管」的孤儿 ZIP 资产。
+- 仍在调用已下线的 `mcp_lark_move_lark_doc.py` / `ensure_doc_in_personal.py` 做资产赋权。
+- ZIP 云盘赋权后没有 `lark-cli drive +member-list` 的 RAW 回读证据（member_id + perm）。
 - Celebrate 阶段引用不存在的 V3 脚本 / 模板（`assemble_card_v3.py`、`card_template_v3.html`、`update_bitable_v3.py`），或画廊记录落到旧灵感台账 `tbly6lJBR0QYTBfW` 而非 V3 画廊 `tblHHVXl9ObjSyRw`。
 - Celebrate 画廊同步失败后静默放行（输出 "proceeding to ensure workflow continuity" 一类话术）而未熔断。
 - 自动删除了非本技能的 ZIP 文件块（异物块属他人资产，只允许报告 + 人工确认）。
@@ -52,10 +57,12 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 5. **Wiki 归档验收**：说明文档必须已成功迁入目标 Wiki 节点；若 Wiki Mount Phase 失败，发布流程必须立刻熔断，不得继续落盘 `metadata.json` 或宣称发布成功。
 6. **归档台账验收**：对【专属技能清单】写入必须走 RAW 原子锁（写→等 2s→读回核对），不一致立刻熔断。
 7. **生动化标准验收**：若目标技能属于报告生成、修复总结、架构演进或归档类能力，`SKILL.md` 中必须存在可执行的【文档生动化标准】条款，并明确联动 `cyber-inspiration-generator` 与“头部前置嵌入”要求。
-8. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
-9. **文件块位置断言验收**：ZIP 原生 File Block 必须位于说明文档**第一个正文块**（BLOCK_BEGIN，标题正下方）。`register_skill.py` 在 `+media-insert` 之后必须执行 `block_move_after`（anchor = 文档 root token）归位，并回读文档 XML 断言首个正文块 id == 新建文件块 id；不一致立刻 `raise` 熔断。
-10. **双轨原子写入验收**：凡涉及「决策台账写入飞书镜像」的节点，本地 SSOT `memory/topics/decision-registry.md` 末条决策 ID 与飞书镜像末行 ID **必须一致**，且必须输出双轨回读证据（`assert_local_track` / `assert_mirror_track` 的 evidence）。任一轨失败即 `raise` 熔断并落孤儿死信队列，禁止宣称完成。
-11. **文件块唯一性断言**：Archive 阶段回挂 ZIP 后，必须回读说明文档并断言「属于本技能的 ZIP 文件块数量恰好为 1」且其 block_id/file_token 等于本次新块。不满足时必须显式输出残留清单与人工解法（允许非熔断，禁止静默）。异物块（其他技能的 ZIP）必须列出 block_id + 文件名交由人工拍板，严禁自动删除。
+8. **云盘 ZIP 赋权验收**：Archive 阶段的 ZIP 赋权必须输出 `lark-cli drive +member-list` RAW 回读证据（目标 open_id/owner_id + `perm == full_access`）。赋权失败必须熔断，禁止以 WARNING 形式放行。
+
+9. **Git 同步远端断言验收**：Post-Forge Git Push 之后，远端 `origin/main` 的 commit SHA **必须严格等于**本地 `git rev-parse HEAD`（通过 `git ls-remote origin refs/heads/main` 回读比对）。只要不一致，即判定 push 未生效，hook 必须以非 0 退出码熔断，禁止宣称「已 push 到 qi-skills」。
+10. **文件块位置断言验收**：ZIP 原生 File Block 必须位于说明文档**第一个正文块**（BLOCK_BEGIN，标题正下方）。`register_skill.py` 在 `+media-insert` 之后必须执行 `block_move_after`（anchor = 文档 root token）归位，并回读文档 XML 断言首个正文块 id == 新建文件块 id；不一致立刻 `raise` 熔断。
+11. **双轨原子写入验收**：凡涉及「决策台账写入飞书镜像」的节点，本地 SSOT `memory/topics/decision-registry.md` 末条决策 ID 与飞书镜像末行 ID **必须一致**，且必须输出双轨回读证据（`assert_local_track` / `assert_mirror_track` 的 evidence）。任一轨失败即 `raise` 熔断并落孤儿死信队列，禁止宣称完成。
+12. **文件块唯一性断言**：Archive 阶段回挂 ZIP 后，必须回读说明文档并断言「属于本技能的 ZIP 文件块数量恰好为 1」且其 block_id/file_token 等于本次新块。不满足时必须显式输出残留清单与人工解法（允许非熔断，禁止静默）。异物块（其他技能的 ZIP）必须列出 block_id + 文件名交由人工拍板，严禁自动删除。
 
 ## 适用场景
 
@@ -179,7 +186,8 @@ python3 user_skills/skill-forge-pipeline-v4/scripts/celebrate_skill.py \
 - 若说明文档中存在版本标识，应通过 MCP 将其替换为最新版本号。
 
 - **Zip 打包**：在最后阶段强制运行 `scripts/register_skill.py`，传入 `--skill-dir`，将目标技能目录（如 `user_skills/xxx/`）打包为同级 `.zip` 文件。
-- **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并通过 `feishu-doc-writing-guide` 的 MCP / personal-space 修复链路为 `yuqinan@bytedance.com` 恢复可管理访问权；严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API。
+- **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并调用 `feishu-doc-writing-guide/scripts/grant_doc_permissions.py`（底层 `lark-cli drive +member-add` + `+member-list` RAW 回读断言）为 `yuqinan@bytedance.com` 赋 `full_access`。严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API，严禁调用已下线的 `move_lark_doc` / `ensure_doc_in_personal.py`。
+- **赋权失败即熔断（V5.18）**：该步骤**不允许任何静默降级**。原实现在捕获异常后，只要报错含 `move_lark_doc` 就 return 一条 WARNING 字符串，导致赋权长期从未真正发生（典型「假成功」）。现已删除该兜底：赋权失败直接 `raise`，发布链路熔断。
 - **文档挂载**：`scripts/register_skill.py` 必须调用 `inner_skills/lark/mcp_lark_update_lark_doc.py`，把最新 `.zip` 以飞书原生【文件块 (File Block)】形式插入到说明飞书文档最顶部（`BLOCK_BEGIN`，即标题下方）。
   - **位置归位与断言（V5.14 新增）**：实际链路使用 `lark-cli docs +media-insert`，其默认行为是**追加到文档末尾**，会静默违反「标题正下方」契约。因此插入后必须：① 从输出解析新文件块 `block_id`；② 执行 `lark-cli docs +update --command block_move_after --block-id <文档 root token> --src-block-ids <block_id>` 将其移到 index 0；③ 回读文档 XML，断言首个正文块 id 等于该 `block_id`，否则 `raise` 熔断。
 - **Archive 步骤文件块替换规则（V5.16 新增，幂等替换而非 append）**：ZIP 回挂必须是**幂等替换**，同一说明文档在任意时刻只允许存在 1 个属于本技能的 ZIP 文件块。执行顺序不可颠倒：
@@ -288,6 +296,12 @@ python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
+
+- **V5.18**: 修复 Archive 阶段「ZIP 云盘资产赋权」的 P1 假成功缺陷。
+  - 根因：`ensure_drive_asset_access_via_mcp()` → `grant_doc_permissions.py` → `ensure_doc_in_personal.py` → `inner_skills/lark/mcp_lark_move_lark_doc.py`，而该 MCP 脚本已从运行时下线（FileNotFoundError）；`register_skill.py` 捕获异常后只要报错含 `move_lark_doc` 就静默 return WARNING，赋权实际从未执行，用户拿到的是「只能看不能管」的孤儿 ZIP。
+  - `register_skill.py`：**删除**该静默 WARNING 兜底，赋权失败直接 `raise` 熔断（反假成功铁律）。
+  - `feishu-doc-writing-guide` v7.6：`grant_doc_permissions.py` 重写为 `lark-cli drive +member-add` 赋权 + `lark-cli drive +member-list` RAW 回读断言，含 owner 短路、`1063003` 幂等处理与 email→open_id 解析；`ensure_doc_in_personal.py` 标记失效。
+  - Red Flags 新增「赋权失败被静默成 WARNING 仍宣称发布成功」等 4 条；Verification 新增第 8 条「云盘 ZIP 赋权验收」。
 
 - **V5.17**: 修复 Celebrate 阶段「幽灵 V3 资产 + 静默降级」缺陷。
   - `scripts/celebrate_skill.py` 由孤儿脚本升格为 Celebrate **正式入口**：不再引用根本不存在的 `card_template_v3.html` / `assemble_card_v3.py` / `update_bitable_v3.py`，改为调用真实存在的 `assemble_card.py` + `card_template.html` + `capture_screenshot.py` + 新的 `sync_gallery.py`。
