@@ -1,6 +1,6 @@
 <title>live-material-fraud-auditor · 直播材质造假与品牌授权审核员 v1.1</title>
 
-<figure view-type="Card"><source name="live-material-fraud-auditor.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=N2FlZjg0NWUxMDMzOGVjZjI2Y2ExZmE5MjBmOWIxOTlfMGQ4ZmZiNjFiOTAzZjNlNTFiZGRmYzQ1ZmQ0YjNhMWFfSUQ6NzY3NjQyNjI1MTQ2MTYxMTEyNV8xNzg3MzA3MjczOjE3ODczMTA4NzNfVjM" mime="application/zip" size="20941" token="EZHhba90KoBTVaxwvlpm3thOynf"/></figure>
+<figure view-type="Card"><source name="live-material-fraud-auditor.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=NWFkOWYyN2Y1YjQ0YTBmZGMyOGFjMWU1MTFhNjg0OTJfY2MwN2MyZDViN2M3YWY2MmZkOTUwNWI3ODVmZjJkNmJfSUQ6NzY3NjQ0OTIwMzQwMDIxNjE4MV8xNzg3MzEyNjEzOjE3ODczMTYyMTNfVjM" mime="application/zip" size="65682" token="Ur72bn98zouEGQxkqopmc399yZb"/></figure>
 
 <callout emoji="📌">
 **Skill ID**：LIVE-MATERIAL-FRAUD-AUDITOR ｜ **版本**：v1.1 ｜ **作者**：于奇楠（yuqinan）

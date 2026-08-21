@@ -1,16 +1,16 @@
 {
-    "skill_id": "SKL-2604-018",
-    "name": "periodic-report-generator",
-    "description": "赛博周期性汇报生成器：生成日报/周报并安全归档；V6.3 修复 P1 事故——Daily_Logs 写入由 append-to-tail 改为降序插入法（第 2 行 dim-insert 插行 + cells-set 写 A2:C2），并新增写后三断言（置顶/降序/非空）运行时熔断。",
-    "version": "6.3",
-    "doc_link": "https://bytedance.larkoffice.com/docx/ILsldnt22oXbMExLssccWmJendg",
+    "skill_id": "LIVE-MATERIAL-FRAUD-AUDITOR",
+    "name": "live-material-fraud-auditor",
+    "description": "直播回放全类型违规语义审核员：prompt-driven 语义判定覆盖 TikTok Shop 白皮书 27 类违规（含材质造假、品牌授权、假货仿冒），支持 llm/manifest/ingest 三模式、反幻觉证据逐字回溯、断点续跑与飞书五段审核报告",
+    "version": "2.0",
+    "doc_link": "https://bytedance.larkoffice.com/docx/X4EYdL9l2otipyx6PommhdPRyIb",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 19:32",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/periodic-report-generator.zip",
-    "zip_name": "periodic-report-generator.zip",
-    "drive_file_token": "Bhovb0unEoPr98xQuHecbrNonTg",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/Bhovb0unEoPr98xQuHecbrNonTg"
+    "updated_at": "2026-08-21 19:43",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-material-fraud-auditor",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/live-material-fraud-auditor.zip",
+    "zip_name": "live-material-fraud-auditor.zip",
+    "drive_file_token": "Ur72bn98zouEGQxkqopmc399yZb",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Ur72bn98zouEGQxkqopmc399yZb"
 }
