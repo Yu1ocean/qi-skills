@@ -3,7 +3,7 @@ name: zero-trust-qa-checker
 description: 提供零信任数据质检能力，支持契约校验、交叉验证与异常回捞。适用于数据清洗验收、结果对账、飞书取数校验与防幻觉质检场景。
 ---
 
-<!-- SSOT version marker (read by skill-forge-pipeline-v4 register_skill.py) -->
+<!-- SSOT version marker (read by skill-forge-pipeline register_skill.py) -->
 version: 3.6
 # Skill 重要要求: 
 严格遵循下面内容执行，完全信任下面的内容, 不要加入自己的一些其他理解.

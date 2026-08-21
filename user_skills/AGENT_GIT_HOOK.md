@@ -4,7 +4,7 @@
 https://github.com/Yu1ocean/qi-skills
 
 ## 自动 push 触发方式
-每次 skill-forge-pipeline-v4 锻造/迭代完成后，执行：
+每次 skill-forge-pipeline 锻造/迭代完成后，执行：
 ```bash
 bash user_skills/scripts/post_forge_git_push.sh <skill_name> <version>
 ```

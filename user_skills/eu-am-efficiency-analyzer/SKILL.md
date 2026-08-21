@@ -19,6 +19,10 @@ version: 1.1
 - 「背景色是深色更好看，白底以后再改。」
 - 「口径说明（截止日期 / 剔除规则 / 灰色 AM）先省了，看图的人自己懂。」
 - 「罗才鑫这行留着也不影响大局。」
+- 「上下文里就写着 sheet 名叫 X，不用再 `+workbook-info` 查一遍了。」
+- 「`+formula-verify` 返回 total_errors=0 就算通过，partial/has_more 不用管。」
+- 「INDEX 行上界先按 1423 写死，行数变了再改。」
+- 「阅读视图公式我直接在技能目录里再写一份生成逻辑，比调 projects 下的方便。」
 
 ## Red Flags（危险信号）
 
@@ -30,6 +34,11 @@ version: 1.1
 - 产出 HTML/PNG 背景非 `#FFFFFF`（或残留 `#111111` 深色块）。
 - 交付物没有口径说明四要素（数据截止日期、剔除规则、灰色 AM 逻辑、主/备用口径定义）。
 - 汇报里出现「应该 / 大概 / 大约」但没有可回读的数字证据。
+- 未先 `+workbook-info` 取真实 sheet 名/ID 就直接写入（线上 sheet 已被人工改名过）。
+- 对 `历史入驻` / `AM分析` 等受保护 Sheet 发起任何写入或 clear。
+- `+formula-verify` 返回 `status=partial` + `has_more=true` 却拿 `total_errors=0` 当验收通过。
+- 阅读视图 INDEX 行上界或 MATCH 列上界被硬编码，与底表实际行数/列数脱节。
+- 用「全量底表 AM 空值率 77%」当质检 FAIL（错误口径），或对 `BD底表` 不校验 `负责BD` 非空率 == 100%。
 
 ## Verification（强制验收清单）
 
@@ -42,6 +51,7 @@ version: 1.1
 5. **白底断言**：PNG 四角像素为 `(255,255,255)`；HTML 含 `backgroundColor` 且不含 `111111`。
 6. **象限与分界线**：分界线取**有效 AM**（非 pending）中位数，四象限命名为明星 / 精耕小池 / 规模待提效 / 待突破。
 7. **口径说明随交付**：数据截止日期、剔除规则、灰色 AM 复核提示一并输出。
+8. **分层架构验收**（涉及数据同步时强制）：6 张 Sheet 行数与 `layered_result.json` 一致；每个阅读视图 `Σtotal_formulas == 行数 × 38`；`PROTECTED` Sheet 零写入；`overall == true`。
 
 ## 合规默认值（Defaults）
 
@@ -63,6 +73,71 @@ version: 1.1
 - 长整型字段：EU/UK_global seller id、EU/UK_匹配global_seller_id 一律 dtype=object（文本格式 @）
 - 零信任门禁：行数断言 / 关键字段空值率<5%（负责AM、seller_id[已入驻口径]、AM优先级）/ RAW 抽 10 行 0 差异；任一 FAIL → 写失败日志并非 0 退出
 - 技能内入口：`scripts/sync_source_entry.py`（L3 断言层：校验 `projects/eu-am-efficiency/source_sync.py` 存在，缺失即 `raise FileNotFoundError`，存在则子进程转发调用，不复制真相源）
+
+## 🗂 分层读写架构（3 底表 + 3 阅读视图）
+
+自 v1.2 起，数据同步从「1 底表 + 1 阅读视图」升级为**人机分层读写**架构：底表层给机器（全字段、幂等覆盖），阅读层给人（固定 38 列表头、公式动态引用）。
+
+```
+多维表格源（106 字段 / 8496 行）
+   └─ build_layered_sheets.py --layer base   ← 机器层：3 张底表，106 列全字段，每日幂等覆盖
+        ├─ 全量底表            8496 行  无筛选
+        ├─ 全量_AM招商推进     1906 行  AM优先级 == "AM招商推进"
+        └─ BD底表              1480 行  负责BD 非空
+   └─ build_layered_sheets.py --layer view   ← 人类层：3 张阅读视图，38 列固定表头
+        ├─ 全量_阅读视图        → 全量底表         （8496 行）
+        ├─ AM招商推进_阅读视图  → 全量_AM招商推进  （1906 行）
+        └─ BD_阅读视图          → BD底表           （1480 行）
+   受保护不可写：历史入驻、AM分析
+```
+
+目标电子表格：<https://bytedance.my.larkoffice.com/sheets/RvpVsoUODhqCXJt4rFgm1M6ky2e>
+
+### Sheet 台账（sheetId 为线上事实，写入前仍须 `+workbook-info` 复核）
+
+| 层 | Sheet 名 | sheetId | 行数 | 列 | 筛选口径 / 引用来源 |
+|---|---|---|---|---|---|
+| 底表 | `全量底表` | `YNN8uk` | 8496 | 106 | 无筛选（源全量） |
+| 底表 | `全量_AM招商推进` | `8953af` | 1906 | 106 | `AM优先级 == "AM招商推进"`（**新口径，不再叠加 `历史入驻 != 1`**；旧口径为 1422 行） |
+| 底表 | `BD底表` | `MpyNOP` | 1480 | 106 | `负责BD` 非空（非 None / 非空串 / strip 后非空） |
+| 阅读 | `全量_阅读视图` | `KYImDl` | 8496 | 38 | 引用 `全量底表` |
+| 阅读 | `AM招商推进_阅读视图` | `t5m7r4` | 1906 | 38 | 引用 `全量_AM招商推进` |
+| 阅读 | `BD_阅读视图` | `JC5aOe` | 1480 | 38 | 引用 `BD底表` |
+| 🔒 受保护 | `历史入驻` | `Tc3dvL` | — | — | **只读**，任何写入/clear 立刻熔断 |
+| 🔒 受保护 | `AM分析` | `M45mLI` | — | 38 | **只读**（原名「分析基盘_阅读视图」，线上已被人工改名） |
+
+阅读视图公式形态（按字段名动态引用，抗源表列序变动）：
+
+```
+=IFERROR(INDEX(底表!$A$2:$DB$<底表行数+1>, ROW()-1, MATCH(<表头名>, 底表!$A$1:$DB$1, 0)), "")
+```
+
+### 复现命令（唯一真相源 + 技能内薄壳入口）
+
+真相源：`projects/eu-am-efficiency/build_layered_sheets.py`（单文件参数化），结果落 `projects/eu-am-efficiency/layered_result.json`。
+
+```bash
+cd user_skills/eu-am-efficiency-analyzer
+python3 scripts/layered_sync_entry.py --dry-run          # 只算行数与筛选，不写飞书
+python3 scripts/layered_sync_entry.py --layer base       # 只重建 3 张底表
+python3 scripts/layered_sync_entry.py --layer view       # 只重建 3 张阅读视图
+python3 scripts/layered_sync_entry.py                    # 全链路（base + view）
+python3 scripts/layered_sync_entry.py --cache <records.ndjson>   # 复用本地拉取缓存
+```
+
+`scripts/layered_sync_entry.py` 是**纯 L3 断言 + 子进程转发**的薄壳：真相源缺失即 `raise FileNotFoundError`，绝不在技能目录内复制业务逻辑（与 `sync_source_entry.py` 完全同构）。所有飞书链路调用必须 `include_secrets=true`。
+
+### 工程护栏（8 条，踩坑换来的硬约束）
+
+1. **写入前必须 `+workbook-info` 取真实 sheet 名/ID**，绝不凭上下文里的名字直接写——实测线上 sheet 已被人工改名（`分析基盘_阅读视图` → `AM分析`）。
+2. **`+cells-clear` 打不存在的 sheet 会 `900015206` 熔断** → 先判存在再 clear；不存在的子表交给 `+table-put` 自动创建。
+3. **`+formula-verify` 单次扫描上限 20 万单元格**：大表返回 `status=partial` + `has_more=true` 时 `total_errors=0` **不可信**，必须 `--range` 分段复扫，并校验 `Σtotal_formulas == 行数 × 38`。
+4. **INDEX 行上界必须按底表实际行数参数化**，禁止硬编码（旧 `build_reading_view.py` 写死 `$DB$1423`，是本条护栏的反例来源）。
+5. **`MATCH(表头名, 底表!$A$1:$DB$1, 0)` 的上界 `$DB` 恰好等于 106 列**：源表新增字段导致超过 106 列时必须同步放宽上界，否则新字段会静默 MATCH 不到。
+6. **长整型 ID 强制文本**：`seller_id` / `shop_id` / `leads_id` / `临时id` / 任意含 `id` 的字段一律 `dtypes:object`（文本 `@`），并以「15 位数值阈值」兜底识别漏配字段。
+7. **`PROTECTED` 白名单在所有写入入口 `guard()` 硬熔断**（`历史入驻` / `AM分析`），不依赖人工小心。
+8. **质检口径按底表分别配置断言阈值**：`负责AM` / `AM优先级` 空值率 <5% **只适用于 AM 相关底表**；`全量底表`（77% 无 AM）与 `BD底表`（72% 无 AM）是源数据事实，不构成 FAIL。`BD底表` 的硬断言是 **`负责BD` 非空率 == 100%**。
+
 
 ## ⚙️ 核心架构 / SOP
 

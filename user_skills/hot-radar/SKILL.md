@@ -2,7 +2,7 @@
 name: hot-radar
 description: 热门视频候选集构建器，负责按平台、市场、类目、时间窗口和 Top N 约束发现并整理 TikTok Shop / 抖音跨境服饰内容候选池，输出可直接交给 media-fetcher 或 video-script 消费的结构化 URL 清单、账号信息、基础指标和视频类型标签。适用于需要批量巡检热门视频、搭建爆款样本池、从公开搜索结果或 Aeolus 导出中沉淀候选集的场景。
 ---
-version: 1.1
+version: 1.2
 # 热门雷达（hot-radar）
 
 把“到处翻热门视频”变成一套有输入约束、有 NULL 契约、有结构化输出的候选池构建流程。
@@ -17,6 +17,12 @@ version: 1.1
 - “找不到账号名也没关系，标题差不多就够用了。”
 - “公开搜索抓不到 GMV，就先拿互动量替代。”
 - “先给一堆 URL，结构化字段等下游再整理。”
+- **时效借口（P0 治理新增）**：
+  - “这条虽然是去年的但很经典，先放进来。”
+  - “拿不到发布时间就先不填，后面补。”
+  - “`--time-window` 写进 manifest 就行，过滤下游会做。”
+  - “近 90 天的候选不够数，先放宽到一年凑够 Top N。”
+  - “反正只是候选池，时效等人工复核时再筛。”
 
 ## Red Flags（危险信号）
 
@@ -27,6 +33,11 @@ version: 1.1
 - 同一候选集中混入不同平台或不同市场，但没有显式字段区分。
 - 视频类型标签没有证据来源（标题、文案片段、账号定位、人工备注）。
 - 输出不含 URL 主键、账号名、来源说明，导致下游无法去重和追溯。
+- **`--time-window` 只写进 manifest 元数据，却不参与任何过滤（装饰参数）。**
+- **`pub_date` 为 `NULL` 的候选仍被放行进主清单，而不是进 DLQ。**
+- 发布时间靠“看起来挺新的”“ID 挺大的”估算，而不是解析或反解。
+- 时效过滤发生在 dedupe / top-n 截断**之后**，导致超期候选先占满名额。
+- 产出 summary 里没有 `stale_rejected_count` / `null_pub_date_count` 拦截计数证据。
 
 ## Verification（强制验收清单）
 
@@ -37,6 +48,14 @@ version: 1.1
 3. **NULL 契约成立**：缺失指标统一写 `NULL`，禁止估算、禁止静默留空。
 4. **标签可解释**：视频类型标签能回到标题关键词、描述片段、账号定位或人工备注。
 5. **输出可消费**：结果可直接交给 `media-fetcher` / `video-script`，无需二次清洗字段名。
+6. **时效硬过滤验收（P0 治理新增，不可跳过）**：
+   - 产出 `candidates` 中**不存在** `publish_time` 为 `NULL` 的候选；
+   - 产出 `candidates` 中**不存在** `age_days` 超过 `effective_cutoff_days`（默认 90）的候选；
+   - `summary` 中给出 `stale_rejected_count` / `null_pub_date_count` /
+     `synthetic_id_rejected_count` / `fresh_within_30d_count` 拦截与优选计数证据；
+   - `query.effective_cutoff_days = min(--time-window 解析天数, --pub-date-cutoff-days)`，
+     证明 `--time-window` 真实参与过滤而非只写元数据；
+   - 被拦截候选全部落 DLQ，且 `reason` 形如 `pub_date_gate:stale_pub_date`，可追溯。
 
 ## 📌 技能简介
 
@@ -73,6 +92,10 @@ version: 1.1
 - `DEFAULT_SOURCE_TYPES = ["public_search", "aeolus_export", "manual_watchlist"]`
 - `DEFAULT_VIDEO_TYPE_TAGS = ["口播", "剧情", "测评", "种草", "直播切片", "混剪"]`
 - `DEFAULT_OUTPUT_FILE = "hot_radar_candidates.json"`
+- `DEFAULT_HARD_CUTOFF_DAYS = 90`（发布时间硬过滤上限，超过物理拦截）
+- `DEFAULT_SOFT_PREFER_DAYS = 30`（软优选，近 30 天候选排序靠前）
+- `DEFAULT_NULL_ACTION = "reject"`（`pub_date` 解析不到一律拒绝，绝不估算）
+- `DEFAULT_GUARD_CONFIG = "references/hot_radar_config.yaml"`（缺失时回退内置默认值，只严不宽）
 
 ## ⚙️ 核心架构 / SOP / 约束条件
 
@@ -86,6 +109,11 @@ version: 1.1
 - `top_n`：候选条数上限
 
 若其中任一字段缺失，先补齐或用默认值，不要直接盲搜。
+
+⚠️ `time_window` **不是元数据标签，而是真过滤条件**。它会被
+`scripts/pub_date_guard.py` 解析成天数，并与硬顶 90 天取更严格的一侧作为本次
+运行的 `effective_cutoff_days`。无法解析（如「随便什么时候」）时直接抛错熔断，
+禁止「解析失败=不过滤」的静默放行。
 
 ### Step 2：选择发现链路
 
@@ -138,7 +166,34 @@ version: 1.1
 - `story` / `剧情` / `反转` → `剧情`
 - 以上都不命中时，保留 `其他` 或人工补标。
 
-### Step 5：去重与输出
+### Step 5：时效硬过滤（GUARD-PUB_DATE-v1，必须在去重/截断之前）
+
+归一化完成后、去重与 Top N 截断**之前**，先过 `pub_date` 守门员：
+
+```python
+from pub_date_guard import gate_candidates, log_freshness_distribution
+passed, rejected, stats = gate_candidates(records, time_window="近7天")
+log_freshness_distribution(stats, stage="hot-radar")
+```
+
+拦截顺序（命中即拒，reason 唯一）：
+
+| 顺序 | reason | 判据 |
+|---|---|---|
+| 1 | `blacklist_hit` | 命中伪造 ID 拉黑表 |
+| 2 | `synthetic_id` | video_id 含 `1234567890` 一类顺序数字指纹 |
+| 3 | `null_pub_date` | 发布时间解析不到（NULL 契约，默认 reject） |
+| 4 | `future_pub_date` | 反解发布日晚于批次日 |
+| 5 | `stale_pub_date` | 年龄 > `effective_cutoff_days` |
+
+发布时间解析优先级：`metadata.timestamp` → `metadata.upload_date` →
+候选自带 `publish_time` → `video_id` 高 32 位 snowflake 反解。全部落空返回
+`(None, "NULL")`，**绝不估算**。
+
+通过的候选按「软优选（≤30 天）优先 → 年龄升序」排序，确保新内容优先占据
+Top N 名额；被拦截的候选全部落 DLQ 并写明 reason，绝不静默丢弃。
+
+### Step 6：去重与输出
 
 - 以 `video_url` 为主键去重。
 - 保留首次出现的来源说明，必要时合并 `source_note`。
@@ -148,6 +203,22 @@ version: 1.1
 ## Runtime Assertions（运行时断言）
 
 执行脚本前后至少满足以下断言：
+
+```python
+# [GUARD-PUB_DATE-v1] 此处为发布时间硬过滤断言，禁止删除或绕过
+# 规则：pub_date 为 NULL 或超 90 天的候选物理拦截
+# 来源：ledger_year_audit_20260821，DEC-20260821（热门剧本沉淀 P0 治理）
+
+def assert_no_stale_in_output(candidates, cutoff_days=90):
+    bad = [
+        c for c in candidates
+        if str(c.get("publish_time")).upper() in {"NULL", "NONE", ""}
+        or (isinstance(c.get("age_days"), int) and c["age_days"] > cutoff_days)
+    ]
+    if bad:
+        raise AssertionError("产出中存在 NULL / 超期候选，禁止放行")
+```
+
 
 ```python
 
@@ -178,12 +249,25 @@ def validate_null_contract(row):
 python3 scripts/build_candidate_manifest.py \
   --input-path data/raw_candidates.json \
   --output-path output/hot_radar_candidates.json \
+  --dlq-path output/hot_radar_candidates.dlq.jsonl \
   --platform "TikTok Shop" \
   --market "US" \
   --category "服饰" \
   --time-window "近7天" \
-  --top-n 50
+  --top-n 50 \
+  --pub-date-cutoff-days 90 \
+  --null-action reject
 ```
+
+参数说明：
+- `--time-window`：真实参与过滤，支持『近7天』/『近30天』/『last 7 days』/『7d』/『30』。
+- `--pub-date-cutoff-days`：硬过滤上限，默认 `90`；实际生效值取它与
+  `--time-window` 解析天数中**更严格**的一侧。
+- `--null-action`：默认 `reject`，`pub_date` 解析不到即拦截入 DLQ。
+
+产出 `summary` 会给出 `stale_rejected_count` / `null_pub_date_count` /
+`synthetic_id_rejected_count` / `fresh_within_30d_count`，并在 stderr 打印
+「本次候选池时效分布」断言日志。
 
 ## 输出口径要求
 
@@ -207,6 +291,19 @@ python3 scripts/build_candidate_manifest.py \
 
 ## Changelog
 
+- **v1.2 (2026-08-21)**：P0 时效治理 —— 把 `--time-window` 从装饰参数升级为真过滤。
+  - 新增 `scripts/pub_date_guard.py`（技能自包含守门员，`GUARD-PUB_DATE-v1`），
+    对外暴露 `gate_candidates()` / `log_freshness_distribution()` / `load_blacklist()`；
+    新增出口断言 `assert_no_stale_in_output()`。
+  - 新增 `references/hot_radar_config.yaml` 作为配置真相源，缺失时回退内置默认值（只严不宽）。
+  - `build_candidate_manifest.py` 在 dedupe / top-n 截断**之前**接入硬过滤：
+    NULL 或超 90 天候选物理拦截并落 DLQ，近 30 天候选软优选排序靠前。
+  - 新增 `--pub-date-cutoff-days`（默认 90）、`--null-action`（默认 reject）参数；
+    `--time-window` 无法解析时抛错熔断，禁止静默放行。
+  - `summary` 新增 `stale_rejected_count` / `null_pub_date_count` /
+    `synthetic_id_rejected_count` / `fresh_within_30d_count`，并输出 freshness 分布日志。
+  - 文档同步补齐时效借口库、`--time-window` 装饰参数危险信号、时效硬过滤验收清单。
+  - 来源：ledger_year_audit_20260821，DEC-20260821（热门剧本沉淀 P0 治理）。
 - **v0.1 (2026-06-14)**：首版发布，固化“查询合同 → 多源发现 → 字段归一化 → 标签归一化 → JSON manifest 输出”的热门候选池流程。
 
 ## 操作示例

@@ -3,8 +3,20 @@ import argparse
 import csv
 import json
 import re
+import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pub_date_guard import (  # noqa: E402
+    DEFAULT_HARD_CUTOFF_DAYS,
+    DEFAULT_NULL_ACTION,
+    assert_no_stale_in_output,
+    gate_candidates,
+    log_freshness_distribution,
+    parse_time_window_days,
+    resolve_cutoff_days,
+)
 
 DEFAULT_NULL = "NULL"
 DEFAULT_TOP_N = 50
@@ -142,9 +154,41 @@ def build_record(record: Dict[str, Any], platform: str, market: str, category: s
     tags = infer_tags(record)
     normalized["video_type_tags"] = tags
     normalized["is_live_clip"] = normalize_live_clip(record, tags)
+    # 透传发布时间解析所需的原始线索，供 pub_date_guard 按优先级反解，
+    # 缺失时不造值 —— 守门员会走 NULL 契约拦截。
+    for raw_key in ("timestamp", "upload_date", "video_id", "metadata", "pub_date_source"):
+        if record.get(raw_key) not in (None, ""):
+            normalized[raw_key] = record[raw_key]
     validate_candidate_row(normalized)
     validate_null_contract(normalized)
     return normalized
+
+
+# [GUARD-PUB_DATE-v1] 此处为发布时间硬过滤断言，禁止删除或绕过
+# 规则：pub_date 为 NULL 或超 90 天的候选物理拦截
+# 来源：ledger_year_audit_20260821，DEC-20260821（热门剧本沉淀 P0 治理）
+def apply_pub_date_gate(
+    records: List[Dict[str, Any]],
+    time_window: str,
+    hard_cutoff_days: int,
+    null_action: str,
+):
+    """
+    在 dedupe / top-n 截断**之前**做时效硬过滤。
+
+    历史缺陷：`--time-window` 曾是只写进 manifest 元数据的装饰参数，不参与任何
+    过滤，导致入库样本中位年龄 436 天、74.4% 超 90 天。此函数把它变成真过滤：
+      - 有效 cutoff = min(--time-window 解析天数, hard_cutoff_days)
+      - pub_date 解析不到（NULL）默认 reject，绝不估算
+      - 近 soft_prefer_days（默认 30）天候选排序靠前，优先占据 top-n 名额
+    返回 (passed, rejected, stats)。
+    """
+    return gate_candidates(
+        records,
+        time_window=time_window,
+        hard_cutoff_days=hard_cutoff_days,
+        null_action=null_action,
+    )
 
 
 def dedupe(records: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -176,11 +220,19 @@ def main() -> int:
     parser.add_argument("--platform", required=True)
     parser.add_argument("--market", required=True)
     parser.add_argument("--category", required=True)
-    parser.add_argument("--time-window", required=True)
+    parser.add_argument("--time-window", required=True,
+                        help="时效窗口，参与真实硬过滤。支持『近7天』/『近30天』/『last 7 days』/『7d』/『30』")
     parser.add_argument("--top-n", type=int, default=DEFAULT_TOP_N)
+    parser.add_argument("--pub-date-cutoff-days", type=int, default=DEFAULT_HARD_CUTOFF_DAYS,
+                        help=f"发布时间硬过滤天数上限，默认 {DEFAULT_HARD_CUTOFF_DAYS}；"
+                             f"与 --time-window 解析值取更严格的一侧")
+    parser.add_argument("--null-action", choices=["reject", "keep"], default=DEFAULT_NULL_ACTION,
+                        help="pub_date 解析不到时的动作，默认 reject（NULL 契约）")
     args = parser.parse_args()
 
     validate_query(args.platform, args.market, args.category, args.top_n)
+    if args.pub_date_cutoff_days <= 0:
+        raise ValueError("--pub-date-cutoff-days 必须大于 0，禁止把闸门关掉")
     input_path = Path(args.input_path)
     if not input_path.exists():
         raise FileNotFoundError(f"输入文件不存在: {input_path}")
@@ -195,21 +247,59 @@ def main() -> int:
         except Exception as exc:  # noqa: PERF203
             invalid_rows.append({"row_number": idx, "reason": str(exc), "payload": row})
 
-    deduped = dedupe(normalized_records)[: args.top_n]
+    # [GUARD-PUB_DATE-v1] 时效硬过滤必须发生在 dedupe / top-n 截断之前
+    gated, stale_rejected, gate_stats = apply_pub_date_gate(
+        normalized_records,
+        time_window=args.time_window,
+        hard_cutoff_days=args.pub_date_cutoff_days,
+        null_action=args.null_action,
+    )
+    log_freshness_distribution(gate_stats, stage="hot-radar/build_candidate_manifest")
+
+    for row in stale_rejected:
+        gate = row.get("_gate", {})
+        invalid_rows.append(
+            {
+                "row_number": None,
+                "reason": f"pub_date_gate:{gate.get('reason')}",
+                "guard": "GUARD-PUB_DATE-v1",
+                "age_days": gate.get("age_days"),
+                "publish_date": gate.get("publish_date"),
+                "cutoff_days": gate.get("cutoff_days"),
+                "payload": {k: v for k, v in row.items() if k != "_gate"},
+            }
+        )
+
+    deduped = dedupe(gated)[: args.top_n]
+    # [GUARD-PUB_DATE-v1] 出口断言：写盘前再验一次，防止过闸后被重新注入
+    assert_no_stale_in_output(deduped, cutoff_days=int(gate_stats["cutoff_days"]))
+
+    reject_reasons = gate_stats.get("reject_reasons", {})
     output = {
         "query": {
             "platform": normalize_platform(args.platform),
             "market": args.market,
             "category": args.category,
             "time_window": args.time_window,
+            "time_window_days": parse_time_window_days(args.time_window),
+            "effective_cutoff_days": gate_stats["cutoff_days"],
+            "null_action": args.null_action,
             "top_n": args.top_n,
         },
         "summary": {
             "input_count": len(raw_records),
             "valid_count": len(normalized_records),
+            "gate_passed_count": len(gated),
+            "stale_rejected_count": reject_reasons.get("stale_pub_date", 0),
+            "null_pub_date_count": reject_reasons.get("null_pub_date", 0),
+            "synthetic_id_rejected_count": reject_reasons.get("synthetic_id", 0)
+            + reject_reasons.get("blacklist_hit", 0)
+            + reject_reasons.get("future_pub_date", 0),
+            "fresh_within_30d_count": sum(1 for r in deduped if r.get("soft_preferred")),
             "deduped_count": len(deduped),
             "dlq_count": len(invalid_rows),
         },
+        "freshness": gate_stats,
         "candidates": deduped,
         "dlq_path": str(Path(args.dlq_path).resolve()),
     }

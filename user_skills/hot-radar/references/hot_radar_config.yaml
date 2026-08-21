@@ -1,0 +1,43 @@
+# =============================================================================
+# hot-radar 技能本体运行时治理配置
+#
+# [GUARD-PUB_DATE-v1] 此文件为发布时间硬过滤断言的配置真相源，禁止删除或绕过
+# 规则：pub_date 为 NULL 或超 90 天的候选物理拦截
+# 来源：ledger_year_audit_20260821，DEC-20260821（热门剧本沉淀 P0 治理）
+#
+# 技能自包含说明：
+#   scripts/pub_date_guard.py 默认解析本文件；若本文件缺失或 pyyaml 不可用，
+#   守门员会回退到模块内置的 _FALLBACK_CONFIG（与本文件同值，只严不宽）。
+# =============================================================================
+
+pub_date_filter:
+  hard_cutoff_days: 90   # 硬过滤，超过即物理拦截
+  soft_prefer_days: 30   # 软优选，近 30 天候选排序靠前
+  null_action: reject    # NULL 一律拒绝，禁止「拿不到就先放进来」
+
+# --- 发布时间解析口径 -------------------------------------------------------
+# 优先级从高到低，命中即停。解析不到一律返回 (None, "NULL")，绝不估算。
+pub_date_resolve:
+  order:
+    - metadata_timestamp    # yt-dlp metadata.timestamp（unix 秒，权威）
+    - metadata_upload_date  # yt-dlp metadata.upload_date（YYYYMMDD）
+    - explicit_publish_time # 候选自带 publish_time / publish_date / pub_date
+    - snowflake             # video_id 高 32 位反解 unix 秒（离线兜底）
+  snowflake:
+    enabled: true
+    # sanity 区间：2011-03-13 ~ 2030-03-18，落在区间外判定为不可解析
+    min_unix_ts: 1300000000
+    max_unix_ts: 1900000000
+
+# --- 伪造 / 幻觉 video_id 拦截 ----------------------------------------------
+synthetic_id_filter:
+  enabled: true
+  reject_sequential_fingerprint: true  # ID 含 1234567890 一类顺序数字指纹
+  reject_future_publish: true          # 反解发布日晚于批次日
+  blacklist_file: references/blacklist_video_ids.txt
+
+# --- 可观测性 ---------------------------------------------------------------
+observability:
+  log_freshness_distribution: true
+  age_buckets_days: [7, 14, 30, 90, 180, 365]
+  log_dir: output/guard_logs

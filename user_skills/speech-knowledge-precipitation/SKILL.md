@@ -3,7 +3,7 @@ name: speech-knowledge-precipitation
 description: 将长音视频、演讲、对谈或飞书妙记转写沉淀为结构化知识文档。支持本地音频 ASR 切片转写，也支持以 minutes_transcript 作为一等输入源跳过 ASR，直接进入逐字稿规范化、L1-L4 提炼、零信任 QA 与飞书 Docx 归档。适用于视频解析、演讲复盘、会议妙记沉淀、知识提炼、逐字稿整理与飞书归档场景。
 ---
 
-<!-- SSOT version marker (read by skill-forge-pipeline-v4 register_skill.py) -->
+<!-- SSOT version marker (read by skill-forge-pipeline register_skill.py) -->
 version: 1.1
 # 演讲知识沉淀 (Speech Knowledge Precipitation v1.1)
 
