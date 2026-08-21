@@ -2,6 +2,31 @@
 
 > 说明：v5.19 起技能更名为 `skill-forge-pipeline`（Skill ID `SKILL-FORGE-PIPELINE` 不变）。以下历史条目中的旧名 `skill-forge-pipeline-v4` 保留原样以保持记录保真。
 
+## v5.20 (2026-08-21)
+
+### Task 1 — 补 L3 断言：说明文档正文版本回读
+- **缺陷**：每次锻造后，飞书说明文档的标题/正文版本号仍停留在旧版，连续两轮「假成功」。
+- **根因（三重叠加）**：
+  1. 版本正则只认「带标签」形态（`version:` / `版本号：`），认不出标题里的 `(Forge Pipeline V5.19)`；
+  2. 替换串误写成 `r"\\1"`（字面反斜杠 + 1，而非分组反向引用），即便命中也会写坏；
+  3. `.lark.md` 兜底下载不含 `<!-- BLOCK_n | id -->` 标记，导致「按块遍历」的 while 循环永远进不了替换分支，最终只打印一句 `⚠️ No explicit version marker found in doc; skip SSOT doc sync.` 静默放行。
+- **修复**：重写 `sync_version_to_skill_doc_via_mcp()`，新增
+  - `collect_doc_version_lines()`：识别标题内嵌版本 + 带标签版本（含 `` `version`: `5.19` `` 反引号变体），刻意**不匹配** Changelog 历史行以保真；
+  - `_rewrite_doc_version_line()`：逐行 `str_replace` 全量改写；
+  - `assert_doc_body_version_synced()`：写后 `sleep 2s` 重新下载文档做 RAW 回读，断言所有版本标识 == 本次锻造版本；不通过 `raise GuardrailViolation("【文档版本未同步】...")`，全文无版本标识同样 `raise`（禁止静默跳过）。
+- **双次断言**：写入后 + Wiki Mount 之后各断言一次（防搬家把旧版本带回），结果落 `metadata.json` 的 `doc_version_synced` / `doc_version_sync`。
+
+### Task 2 — Code Review 修复
+- **版本号 patch 位截断（已知 BUG）**：`_normalize_version_to_int_pair()` / `_format_version_pair()` 只取 `(major, minor)`，`v1.6.1` 被静默降级为 `1.6`。改为 `_parse_version()` → `(major, minor, patch|None)` + `_format_version()` + `normalize_version_text()`，**两段进两段出、三段进三段出**。
+- **`bump_version` 语义补全**：新增 `patch` 档；三段版本做 minor/major 升迁时自动补 `.0`（`1.6.1` --minor--> `1.7.0`）；`--bump` 新增 `patch` 选项与交互式第 3 项，非交互报错文案同步更新。
+- **技能包体积护栏**：`create_skill_zip()` 新增运行时产物黑名单（`.tmp` / `.runtime` / `downloads` / `snapshots` / `output(s)` 目录，`*.zip` / `*.mp4` / `*.part` / `*.pyc` 后缀）与 >50MB 醒目告警，防重演 245MB 技能包被 pre-push 熔断。
+- **文档**：`SKILL.md` Common Rationalizations +3 / Red Flags +3 / Verification 第 14 条 / Defaults 新增版本形态与回读断言默认值。
+
+### 遗留观察项（未改，风险可控）
+- `call_with_retry()` 会对 `GuardrailViolation` 同样重试 3 次：对最终一致性场景（文档回读）有益，但对纯参数类违规属无谓重试，建议后续按异常类型分流。
+- `metadata.json` 写入 `Path.cwd()`，路径依赖调用现场；按 AGENT.md R4，它是单次发布回执，不应纳入 Git 跟踪。
+- 多处 `except Exception` 宽捕获（枚举/快照类降级路径），已有醒目 WARNING，但建议收窄异常类型以免掩盖真实缺陷。
+
 ## v5.19 (2026-08-21)
 - **新增第四步「Cloud Publish 云端发布」**：此前流水线止步于 Git Push，技能虽已进 GitHub `Yu1ocean/qi-skills`，却仍是 Aime 本地草稿，必须人工去界面点「上传到云端」才真正生效 —— 这是自动化链路上最后一段手工缺口。
 - 新增 `scripts/cloud_publish.py`：

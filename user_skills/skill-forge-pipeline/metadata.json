@@ -1,16 +1,21 @@
 {
-    "skill_id": "VIDEO-SCRIPT",
-    "name": "video-script",
-    "description": "结构化拆解优质视频脚本的方法论；v1.3 输出新增 created_at / created_at_source / freshness_status 时效元数据，snowflake 兜底、失败写 NULL，供 script-archive 直接消费",
-    "version": "1.3",
-    "doc_link": "https://bytedance.larkoffice.com/docx/N9Vvd7p8yokL4qxZhufcafx0nUc",
+    "skill_id": "SKILL-FORGE-PIPELINE",
+    "name": "skill-forge-pipeline",
+    "description": "自动化技能创建、升级、打包发布、归档与云端上线流水线（含 CDA 自检、说明文档正文版本回读断言与云端发布断言）",
+    "version": "5.20",
+    "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 21:00",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/video-script",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/video-script.zip",
-    "zip_name": "video-script.zip",
-    "drive_file_token": "Ox8ObX5qioKiVOxiUotc6Gx3n6d",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/Ox8ObX5qioKiVOxiUotc6Gx3n6d"
+    "updated_at": "2026-08-21 21:11",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline.zip",
+    "zip_name": "skill-forge-pipeline.zip",
+    "drive_file_token": "UHUcbhADToLpMMxkRrpce1iwnwg",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/UHUcbhADToLpMMxkRrpce1iwnwg",
+    "doc_version_synced": true,
+    "doc_version_sync": {
+        "expected": "5.20",
+        "checked_lines": 2
+    }
 }

@@ -1,6 +1,8 @@
-# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.19)
+<title>【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.19)</title>
 
-<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZTI4ODQyMmZmODRjOWNhMmE1ODlmNjM0YWNhOTg2ZTNfOTU4NjNhODQyZDBjNWQ5NjVkODI1OTAwNGU4NzJmOTdfSUQ6NzY3NjQ2Njc2ODUyODgyMTQ1OV8xNzg3MzE2NzAyOjE3ODczMjAzMDJfVjM" mime="application/zip" size="3021665" token="XUejb35Qqo8i1Wxm1Vzc3Y4pn8d"/></figure>
+# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.20)
+
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OTdmMmUzMmNlZmZjNjRhNWRhM2NjMjY4OGEyYzkxNWVfOGViNDExMmRkZjkwNTdiNmZlZTgwMzc0ODk0ODUxMGJfSUQ6NzY3NjQ3MTY2MjI5MTg2NDU1OV8xNzg3MzE3ODQzOjE3ODczMjE0NDNfVjM" mime="application/zip" size="3031616" token="UHUcbhADToLpMMxkRrpce1iwnwg"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -84,7 +86,7 @@
   
   ```
 
-## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.15 新增
+## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.20 新增
 
 关联决策：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」。事故起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见。
 

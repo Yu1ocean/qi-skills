@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.19
+version: 5.20
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.19)
+# 技能锻造流水线 (Forge Pipeline V5.20)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -27,6 +27,9 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - “`aime skill upload` 退出码是 0，就不用再 `aime skill list` 回读了。”
 - “顺手加个 `--scope space` 让全员都能用，反正更方便。”
 - “技能名带不带 v4 无所谓，改一半也能跑。”
+- “说明文档正文标题里的版本号是给人看的，跟代码版本不一致也没啥影响。”
+- “文档里没找到版本标识，打一句 warning 跳过就行。”
+- “`v1.6.1` 就当 `1.6` 处理吧，patch 位没人在意。”
 
 ## Red Flags（危险信号）
 
@@ -58,6 +61,9 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - upload 撞权限墙后擅自切换空间或反复重试绕过，而不是如实报告「需要项目空间管理员加成员」。
 - Cloud Publish 在 Git Push 之前执行，或 git push 断言 FAIL 后仍继续上云。
 - 技能改名只改了目录/`SKILL.md`，漏改脚本内硬编码路径或跨技能路由引用（造成断链）。
+- **说明文档正文/标题版本号仍是旧版（如 V5.19），却宣称版本已同步** —— 没有做正文版本回读断言。
+- 文档版本同步链路走到「未找到版本标识 → 打 WARNING → skip」的静默分支（必须改为 `raise`）。
+- 版本号归一化时丢掉 patch 位（`v1.6.1` → `1.6`），导致三段版本被静默降级。
 
 ## Verification（强制验收清单）
 
@@ -81,6 +87,7 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
     - ② **云端回读断言 PASS**：`aime -o json skill list` 中出现该技能名且 `ID` 非空，`aime -o json skill draft list` 的 `cloudVersionTime > 0`（或该名已不在草稿列表），且云端 `UpdatedAt` 相对 upload 前基线有推进；
     - ③ `SKILL.md` 的「## ☁️ 云端发布记录」小节与 `metadata.json` 均记录 `cloud_publish_status` / `cloud_scope` / `cloud_published_at`。
     仅凭 upload 退出码宣称成功视为 P1 假成功缺陷。上传失败必须标记「需手动上传」+ 落死信队列 + 输出醒目 ERROR，禁止静默跳过。
+14. **说明文档正文版本回读断言验收（V5.20 新增）**：SSOT 版本写回 `SKILL.md` 之后，必须调用 `assert_doc_body_version_synced(doc_url, new_version)`：重新下载说明文档 → 提取**标题内嵌版本**（`(... Vx.y[.z])`）与**带标签版本**（`version: x.y` / `版本号：x.y` / `` `version`: `x.y` ``）→ 断言全部等于本次锻造版本。任一处仍为旧版、或全文找不到任何版本标识，都必须 `raise GuardrailViolation` 并标记 **【文档版本未同步】**，禁止静默成功。该断言执行两次：写入后（sleep 2s）+ Wiki Mount 之后（防止搬家把旧版本带回）。
     ⚠️ 断言口径不得使用 `isDraft == False`：真机验证表明只要本地存在同名草稿目录，`skill list` 就会把记录标成 `isDraft=True`，主站点 upload 后也不会丢弃本地草稿，用它断言会误熔断。
 
 ## 适用场景
@@ -200,9 +207,14 @@ python3 user_skills/skill-forge-pipeline/scripts/celebrate_skill.py \
 到了“入库”环节，流水线默认**不直接写飞书表格**（核心入库仍由 `omni-asset-archiver` 作为唯一网关负责），但为了实现「版本同步总线（SSOT）」：
 
 - 必须以目标技能的 `SKILL.md` Frontmatter `version:` 为 **单一事实来源**。
-- 在归档执行时，必须完成版本号升迁（Major +1.0 / Minor +0.1），并将新版本号 **回写覆盖** 本地目标技能 `SKILL.md`。
+- 在归档执行时，必须完成版本号升迁（Major +1.0 / Minor +0.1 / Patch +0.0.1），并将新版本号 **回写覆盖** 本地目标技能 `SKILL.md`。三段版本（`X.Y.Z`）的 **patch 位必须原样保留**，禁止归一化成两段（V5.20 修复）。
 - 同时必须通过 `bytedcli-auth` + MCP `lark_sheets_update`，对飞书台账【专属技能清单】的【版本号】列做定向覆写，并执行“写 → 等 2s → 读回核对”的 RAW 级验收。
-- 若说明文档中存在版本标识，应通过 MCP 将其替换为最新版本号。
+- **说明文档正文版本强同步 + L3 回读断言（V5.20，替代原 best-effort 口径）**：不再是「有则改、无则跳过」。
+  1. **改写范围**：标题内嵌版本（`# ... (Forge Pipeline V5.20)`）与带标签版本（`version: 5.20` / `版本号：v5.20` / `` - `version`: `5.20` ``）**全部**改写；Changelog 历史行（如 `- 2026-04-27：v5.2.0`）刻意不匹配，保持记录保真。
+  2. **回读断言**：写入后 `sleep 2s` 重新下载文档，断言上述所有版本标识 == 本次锻造版本，不通过即 `raise GuardrailViolation`，错误信息带 **【文档版本未同步】** 标记。
+  3. **禁止静默跳过**：文档全文找不到任何版本标识时，同样 `raise`（原实现只打 `⚠️ ... skip SSOT doc sync` 就放行，是本轮堵死的漏洞）。
+  4. **二次断言**：Wiki Mount 完成后再执行一次 `assert_doc_body_version_synced(final_doc_link, ssot_version)`，结果落 `metadata.json` 的 `doc_version_synced` / `doc_version_sync`。
+  5. **历史根因（三重）**：① 旧正则只认「带标签」版本，认不出标题里的 `V5.19`；② 替换串误写成 `r"\\1"`（字面反斜杠+1，而非分组反向引用）；③ `.lark.md` 兜底下载不含 `<!-- BLOCK_n -->` 标记，导致按块遍历的循环永远进不了替换分支。三者叠加 = 连续两轮「假成功」。
 
 - **Zip 打包**：在最后阶段强制运行 `scripts/register_skill.py`，传入 `--skill-dir`，将目标技能目录（如 `user_skills/xxx/`）打包为同级 `.zip` 文件。
 - **云盘发布**：`scripts/register_skill.py` 必须将 `.zip` 发布到飞书云盘，并调用 `feishu-doc-writing-guide/scripts/grant_doc_permissions.py`（底层 `lark-cli drive +member-add` + `+member-list` RAW 回读断言）为 `yuqinan@bytedance.com` 赋 `full_access`。严禁再用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API，严禁调用已下线的 `move_lark_doc` / `ensure_doc_in_personal.py`。
@@ -250,7 +262,7 @@ Git Push 断言 PASS 之后，流水线必须继续把技能推上 Aime 云端�
 # 手动补跑 / 重试：
 python3 user_skills/skill-forge-pipeline/scripts/cloud_publish.py \
   --skill-dir "user_skills/skill-forge-pipeline" \
-  --version "5.19" \
+  --version "5.20" \
   --cloud-scope user
 
 # 零副作用预演
@@ -300,6 +312,8 @@ python3 user_skills/skill-forge-pipeline/scripts/cloud_publish.py \
 - 文档挂载默认插入点：`BLOCK_BEGIN`（标题正下方）
 - `--wiki-node-token` 默认：`GU0ewkyaGi4i5nkwBtNcM3aPn9g`（Aime 技能库根节点）
 - 写后即读 RAW 校验：默认开启（任何不一致必须熔断）
+- 说明文档正文版本回读断言：默认开启（`--skip-ssot-doc-sync` 才跳过，仅限调试）
+- 版本号形态：保留来源形态（两段进两段出、三段进三段出，patch 位不得截断）；`--bump` 支持 `major|minor|patch`
 - **`--initial-version` 默认：`1.1`**（首次发布起始版本号）
   - 当 `SKILL.md` 当前版本仍处于 `0.x` 脚手架阶段时，流水线判定为「首次发布」，**会忽略 `--bump`，直接将版本设为 `1.1`**，不再做 `0.x → 0.x+0.1` 的小迭代。
   - 已经 ≥ `1.0` 的技能，按原 `--bump major|minor` 规则升迁，不受影响。
@@ -363,6 +377,12 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py \
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
+
+- **V5.20**: 堵死「说明文档正文版本未同步」的连续两轮假成功缺陷，并修复版本号 patch 位截断。
+  - **Task 1（L3 断言）**：`register_skill.py` 重写 `sync_version_to_skill_doc_via_mcp()`，新增 `collect_doc_version_lines()` / `_rewrite_doc_version_line()` / `assert_doc_body_version_synced()`。标题内嵌版本 + 带标签版本全量改写，写后 2s RAW 回读断言，Wiki Mount 后再断言一次；找不到版本标识或仍为旧版即 `raise GuardrailViolation("【文档版本未同步】...")`，删除原 `skip SSOT doc sync` 静默分支。结果落 `metadata.json` 的 `doc_version_synced` / `doc_version_sync`。
+  - **Task 1 根因（三重叠加）**：旧正则只认 `version:` 标签认不出标题 `V5.19`；替换串误写 `r"\\1"` 导致即便命中也写成字面量；`.lark.md` 兜底下载无 `<!-- BLOCK_n -->` 标记使按块遍历永不进入替换分支。
+  - **Task 2（Code Review 修复）**：① `_normalize_version_to_int_pair` / `_format_version_pair` 升级为 `_parse_version` / `_format_version` / `normalize_version_text`，**保留 patch 位**（`v1.6.1` 不再被截成 `1.6`）；② `bump_version` 新增 `patch` 档，三段版本 minor/major 升迁自动补 `.0`；③ `--bump` 新增 `patch` 选项与交互式第 3 项；④ `create_skill_zip` 新增运行时产物黑名单（`.tmp` / `.runtime` / `downloads` / `snapshots` / `output(s)` / `*.zip` / `*.mp4` / `*.part`）与 >50MB 体积告警，防重演 245MB 技能包被 pre-push 拦截。
+  - CDA L1：Common Rationalizations 新增 3 条、Red Flags 新增 3 条；Verification 新增第 14 条「说明文档正文版本回读断言验收」；Defaults 新增版本形态与回读断言默认值。
 
 - **V5.19**: 新增第四步「Cloud Publish 云端发布」，并将本技能改名 `skill-forge-pipeline-v4` → `skill-forge-pipeline`（Skill ID `SKILL-FORGE-PIPELINE` 不变）。
   - 根因：此前流水线止步于 Git Push，技能虽进了 GitHub 仓库，却仍是 Aime 本地草稿，必须人工去界面点「上传到云端」才真正生效 —— 这是自动化链路上最后一段手工缺口，也是「已发布」错觉的来源。
@@ -460,7 +480,7 @@ cd user_skills/skill-forge-pipeline \
 
 - `cloud_publish_status`: **FAILED / 需手动上传**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.19`
+- `version`: `5.20`
 - `cloud_scope`: `user`
 - `cloud_published_at`: ``
 - 备注：需手动上传（详见死信队列）

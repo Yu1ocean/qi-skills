@@ -226,22 +226,46 @@ def call_with_retry(action: str, callback: Callable[[], Any], attempts: int = 3,
     raise RuntimeError(f"{action} failed after {attempts} attempts: {last_error}")
 
 
+ZIP_SKIP_DIR_NAMES = {
+    ".git",
+    "__pycache__",
+    ".DS_Store",
+    ".tmp",
+    ".runtime",
+    "downloads",
+    "snapshots",
+    "output",
+    "outputs",
+}
+ZIP_SKIP_SUFFIXES = {".zip", ".mp4", ".part", ".pyc"}
+ZIP_SIZE_WARN_BYTES = 50 * 1024 * 1024
+
+
 def create_skill_zip(skill_dir: Path, output_zip: Path) -> Path:
     if not skill_dir.is_dir():
         raise FileNotFoundError(f"Skill directory not found: {skill_dir}")
 
-    skip_names = {".git", "__pycache__", ".DS_Store"}
     output_zip.parent.mkdir(parents=True, exist_ok=True)
 
     with zipfile.ZipFile(output_zip, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(skill_dir.rglob("*")):
-            if any(part in skip_names for part in path.parts):
+            if any(part in ZIP_SKIP_DIR_NAMES for part in path.parts):
                 continue
             if path == output_zip:
+                continue
+            if path.is_file() and path.suffix.lower() in ZIP_SKIP_SUFFIXES:
+                # 运行时产物（缓存 zip / 媒体 / 下载残片）一律不入包，
+                # 否则技能包会被历史缓存拖成几百 MB（真机曾出现 245MB ZIP 被 push 拦截）。
                 continue
             arcname = Path(skill_dir.name) / path.relative_to(skill_dir)
             archive.write(path, arcname)
 
+    size = output_zip.stat().st_size
+    if size > ZIP_SIZE_WARN_BYTES:
+        print(
+            f"⚠️ 技能包体积异常：{size / 1024 / 1024:.1f}MB > 50MB，"
+            "请检查是否有运行时产物混入（.tmp / downloads / snapshots / 媒体文件）。"
+        )
     return output_zip.resolve()
 
 
@@ -408,18 +432,33 @@ def ensure_bytedcli_auth() -> None:
     run_subprocess(["bash", str(auth_script)], "bytedcli-auth")
 
 
-def _normalize_version_to_int_pair(raw: str) -> Tuple[int, int]:
-    raw = (raw or "").strip()
-    raw = raw.lstrip("vV")
+def _parse_version(raw: str) -> Tuple[int, int, Optional[int]]:
+    """Parse a version string into (major, minor, patch|None).
 
-    m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?$", raw)
+    V5.20 fix: the legacy `_normalize_version_to_int_pair()` truncated the patch
+    segment (`v1.6.1` -> `1.6`), so every forge run silently downgraded
+    three-segment versions. Patch is now preserved verbatim; `None` means the
+    source version was two-segment and must stay two-segment.
+    """
+
+    text = (raw or "").strip().lstrip("vV").strip()
+    m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?$", text)
     if not m:
         raise ValueError(f"Unsupported version format: {raw!r} (expected X.Y or X.Y.Z)")
-    return int(m.group(1)), int(m.group(2))
+    patch = int(m.group(3)) if m.group(3) is not None else None
+    return int(m.group(1)), int(m.group(2)), patch
 
 
-def _format_version_pair(major: int, minor: int) -> str:
-    return f"{major}.{minor}"
+def _format_version(major: int, minor: int, patch: Optional[int] = None) -> str:
+    if patch is None:
+        return f"{major}.{minor}"
+    return f"{major}.{minor}.{patch}"
+
+
+def normalize_version_text(raw: str) -> str:
+    """Normalize any version literal while PRESERVING the patch segment."""
+
+    return _format_version(*_parse_version(raw))
 
 
 def read_skill_version_from_skill_md(skill_dir: Path) -> str:
@@ -434,20 +473,28 @@ def read_skill_version_from_skill_md(skill_dir: Path) -> str:
     if not m:
         raise ValueError(f"version field not found in SKILL.md: {skill_md}")
 
-    major, minor = _normalize_version_to_int_pair(m.group(1).strip())
-    return _format_version_pair(major, minor)
+    return normalize_version_text(m.group(1).strip())
 
 
 def bump_version(current_version: str, bump_type: str) -> str:
-    major, minor = _normalize_version_to_int_pair(current_version)
+    """Bump version while preserving the three-segment shape when present.
+
+    - major: X.Y[.Z] -> X+1.0[.0]
+    - minor: X.Y[.Z] -> X.Y+1[.0]
+    - patch: X.Y[.Z] -> X.Y.Z+1  (two-segment input is treated as .0)
+    """
+
+    major, minor, patch = _parse_version(current_version)
     bump_type = (bump_type or "").strip().lower()
 
     if bump_type == "major":
-        return _format_version_pair(major + 1, 0)
+        return _format_version(major + 1, 0, 0 if patch is not None else None)
     if bump_type == "minor":
-        return _format_version_pair(major, minor + 1)
+        return _format_version(major, minor + 1, 0 if patch is not None else None)
+    if bump_type == "patch":
+        return _format_version(major, minor, (patch or 0) + 1)
 
-    raise ValueError(f"Unsupported bump type: {bump_type!r} (expected major/minor)")
+    raise ValueError(f"Unsupported bump type: {bump_type!r} (expected major/minor/patch)")
 
 
 def is_initial_version(current_version: str) -> bool:
@@ -456,7 +503,7 @@ def is_initial_version(current_version: str) -> bool:
     """
 
     try:
-        major, _minor = _normalize_version_to_int_pair(current_version)
+        major, _minor, _patch = _parse_version(current_version)
     except ValueError:
         return False
     return major == 0
@@ -1104,73 +1151,147 @@ def download_doc_markdown(doc_url: str) -> Path:
     raise RuntimeError(f"Unable to download markdown for doc: {doc_url}")
 
 
-def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
-    """Sync point #3: replace version marker inside the Feishu skill doc.
+# --- 说明文档正文版本标识（V5.20 加固） ---
+# 两类版本标识都必须同步：
+#   1) 带标签的：`version: 5.19` / `版本号：v5.19` / `- `version`: `5.19``
+#   2) 标题内嵌的：`# 【技能说明】xxx · 技能锻造流水线 (Forge Pipeline V5.19)`
+# 历史缺陷：旧实现只认第 1 类，且写替换串时错写成 r"\\1"（字面反斜杠+1，不是分组
+# 反向引用），再加上 .lark.md 兜底下载没有 BLOCK 标记 → 循环永远走不进替换分支，
+# 最终只打印一句 "skip SSOT doc sync" 就静默放行，正文版本长期停在旧版。
+DOC_LABELED_VERSION_RE = re.compile(
+    r"(?i)((?:version|版本号|版本)\s*`?\s*[:：]\s*\**\s*`?\s*)([vV]?)(\d+(?:\.\d+){1,2})"
+)
+DOC_TITLE_VERSION_RE = re.compile(r"(?i)(?<![A-Za-z0-9])([vV])(\d+(?:\.\d+){1,2})")
 
-    This is a best-effort update:
-    - We download the doc as .lark.md with block markers
-    - Find the first block that contains an explicit version marker
-    - Update that block via lark MCP
 
-    If no marker is found, we will log a warning and skip.
+def _is_heading_line(line: str) -> bool:
+    return bool(re.match(r"^\s{0,3}#{1,6}\s", line))
+
+
+def collect_doc_version_lines(text: str) -> list[Tuple[str, list[str]]]:
+    """Return [(line, [version_literals...])] for every version-bearing line.
+
+    Only two shapes are trusted as「正文版本标识」: headings with an inline
+    `Vx.y[.z]` marker, and lines carrying an explicit version label. Changelog
+    history lines (e.g. `- 2026-04-27：v5.2.0`) are deliberately NOT matched, so
+    历史记录不会被改写。
     """
 
+    found: list[Tuple[str, list[str]]] = []
+    for line in text.splitlines():
+        versions = [m.group(3) for m in DOC_LABELED_VERSION_RE.finditer(line)]
+        if _is_heading_line(line):
+            versions += [m.group(2) for m in DOC_TITLE_VERSION_RE.finditer(line)]
+        if versions:
+            found.append((line, versions))
+    return found
+
+
+def _rewrite_doc_version_line(line: str, new_version: str) -> str:
+    updated = DOC_LABELED_VERSION_RE.sub(
+        lambda m: f"{m.group(1)}{m.group(2)}{new_version}", line
+    )
+    if _is_heading_line(updated):
+        updated = DOC_TITLE_VERSION_RE.sub(
+            lambda m: f"{m.group(1)}{new_version}", updated
+        )
+    return updated
+
+
+def assert_doc_body_version_synced(doc_url: str, new_version: str) -> Dict[str, Any]:
+    """L3 runtime gate: RAW read-back of the doc body version markers.
+
+    Post-forge, the Feishu skill doc body/title MUST carry the freshly forged
+    version. Anything else (stale version, or no marker at all) is a
+    「文档版本未同步」defect and must circuit-break — 静默成功是明确禁止的。
+    """
+
+    expected = normalize_version_text(new_version)
     md_path = download_doc_markdown(doc_url)
     text = md_path.read_text(encoding="utf-8", errors="ignore")
+    found = collect_doc_version_lines(text)
 
-    block_re = re.compile(r"^<!--\s*(BLOCK_\d+)\s*\|\s*([^\s]+)\s*-->\s*$")
-    end_re = re.compile(r"^<!--\s*END_BLOCK_\d+\s*-->\s*$")
-    version_re = re.compile(r"(?i)((?:version|版本号|版本)\s*[:：]\s*)([vV]?\d+(?:\.\d+){1,2})")
+    if not found:
+        raise GuardrailViolation(
+            "【文档版本未同步】说明文档正文/标题未找到任何版本标识，无法断言版本已同步。"
+            f"doc={doc_url}, expected={expected}. "
+            "请在文档标题中加入 `(... Vx.y)` 或正文加入 `版本号：x.y` 标识后重跑。"
+        )
 
-    lines = text.splitlines()
-    i = 0
-    while i < len(lines):
-        m = block_re.match(lines[i])
-        if not m:
-            i += 1
+    stale = [
+        (line, v)
+        for line, versions in found
+        for v in versions
+        if normalize_version_text(v) != expected
+    ]
+    if stale:
+        detail = "; ".join(f"{v!r} @ {line.strip()[:80]!r}" for line, v in stale)
+        raise GuardrailViolation(
+            f"【文档版本未同步】说明文档正文版本回读断言 FAILED：expected={expected}，"
+            f"仍存在旧版本标识 -> {detail}。doc={doc_url}"
+        )
+
+    print(
+        f"✅ 说明文档正文版本回读断言 PASS：{len(found)} 处版本标识均为 {expected}。"
+    )
+    return {"expected": expected, "checked_lines": len(found)}
+
+
+def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[str, Any]:
+    """Sync point #3: rewrite EVERY version marker inside the Feishu skill doc.
+
+    Covers both the doc title (`... Forge Pipeline V5.19`) and labeled markers
+    (`版本号：5.19`), then hands over to `assert_doc_body_version_synced()` for a
+    RAW read-back assertion. No marker found => raise (never a silent skip).
+    """
+
+    expected = normalize_version_text(new_version)
+    md_path = download_doc_markdown(doc_url)
+    text = md_path.read_text(encoding="utf-8", errors="ignore")
+    found = collect_doc_version_lines(text)
+
+    if not found:
+        raise GuardrailViolation(
+            "【文档版本未同步】说明文档正文/标题未找到任何版本标识，拒绝静默跳过。"
+            f"doc={doc_url}, target={expected}"
+        )
+
+    updated_count = 0
+    for line, _versions in found:
+        updated_line = _rewrite_doc_version_line(line, expected)
+        if updated_line == line:
             continue
+        print(f"📝 Syncing doc version marker: {line.strip()[:80]!r} -> {expected}")
+        run_subprocess(
+            [
+                "lark-cli",
+                "docs",
+                "+update",
+                "--api-version",
+                "v2",
+                "--as",
+                "user",
+                "--doc",
+                doc_url,
+                "--command",
+                "str_replace",
+                "--doc-format",
+                "markdown",
+                "--pattern",
+                line,
+                "--content",
+                updated_line,
+            ],
+            "sync doc version marker",
+        )
+        updated_count += 1
 
-        block_number = m.group(1)
-        block_id = m.group(2)
-        i += 1
+    if updated_count == 0:
+        print(f"ℹ️ 说明文档版本标识已是 {expected}，无需改写；继续执行回读断言。")
 
-        content_lines: list[str] = []
-        while i < len(lines) and not end_re.match(lines[i]):
-            content_lines.append(lines[i])
-            i += 1
-
-        content = "\n".join(content_lines).strip("\n")
-        if version_re.search(content):
-            updated_content = version_re.sub(r"\\1" + new_version, content)
-            print(f"📝 Syncing doc version marker via lark-cli: {block_number} | {block_id}")
-            run_subprocess(
-                [
-                    "lark-cli",
-                    "docs",
-                    "+update",
-                    "--api-version",
-                    "v2",
-                    "--as",
-                    "user",
-                    "--doc",
-                    doc_url,
-                    "--command",
-                    "str_replace",
-                    "--doc-format",
-                    "markdown",
-                    "--pattern",
-                    content,
-                    "--content",
-                    updated_content,
-                ],
-                "sync doc version marker",
-            )
-            return
-
-        # skip end marker
-        i += 1
-
-    print("⚠️ No explicit version marker found in doc; skip SSOT doc sync.")
+    time.sleep(2)
+    assertion = assert_doc_body_version_synced(doc_url, expected)
+    return {"updated_lines": updated_count, **assertion}
 
 
 def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
@@ -1424,6 +1545,7 @@ def extract_metadata(
     drive_file_url: Optional[str] = None,
     wiki_url: str = "",
     wiki_node_token: str = "",
+    doc_version_sync: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     now = datetime.datetime.now()
     return {
@@ -1441,6 +1563,8 @@ def extract_metadata(
         "zip_name": zip_path.name if zip_path else "",
         "drive_file_token": drive_file_token or "",
         "drive_file_url": drive_file_url or "",
+        "doc_version_synced": bool(doc_version_sync),
+        "doc_version_sync": doc_version_sync or {},
     }
 
 
@@ -1467,7 +1591,7 @@ def main() -> int:
     # SSOT version sync bus
     parser.add_argument(
         "--bump",
-        choices=["major", "minor"],
+        choices=["major", "minor", "patch"],
         help="SSOT 版本升迁：major(+1.0) / minor(+0.1)。若未提供且为交互式终端，会提示选择；非交互式将直接报错。",
     )
     parser.add_argument(
@@ -1543,6 +1667,7 @@ def main() -> int:
     final_doc_link = args.path
     wiki_url = ""
     wiki_node_token = ""
+    doc_version_sync: Optional[Dict[str, Any]] = None
 
     # SSOT version (X.Y)
     ssot_version = ""
@@ -1555,12 +1680,10 @@ def main() -> int:
             new_version = ""
 
             if args.new_version:
-                major, minor = _normalize_version_to_int_pair(args.new_version)
-                new_version = _format_version_pair(major, minor)
+                new_version = normalize_version_text(args.new_version)
             elif is_initial_version(current_version):
                 # First publish: ignore --bump, jump straight to initial version (default 1.1).
-                major, minor = _normalize_version_to_int_pair(args.initial_version)
-                new_version = _format_version_pair(major, minor)
+                new_version = normalize_version_text(args.initial_version)
                 print(
                     f"🚌 SSOT initial publish detected (current={current_version}). "
                     f"Forcing initial version: {new_version}"
@@ -1574,11 +1697,12 @@ def main() -> int:
                         print("choose bump type:")
                         print("  1) minor (+0.1)")
                         print("  2) major (+1.0)")
+                        print("  3) patch (+0.0.1)")
                         choice = (input("Select (default=1): ") or "1").strip()
-                        bump_type = "major" if choice == "2" else "minor"
+                        bump_type = {"2": "major", "3": "patch"}.get(choice, "minor")
                     else:
                         raise RuntimeError(
-                            "SSOT version sync requires --bump {major|minor} or --new-version X.Y in non-interactive mode."
+                            "SSOT version sync requires --bump {major|minor|patch} or --new-version X.Y[.Z] in non-interactive mode."
                         )
                 new_version = bump_version(current_version, bump_type)
 
@@ -1635,7 +1759,7 @@ def main() -> int:
 
             if ssot_version and (not args.skip_ssot) and (not args.skip_ssot_doc_sync):
                 print("🚌 Syncing SSOT version marker to skill doc...")
-                call_with_retry(
+                doc_version_sync = call_with_retry(
                     "sync ssot version marker",
                     lambda: sync_version_to_skill_doc_via_mcp(args.path, ssot_version),
                 )
@@ -1654,6 +1778,14 @@ def main() -> int:
                 print("✅ Wiki Mount Phase finished.")
                 if wiki_mount_result.get("raw_output"):
                     print(wiki_mount_result["raw_output"])
+
+            # L3 final gate: 迁入 Wiki 后再回读一次正文版本，确保搬家过程没把旧版本带回来。
+            if ssot_version and (not args.skip_ssot) and (not args.skip_ssot_doc_sync):
+                print("🚧 Final assert: 说明文档正文版本回读（post wiki mount）...")
+                doc_version_sync = call_with_retry(
+                    "assert doc body version synced",
+                    lambda: assert_doc_body_version_synced(final_doc_link, ssot_version),
+                )
 
             drive_file_token = resolve_attached_drive_file_token(
                 attach_output=attach_output,
@@ -1687,6 +1819,7 @@ def main() -> int:
         drive_file_url,
         wiki_url,
         wiki_node_token,
+        doc_version_sync,
     )
 
     if (
