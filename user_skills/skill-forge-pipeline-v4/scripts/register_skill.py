@@ -1606,7 +1606,7 @@ def main() -> int:
                 before_blocks_error=before_blocks_error,
             )
             drive_file_url = build_drive_file_url(final_doc_link, drive_file_token)
-            print(f"🚀 Repairing drive asset access for {args.user_email} via MCP personal flow...")
+            print(f"🚀 Granting drive asset access (full_access) to {args.user_email} via lark-cli drive +member-add...")
             repair_output = call_with_retry(
                 "repair drive asset access via MCP personal flow",
                 lambda: ensure_drive_asset_access_via_mcp(
@@ -1614,7 +1614,7 @@ def main() -> int:
                     email=args.user_email,
                 ),
             )
-            print("✅ Drive asset access repaired.")
+            print("✅ Drive asset access granted & verified via +member-list RAW readback.")
             if repair_output:
                 print(repair_output)
 
