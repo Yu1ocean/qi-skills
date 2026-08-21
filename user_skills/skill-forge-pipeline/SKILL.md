@@ -510,6 +510,7 @@ python3 scripts/test_doc_zones.py
   - **根因**：`register_skill.py::sync_version_to_skill_doc_via_mcp()` 改文档标题时，把 `<title>...</title>` 剥掉标签后走 `lark-cli docs +update --command str_replace --doc-format markdown` 下发。V5.25 已删除写死的正文 h1，于是这条 markdown str_replace 在正文找不到目标文本时**重新物化了一个同名 h1 block**，「双大标题」每次版本号变化都会复发（手工删除只是治标）。
   - **Plan A（主修复）**：新增 `update_doc_title_via_drive_api(doc_url, new_title)`，标题改写改走独立重命名 API `lark-cli drive +update-title --as user --url <docx_url> --title <新标题> --format json`（只改文档元数据，不触碰正文；wiki 节点标题自动同步；注意 99991400 限流，禁止并行批量）。正文各行（labeled version / 正文 heading）仍走原 `str_replace` 路径不变。原「先改正文、最后改 title 以规避 degrade_code=1014 ambiguous」的顺序契约不再必需（注释已更新为「title 已走独立 API，不再有 ambiguous 风险」），顺序保留仅作历史习惯。
   - **Plan B（收尾兜底断言，双保险）**：新增 `assert_no_phantom_h1(doc_url, doc_title)` —— `docs +fetch --doc-format xml --detail with-ids` 读带 id 结构（复用 `doc_zone_manager.sanitize_doc_xml()` 处理未转义裸 `&`），在 Overwrite Zone（Preserve 锚点 `## 📝 使用案例 & 踩坑记录` 之前）范围内查找与文档 title 同名（空白归一化）的 h1 block；命中即 `block_delete` 自动纠正 + 打印 `⚠️ [L3-autocorrect] deleted phantom h1: <block_id>` + sleep 2s 回读断言 count == 0，仍存在即 `raise GuardrailViolation`。fetch 抖动只允许降级为醒目 WARNING 并标记 `phantom_h1_check="degraded"`，禁止静默 return success。该断言在 `assert_doc_body_version_synced()` 之后调用，结果并入返回 dict（`phantom_h1_check` / `phantom_h1_removed`）。
+  - **真机加固（同版）**：`.lark.md` 下载件会把文档 title 渲染成一行 markdown h1（`# 【技能说明】...`），而正文其实并无该 h1 block —— 对它下发 str_replace 等于「用正文通道改标题」，正是双大标题的真正复发点。故新增 `_is_title_proxy()`：凡 h1 行文本与文档 title 文本相同（空白归一化）的行，一律改走 `drive +update-title`，不再进入 str_replace 通道。
   - CDA L1：Red Flags 新增 2 条（标题走 markdown str_replace / 幽灵 h1 只 WARNING 不熔断）；Verification 新增第 17 条「文档标题改写路径与幽灵 h1 断言验收」；Defaults 新增标题改写通道与幽灵 h1 断言默认值。
 
 - **V5.25**: 根治说明文档「双大标题」冗余，并强化三个 Zone 的入口引导语。
@@ -655,7 +656,7 @@ cd user_skills/skill-forge-pipeline \
 
 - `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.27`
+- `version`: `5.26`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-22 01:39`
+- `cloud_published_at`: `2026-08-22 01:41`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`

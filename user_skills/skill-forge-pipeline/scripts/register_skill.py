@@ -1497,14 +1497,36 @@ def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> Dict[st
     # （ambiguous，标题文案与正文 H1 同时命中）的风险，也不再会在正文物化同名 h1。
     # 保留「正文优先、<title> 最后」的顺序无害，仅作历史习惯保留。
     ordered = sorted(found, key=lambda item: 1 if DOC_TITLE_TAG_RE.match(item[0]) else 0)
+    # 真机踩坑（V5.26）：`.lark.md` 下载件里，文档 title 会被渲染成一行 markdown h1
+    # （`# 【技能说明】...`），而正文其实并不存在该 h1 block。对它下发 str_replace 等于
+    # 「用正文通道改标题」，会在正文物化一个同名 h1 —— 双大标题的真正复发点。
+    # 因此凡「h1 行文本 == 文档 title 文本」的行，一律改走 drive +update-title。
+    doc_title_text = ""
+    for line, _v in found:
+        if DOC_TITLE_TAG_RE.match(line):
+            doc_title_text = _normalize_ws(_strip_title_tag(line))
+            break
+
+    def _is_title_proxy(line: str) -> bool:
+        m = re.match(r"^\s{0,3}#\s+(.*)$", line)
+        if not m:
+            return False
+        text = _normalize_ws(m.group(1))
+        if doc_title_text:
+            return text == doc_title_text
+        # 无 <title> 行时（markdown 只渲染出 h1），h1 即 title 的代理表示
+        return True
+
     for line, _versions in ordered:
         updated_line = _rewrite_doc_version_line(line, expected)
-        if DOC_TITLE_TAG_RE.match(line):
-            doc_title = _strip_title_tag(updated_line)
+        if DOC_TITLE_TAG_RE.match(line) or _is_title_proxy(line):
+            new_title = _strip_title_tag(updated_line)
+            new_title = re.sub(r"^\s{0,3}#\s+", "", new_title).strip()
+            doc_title = new_title
             if updated_line == line:
                 continue
             # Plan A（V5.26）：标题走独立重命名 API，绝不再走 markdown str_replace。
-            update_doc_title_via_drive_api(doc_url, doc_title)
+            update_doc_title_via_drive_api(doc_url, new_title)
             updated_count += 1
             continue
 
