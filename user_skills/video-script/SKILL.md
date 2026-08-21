@@ -4,8 +4,7 @@ description: 结构化拆解优质视频脚本的方法论，支持分析叙事�
 author: 于奇楠
 ---
 
-version: 1.2
-
+version: 1.3
 # 视频脚本（Video Script）
 
 把“一个视频为什么有效”拆成可复用的方法论资产，而不是停留在主观夸赞。
