@@ -480,7 +480,9 @@ def _fetch_doc_markdown_via_lark_cli(document_url: str) -> list[Path]:
     """
 
     token = document_url.rstrip("/").split("/")[-1].split("?")[0]
-    fallback_path = Path(__file__).resolve().parents[1] / f"{token}.lark.md"
+    # Land the by-product in the system temp dir: writing it into the skill dir
+    # would pollute the published .zip and the git working tree.
+    fallback_path = Path(tempfile.gettempdir()) / f"{token}.lark.md"
     fetch_output = run_subprocess(
         [
             "lark-cli",

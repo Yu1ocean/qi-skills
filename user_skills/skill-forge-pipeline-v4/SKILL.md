@@ -201,7 +201,7 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
   - **根因**：`attach_zip_to_doc_via_mcp()` 每次发布都纯 insert 一个新 File Block，从不清理同名旧块；而 `verify_file_block_attached()` 只判断「文件名是否出现过」（`in content`），堆到 14 个 ZIP 块也照样 PASS —— 缺陷因此长期潜伏（24 篇技能说明文档中 7~8 篇被污染）。
   - **改造**：新增 `upsert_zip_file_block()` 实现 UPSERT 语义五步闭环——扫描（`list_doc_zip_file_blocks()` 解析 `<figure><source name=.. token=..>`，取外层 figure id，属性顺序无关）→ 批量 `block_delete` 删除同名旧块（先删后插）→ `+media-insert` 插入新块 → `block_move_after` 归位标题正下方 + `assert_zip_block_below_title()` 位置断言 → RAW 回读断言目标 zip 块数 **== 1**，不等于 1 直接 `raise GuardrailViolation`（严禁 WARNING 降级）。
   - **护栏加固**：`verify_file_block_attached()` 由「出现即 PASS」改为「出现次数 == 1 才 PASS」；`is_own_skill_zip()` 兼容 `<skill>_latest.zip` 等历史变体命名；异物块（他人技能 ZIP）只报告不自动删除。
-  - **运行时通道迁移（阻断性修复）**：`inner_skills/lark/mcp_lark_update_lark_doc.py` / `mcp_lark_lark_download.py` / `mcp_lark_move_lark_doc.py` 均已从运行时下线，v4 链路整体不可运行。文件块插入改走 `lark-cli docs +media-insert`，文档下载改走 `lark-cli docs +fetch --doc-format markdown` 兜底，版本标识同步改走 `docs +update --command block_replace`，Wiki Mount 改走 `lark-cli wiki +node-get` + `wiki +move`。
+  - **运行时通道迁移（阻断性修复）**：`inner_skills/lark/mcp_lark_update_lark_doc.py` / `mcp_lark_lark_download.py` / `mcp_lark_move_lark_doc.py` 均已从运行时下线，v4 链路整体不可运行。文件块插入改走 `lark-cli docs +media-insert`，文档下载改走 `lark-cli docs +fetch --doc-format markdown` 兜底，版本标识同步改走 `docs +update --command block_replace`，Wiki Mount 改走 `lark-cli wiki +node-get` + `wiki +move`；文档下载副产物落系统临时目录，不再污染技能目录与发布 zip。
   - **真机验证**：`skill-forge-pipeline-v4` 说明文档（`HgY3dJBPfowjJfxWnxWcvItJncg`）forge 前 `skill-forge-pipeline-v4.zip` 块数 = 0（另有 1 个异物块 `skill-forge-pipeline.zip` 仅报告不删除），forge 后回读断言 == 1。
 
 - **V5.14**: 修复 forge 回执落点错位与版本号 patch 位截断两项 P1 缺陷。
