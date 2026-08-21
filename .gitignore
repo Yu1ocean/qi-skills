@@ -1,3 +1,19 @@
+# ==========================================================
+# qi-skills 仓库 .gitignore
+# 唯一目的：只同步 user_skills/ 下的技能源码，杜绝沙盒垃圾入库
+# 2026-08-21 加固：根目录白名单 + 全局临时目录护栏
+# ==========================================================
+
+# ---------- 1. 根目录白名单（防止 git add -A 吸入整个沙盒） ----------
+/*
+!/.gitignore
+!/MEMORY.md
+!/metadata.json
+!/user_skills/
+!/published/
+!/weekly-card-w30/
+
+# ---------- 2. 通用垃圾 ----------
 *.pyc
 __pycache__/
 .env
@@ -6,28 +22,52 @@ memory/
 .aime/
 projects/
 
-# Keep every file under user_skills/ tracked for qi-skills sync
+# 保留 user_skills/ 下的全部技能源码（含 json 配置）
 !user_skills/
 !user_skills/**
 
-# 下载类技能产物 - 禁止入 Git
-user_skills/yt-dlp-media-downloader/downloads/
-user_skills/*/downloads/
-user_skills/*/output/*.mp4
-user_skills/*/output/*.mp4.part
-user_skills/*/output/*.webm
-user_skills/*/output/*.m4a
-user_skills/*/output/*.mp3
+# ---------- 3. 全局临时目录 / 运行时产物护栏（最高优先级，放最后） ----------
+.tmp/
+**/.tmp/
+**/.tmp_*/
+**/tmp/
+**/.runtime/
+**/.cache/
+**/.ephemeral_pool/
+**/.index/
+.heartbeat_dlq*.jsonl
+
+# 快照类
+**/snapshots/
+**/assets/snapshots/
+*.snapshot
+*.snapshot.json
+
+# 输出/导出产物
+**/output/
+**/outputs/
+**/downloads/
+**/exports/
+*_export_*.xlsx
+*_export_*.csv
+lark_sheet_export_*.xlsx
+top3_export_*.xlsx
+top3_W*.xlsx
+
+# forge 打包产物（zip 一律走飞书云盘，不入 Git）
+*.zip
+
+# 媒体大文件
+*.mp4
 *.mp4.part
+*.webm
+*.m4a
+*.mp3
+*.wav
 *.ytdl
 
 # 允许保留目录占位文件
-!user_skills/yt-dlp-media-downloader/downloads/.gitkeep
-!user_skills/*/downloads/.gitkeep
-!user_skills/yt-dlp-media-downloader/downloads/
-!user_skills/*/downloads/
+!**/.gitkeep
 
-# forge artifacts / runtime junk (V6.3)
-user_skills/*.zip
-user_skills/periodic-report-generator/.tmp/
-user_skills/periodic-report-generator/assets/snapshots/
+# 根目录必须保留的元数据（覆盖上面的 *.json 全局忽略）
+!/metadata.json
