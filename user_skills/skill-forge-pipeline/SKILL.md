@@ -1,6 +1,6 @@
 ---
 name: skill-forge-pipeline
-version: 5.27
+version: 5.26
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
@@ -655,7 +655,7 @@ cd user_skills/skill-forge-pipeline \
 
 - `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.23`
+- `version`: `5.27`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 22:26`
+- `cloud_published_at`: `2026-08-22 01:39`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`

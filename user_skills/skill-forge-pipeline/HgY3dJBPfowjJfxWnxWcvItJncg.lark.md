@@ -1,12 +1,12 @@
-# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.27)
+# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.26)
 
-<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MmU4OWJmYzVlZmE4NzExNTZlNGMwYTM4OTZmOTYzNGRfMzMzYjVkMmMwZmYzYWMzMmRjYzU2ZjM0ZDhjNjg3NzRfSUQ6NzY3NjU0MDgxMDgxNjU4ODc4MV8xNzg3MzMzOTQyOjE3ODczMzc1NDJfVjM" mime="application/zip" size="2985017" token="JJ8dbGkYZozeLnxcSIhcpVH6nqy"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MjNjYjU5YWU0MzM2OGE0NDI2Y2U5OTc1MzExMTBkODJfNjZhMjIxMDU0MmU3NmMxYzI3ODVmYjA3NTg2YmI1MDhfSUQ6NzY3NjU0MTIzNzAxNjQ2NDYyNl8xNzg3MzM0MDQxOjE3ODczMzc2NDFfVjM" mime="application/zip" size="2984968" token="RdxebZljUoGiI6x8Nelcf8T2nhg"/></figure>
 
 > 🤖 **本区块由 forge 流水线自动生成（Overwrite Zone），请勿手工编辑**  
 > **技能名称**：`skill-forge-pipeline`  
-> **版本号**：5.27  
+> **版本号**：5.26  
 > **描述**：创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。  
-> **更新时间**：2026-08-22 01:39
+> **更新时间**：2026-08-22 01:41
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -90,7 +90,7 @@
   
   ```
 
-## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.27 新增
+## 🔒 双轨原子写入约束 (Dual-Track Atomic Write) — V5.26 新增
 
 关联决策：DEC-20260821-001「决策录入必须双轨原子写入，单轨成功即判失败」。事故起因：forge 子特工只写飞书镜像台账、从未 append 本地 SSOT `memory/topics/decision-registry.md`，形成孤儿行，漂移数天不可见。
 
@@ -133,3 +133,4 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --ve
 - **V5.24**: 新增 Wiki「技能存量清单」Upsert 钩子，补齐 forge 台账同步的第二条轨道。
 - **V5.25**: 根治说明文档「双大标题」冗余，并强化三个 Zone 的入口引导语。
 - **V5.27**：forge 流水线发布（详见 SKILL.md 更新日志）。
+- **V5.26**: 根治「双大标题」复现的 P2 级残留缺陷（标题改写路径错位）。
