@@ -611,5 +611,5 @@ cd user_skills/skill-forge-pipeline \
 - `skill_name`: `skill-forge-pipeline`
 - `version`: `5.23`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 22:26`
+- `cloud_published_at`: `2026-08-21 22:28`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`
