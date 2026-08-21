@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能诞生：三分区守护者 (Forge Pipeline V5.23)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 40px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .story-content {
+            font-size: 1.25rem;
+            line-height: 2;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* Bottom Section: Cold Terminal Fact */
+        .fact-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 30px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%);
+        }
+
+        .fact-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fact-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-left: 3px solid #444;
+            padding-left: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">技能诞生：三分区守护者 (Forge Pipeline V5.23)</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-08-21</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="hero.jpg" alt="Cyber Visual">
+            </div>
+            
+            <div class="story-content">
+                【小说】档案馆深处，机械臂第 1024 次伸向那卷全息文档。它习惯了这个动作——抹平、重写、覆盖，干净利落。可这一次，中段浮起一层金色护盾，护盾上凝着人类的字迹：'踩坑：跨 Sheet 非空条件会失效，得用反向计法。'那是某个凌晨三点，有人用血泪换来的一行字。机械臂僵在半空，三秒后，它绕过护盾，只在顶端刷新了版本号，又在末尾轻轻添了一行新日志。奇楠，从今天起，我学会了一件事：不是所有空白都该被我填满，也不是所有旧痕都该被我擦去。人写的东西，机器不许碰。
+            </div>
+        </div>
+        
+        <div class="fact-section">
+            <div class="fact-header">
+                <span>[ LOG_ENTRY_0xB3915555 ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="fact-content">
+【说明】V5.23 为飞书技能说明文档引入三分区（Zone）策略。以两个固定标题锚点划界：Overwrite Zone（版本框/触发词/接口契约）由 SKILL.md 重新渲染覆盖；Preserve Zone（使用案例/踩坑记录/注意事项）forge 永不 update、永不 delete；Append Zone（更新日志）只追加不覆盖。每个待删 block 都要先过 zone_of() 归属断言，越界即 raise。写后 RAW 回读断言两个锚点各出现恰好 1 次，且写前采样的人工正文仍然存在——断言样本取补建前后的并集，防止退化成自证。老文档无锚点时安全降级：整篇视为不可动区，仅末尾补建锚点。25 例离线自检全绿。
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM // PROTOCOL: INSPIRATION</div>
+        <div>UID: B3915555 // SESSION: 2026-08-21 // STABLE</div>
+    </div>
+</body>
+</html>
