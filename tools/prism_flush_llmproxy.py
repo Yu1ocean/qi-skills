@@ -292,6 +292,42 @@ def snapshot_before_write(path: str) -> str:
     return dest
 
 
+def git_pre_flush_commit() -> bool:
+    """Commit a pre-flush snapshot of MEMORY.md / USER.md into git.
+
+    Best-effort only: any failure (no repo, nothing to commit, git missing) is
+    logged as a warning and MUST NOT block the flush pipeline.
+    """
+    import subprocess
+
+    targets = [p for p in ("MEMORY.md", "USER.md") if os.path.exists(p)]
+    if not targets:
+        eprint("⚠️  git pre-flush snapshot skipped: no MEMORY.md/USER.md found")
+        return False
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    try:
+        add = subprocess.run(["git", "add", *targets], capture_output=True, text=True)
+        if add.returncode != 0:
+            eprint(f"⚠️  git add failed (non-blocking): {add.stderr.strip()}")
+            return False
+        commit = subprocess.run(
+            ["git", "commit", "-m", f"chore(memory): pre-flush snapshot {ts}"],
+            capture_output=True,
+            text=True,
+        )
+        if commit.returncode != 0:
+            eprint(
+                "⚠️  git commit skipped/failed (non-blocking): "
+                + (commit.stdout.strip() or commit.stderr.strip())
+            )
+            return False
+        eprint(f"🔒 git pre-flush snapshot committed: {ts}")
+        return True
+    except Exception as exc:  # noqa: BLE001 - never block flush
+        eprint(f"⚠️  git pre-flush snapshot error (non-blocking): {exc}")
+        return False
+
+
 def append_only_merge(existing: str, generated: str) -> str:
     """Preserve the existing file verbatim and append only genuinely new generated lines.
 
@@ -496,6 +532,8 @@ def main() -> None:
         out["memory_md"] = memory_md
 
     if args.write_files:
+        # Pre-flush git snapshot (best-effort, never blocks the flush).
+        git_pre_flush_commit()
         if out.get("user_md"):
             snapshot_before_write("USER.md")
             user_to_write = append_only_merge(existing_user, out["user_md"])
