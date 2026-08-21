@@ -5,8 +5,8 @@ EU AM 效率分析 · 分层读写架构构建器（3 底表 + 3 阅读视图）
 
 底表层（机器层，全字段 ~100 列，每日覆盖）：
   1. 全量底表            : 源全量，不筛选
-  2. 全量_AM招商推进     : AM优先级 == "AM招商推进"（覆盖已有 sheet 8953af）
-  3. BD底表              : 负责BD 非空
+  2. 全量_AM招商推进     : AM优先级 == "AM招商推进" 且 历史入驻 != 1（覆盖已有 sheet 8953af）
+  3. BD底表              : 负责BD 非空 且 历史入驻 != 1
 
 阅读层（人类层，38 列固定表头 + INDEX+MATCH 动态引用）：
   4. 全量_阅读视图        -> 全量底表
@@ -56,8 +56,8 @@ LAYERS = [
 ]
 FILTER_DESC = {
     "all": "无筛选（源全量）",
-    "am": 'AM优先级 == "AM招商推进"',
-    "bd": "负责BD 非空（非 None / 非空串 / strip 后非空）",
+    "am": 'AM优先级 == "AM招商推进" 且 历史入驻 != 1',
+    "bd": "负责BD 非空（非 None / 非空串 / strip 后非空）且 历史入驻 != 1",
 }
 
 QA_NULL_COLS = ["负责AM", "AM优先级"]
@@ -173,13 +173,21 @@ def fetch_records(cache: str | None = None) -> list[dict]:
     return records
 
 
+def is_hist_settled(r: dict) -> bool:
+    """历史入驻 == 1（兼容数字 1 / 浮点 1.0 / 字符串 "1" / 布尔 True，norm_scalar 已统一归一）"""
+    return norm_scalar(r.get("历史入驻")) == "1"
+
+
 def filter_records(records: list[dict], key: str) -> list[dict]:
     if key == "all":
+        # 全量快照语义：不加任何筛选（含历史入驻商家）
         return list(records)
     if key == "am":
-        return [r for r in records if norm_scalar(r.get("AM优先级")) == "AM招商推进"]
+        return [r for r in records
+                if norm_scalar(r.get("AM优先级")) == "AM招商推进" and not is_hist_settled(r)]
     if key == "bd":
-        return [r for r in records if norm_scalar(r.get("负责BD")) != ""]
+        return [r for r in records
+                if norm_scalar(r.get("负责BD")) != "" and not is_hist_settled(r)]
     raise ValueError(key)
 
 
