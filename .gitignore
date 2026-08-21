@@ -26,3 +26,8 @@ user_skills/*/output/*.mp3
 !user_skills/*/downloads/.gitkeep
 !user_skills/yt-dlp-media-downloader/downloads/
 !user_skills/*/downloads/
+
+# forge artifacts / runtime junk (V6.3)
+user_skills/*.zip
+user_skills/periodic-report-generator/.tmp/
+user_skills/periodic-report-generator/assets/snapshots/
