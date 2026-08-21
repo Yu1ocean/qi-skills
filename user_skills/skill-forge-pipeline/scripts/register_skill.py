@@ -1860,12 +1860,18 @@ def main() -> int:
             lambda: ensure_skill_inventory_updated_at_formatter(row_number, metadata.get("updated_at", "")),
         )
 
-    metadata_path = Path.cwd() / "metadata.json"
-    metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
+    # Forge receipt lands INSIDE the target skill dir (never Path.cwd()).
+    # Historical bug: `Path.cwd() / "metadata.json"` scattered ghost receipts
+    # into whatever directory the pipeline happened to run from, and the
+    # "metadata" name made them look like authoritative skill metadata
+    # (they are not — Skill ID must come from the Feishu inventory sheet).
+    receipt_dir = skill_dir if skill_dir else Path.cwd()
+    receipt_path = receipt_dir / ".forge_receipt.json"
+    receipt_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
 
     print("🚀 Metadata packaged for omni-asset-archiver:")
     print(json.dumps(metadata, indent=4, ensure_ascii=False))
-    print(f"\n✅ Metadata written to {metadata_path.resolve()}")
+    print(f"\n✅ Forge receipt written to {receipt_path.resolve()}")
 
     if skill_dir:
         print("🚀 Running post-forge git push hook...")
@@ -1895,8 +1901,8 @@ def main() -> int:
             metadata["cloud_publish_dlq"] = cloud_result["dlq_path"]
         if cloud_result.get("error"):
             metadata["cloud_publish_error"] = cloud_result["error"]
-        metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
-        print(f"✅ metadata.json updated with cloud_publish_status={metadata['cloud_publish_status']}")
+        receipt_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
+        print(f"✅ .forge_receipt.json updated with cloud_publish_status={metadata['cloud_publish_status']}")
 
         if str(metadata["cloud_publish_status"]).startswith("FAILED"):
             print(
