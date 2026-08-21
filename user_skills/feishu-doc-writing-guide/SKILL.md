@@ -1,12 +1,14 @@
 ---
 name: feishu-doc-writing-guide
-description: 飞书电子表格（Sheets）与文档（Docs）的安全写入与归属治理指南，包含执行人身份穿透法则、个人空间优先创建、MCP 迁移兜底、三级防爆破自检机制、反合理化四件套、标题去重、元数据标头及幽灵对象清除 SOP。适用于生成/更新飞书文档、写入台账、处理权限与数据安全。
-version: 7.4
+description: 飞书电子表格（Sheets）与文档（Docs）的安全写入与归属治理指南，包含执行人身份穿透法则、个人空间优先创建、MCP 迁移兜底、三级防爆破自检机制、反合理化四件套、公式与多选单元格结构化写入护栏、标题去重、元数据标头及幽灵对象清除 SOP。适用于生成/更新飞书文档、写入台账、写入多选/公式单元格、处理权限与数据安全。
+version: 7.5
 ---
 
-# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.4
+# 飞书文档写入权威指南 (feishu-doc-writing-guide) v7.5
 
 本 Skill 汇总了 Aime 系统及团队在处理飞书文档与电子表格时的血泪经验，规定了写入、更新及维护操作的权威标准。
+
+**v7.5 关键升级：新增「多选单元格结构化写入护栏」。** 飞书多选（Multi-Select）单元格的值本质是**选项数组**而非字符串，用逗号串（如 `"EU,UK,JP"`）经 `+csv-put` 或 `value` 文本通道写入，会被引擎当作**一个整体文本**去匹配选项列表，导致药丸（Pill/Tag）不渲染并触发右上角红色校验失败角标。从本版本起，多选列写入必须走 `+cells-set` 的 `multiple_values` 结构化数组，写后必须 `+cells-get --include value,multiple_values` 回读断言，并可用 `scripts/multiselect_write_guard.py` 做 L3 运行时熔断预检。详见「陷阱6」。
 
 **v7.3 关键升级：新增「个人空间优先创建法则」并废弃 JWT 直调 Permission API。** 从本版本起，创建飞书文档时必须默认 `target_type=personal`，让文档直接落到用户个人空间；若因历史路径或工具默认值导致资产仍停留在系统云盘，必须立刻通过 MCP `move_lark_doc` 迁移到 `personal`。`scripts/grant_doc_permissions.py` 保留为兼容入口，但底层已不再使用 `AIME_USER_CLOUD_JWT` 直调 Drive Permission API，而是改为转发到 MCP 迁移链路，彻底规避 `code=99991668` 一类鉴权错位问题。
 
@@ -47,8 +49,10 @@ version: 7.4
 - “先把文档留在系统云盘，等用户来报错时再迁移到个人空间。”
 - “表格写入量不大，我就不做 Schema 校验和 RAW 回读了。”
 - “幽灵块先不处理，反正文档还能打开。”
+- “多选列我先用逗号串灌一版，能显示就行。”
+- “单值那格（只写 `EU`）没报错，多值应该也没事。”
 
-这些借口本质上都在尝试绕过：**MCP 权威通道、个人空间优先创建、MCP 迁移兜底、三级防爆破、写后即读 RAW 原子锁、反影子克隆定律、幽灵块物理斩除**。
+这些借口本质上都在尝试绕过：**MCP 权威通道、个人空间优先创建、MCP 迁移兜底、三级防爆破、写后即读 RAW 原子锁、反影子克隆定律、幽灵块物理斩除、多选单元格结构化写入**。
 
 ## Why they fail（为什么这些借口是致命的）
 
@@ -57,6 +61,7 @@ version: 7.4
 - **绕开 MCP = 失去宿主权限继承**：非 MCP 通道常导致权限视野不一致，最终出现“我创建成功了，但你管不了”的权限灾难。
 - **不做全列对齐/不拉 Schema = 主键与合同破裂**：主键缺失、列错位、部分字段写入，会直接触发重复数据、幂等性失效，甚至导致整表公式列崩坏。
 - **忽略幽灵块 = 文档结构腐烂**：空 Block/不可见对象会在后续更新中变成“无法定位、无法修复”的结构性错误；必须按信标→定位→物理斩除处理。
+- **逗号串 ≠ 选项数组**：飞书多选单元格存的是**选项对象数组**，引擎按「整串文本」去匹配选项列表。`"EU,UK,JP"` 会被当成一个名叫 `EU,UK,JP` 的选项去查表，选项列表里必然没有这一项 → 判定「不在选项列表内」→ 必然触发数据校验失败角标且不渲染药丸。更阴险的是单值（`"EU"`）恰好能命中选项，于是“偶发正常”，让人误判为已修复。
 
 ## Red Flags（危险信号）
 
@@ -68,6 +73,7 @@ version: 7.4
 - 表格写入动作没有展示 **写入参数**（sheet_url、sheet_name、row_index、data_json）或 **读回原始数组**。
 - 遇到 404/无权限后没有熔断告警，却继续“新建/复制/换 token”完成任务。
 - 提到“修复”但没有给出 **幽灵块信标**（如 `GHOST_TARGET_001`）与对应 block 定位证据。
+- 向飞书 Sheet 多选（Multi-Select）单元格写入时，使用逗号串文本（如 `"EU,UK,JP"`）经 `+csv-put` 或普通 `value` 文本通道写入，而非 `+cells-set` 的 `multiple_values` 结构化数组。
 
 ## Verification（强制物理验证与核对清单）
 
@@ -111,6 +117,12 @@ version: 7.4
    - 必须收敛到 `status=success` 且 `total_errors=0`；存在任一 `#VALUE!` / `#REF!` / `#NAME?` 即视为未完成，立刻熔断修复。
    - 同时用 `+cells-get --include value,formula` 回读目标单元格，确认存在 `formula` 字段（防伪公式文本）。
    - 可用本地断言脚本预检：`python3 scripts/formula_write_guard.py --formula "=INDEX('明细'!J:J,COUNTA('明细'!J:J))" --sheet-names '明细,US行业统计' --field formula`
+
+10. **多选单元格结构化写入收敛（Multi-Select Structured Write）**
+   - 任何写入多选（Multi-Select）列的动作，必须走 `+cells-set` 的 `multiple_values` 结构化数组，禁止 `value` 逗号串与 `+csv-put`。
+   - 写后必须回读断言：`lark-cli sheets +cells-get --url "<sheet_url>" --range "<Sheet名>!G2" --include value,multiple_values`。
+   - 断言口径：`multiple_values` 数组必须存在，长度与预期标签数一致，且每个 `value` 命中选项列表；只有 `value` 字符串而无 `multiple_values` 数组即判定为逗号串污染，立刻熔断重写。
+   - 可用本地断言脚本预检：`python3 scripts/multiselect_write_guard.py --values "EU,UK,JP" --field multiple_values --allowed-options "EU,UK,JP,US,SEA"`
 
 ## ⚙️ 核心架构 / SOP / 约束条件
 
@@ -268,6 +280,33 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 - **诊断命令**：`+cells-get --include value,formula` 观察目标列样本是否为纯字符串；或临时写 `=ISTEXT('明细'!J2)` 判定类型。
 - **禁止行为**：禁止在未确认列类型前对日期列使用 MAX/MIN 聚合并直接对外交付结果。
 
+### 陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标
+
+- **现象**：向多选列（如「覆盖区域」G 列）写入 `"EU,UK,JP"` 后，单元格不渲染多选药丸（Pill/Tag），右上角出现红色校验失败角标；而单值场景（如只写 `"EU"`）恰好命中选项时不报错，造成「偶发正常」的假象，极易误判为已修复。
+- **根因**：飞书多选单元格的值是**选项数组**，不是字符串。逗号串会被引擎当作**一个整体文本**去匹配选项列表，多值时匹配失败 → 判定为「不在选项列表内」→ 触发数据校验失败角标且不渲染药丸。
+- **正确做法**：使用 `+cells-set` 的 `multiple_values` 字段，以结构化数组写入：
+
+  ```bash
+  lark-cli sheets +cells-set --url "<sheet_url>" --range "<Sheet名>!G2" \
+    --cells '[[{"multiple_values":[{"value":"EU"},{"value":"UK"},{"value":"JP"}]}]]'
+  ```
+
+- **诊断命令**：
+
+  ```bash
+  lark-cli sheets +cells-get --url "<sheet_url>" --range "<Sheet名>!G2" --include value,multiple_values
+  ```
+
+  回读若只有 `value` 字符串、没有 `multiple_values` 数组，即判定为逗号串污染，必须重写。
+- **写后验收**：写完必须回读断言 `multiple_values` 数组长度与预期标签数一致，且每个 `value` 命中选项列表；不一致立刻熔断。
+- **前置断言（L3 熔断）**：写入前先跑本地护栏脚本，违规直接非 0 退出：
+
+  ```bash
+  python3 scripts/multiselect_write_guard.py --values "EU,UK,JP" --field multiple_values --allowed-options "EU,UK,JP,US,SEA"
+  ```
+
+- **禁止行为**：禁止用 `+csv-put` 批量灌多选列；禁止用 `value` 纯文本字段写多选单元格；禁止因「单值写成功」就推断多值也没问题。
+
 ## Defaults（合规默认值）
 
 - 新建飞书文档默认：`target_type=personal`
@@ -277,6 +316,8 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 - 公式写入通道默认：`+cells-set --cells '[[{"formula":"=..."}]]'`（禁用 `value` / `+csv-put`）
 - 公式写后校验默认：`lark-cli sheets +formula-verify` 必须 `total_errors=0`
 - 取“最新日期值”默认公式：`=INDEX('<sheet_name>'!J:J,COUNTA('<sheet_name>'!J:J))`
+- 多选列写入通道默认：`+cells-set --cells '[[{"multiple_values":[...]}]]'`（禁用 `value` / `+csv-put`）
+- 多选写后校验默认：`+cells-get --include value,multiple_values`，`multiple_values` 数组长度必须等于预期标签数
 
 ## 脚本工具箱（可选，但遇到对应场景必须用）
 
@@ -311,6 +352,16 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
   python3 scripts/formula_write_guard.py --formula "=INDEX('明细'!J:J,COUNTA('明细'!J:J))" --sheet-names '明细,US行业统计' --field formula
   ```
 
+- **多选单元格写入前置断言（L3 熔断）**：
+
+  ```bash
+  # 正例：标签数组 + 选项白名单校验，通过后打印可直接复制的 cells payload
+  python3 scripts/multiselect_write_guard.py --values "EU,UK,JP" --field multiple_values --allowed-options "EU,UK,JP,US,SEA"
+
+  # 也可直接体检既有 cells payload（逗号串污染 / 缺失 multiple_values 会熔断）
+  python3 scripts/multiselect_write_guard.py --cells-json '[[{"multiple_values":[{"value":"EU"},{"value":"UK"}]}]]'
+  ```
+
 - **清理幽灵 Block**：
 
   ```bash
@@ -333,6 +384,13 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 
 ## 变更记录
 
+- **v7.5**: 新增多选单元格结构化写入护栏。
+  - 新增「陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标」，明确飞书多选值是**选项数组**而非字符串，逗号串会被当作整串文本匹配选项列表而必然校验失败。
+  - 多选列写入通道锁定为 `+cells-set --cells '[[{"multiple_values":[{"value":"EU"},...]}]]'`，禁用 `value` 纯文本与 `+csv-put` 批量灌列。
+  - 诊断法固化为 `+cells-get --include value,multiple_values`：只有 `value` 字符串而无 `multiple_values` 数组即判定为逗号串污染。
+  - Verification 新增第 10 条「多选单元格结构化写入收敛」：写后必须回读断言数组长度与选项命中。
+  - Red Flags / Common Rationalizations / Why they fail 同步新增「逗号串写多选」「单值没报错就推断多值也行」的反合理化条款。
+  - 新增 L3 断言脚本 `scripts/multiselect_write_guard.py`，对逗号串污染、`multiple_values` 结构缺失、选项越界三类违规运行时熔断。
 - **v7.4**: 新增公式类三大陷阱与零错误收敛护栏。
   - 新增「陷阱3：sheet_id 冒充 sheet_name 导致跨 Sheet 公式失效」，规定写公式前必须 `lark-cli sheets +workbook-info` 拿 `sheet_name`。
   - 新增「陷阱4：伪公式文本引发级联 #VALUE!」，明确 `+cells-get --include value,formula` 诊断法（有 value 无 formula 即伪公式），公式必须走 `+cells-set --cells '[[{"formula":"=..."}]]'`。
@@ -353,4 +411,5 @@ python3 inner_skills/lark/mcp_lark_move_lark_doc.py '{"document_urls":["<documen
 - 文档创建默认必须显式传 `target_type=personal`。
 - 历史文档归属修复必须使用 `move_lark_doc -> personal` 链路，不得再使用 Drive Permission API 直调兜底。
 - 台账写入遵循三级防线 + RAW 原子锁（写后即读）。
+- 多选（Multi-Select）列写入必须走 `+cells-set` 的 `multiple_values` 结构化数组，并以 `+cells-get --include value,multiple_values` 回读断言。
 - 涉及飞书脚本或 MCP 操作时，必须设置 `include_secrets=true`。

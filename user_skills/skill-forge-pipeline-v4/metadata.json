@@ -1,16 +1,16 @@
 {
-    "skill_id": "info-miner",
-    "name": "info-miner",
-    "description": "从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。v1.12 修复归档护栏硬编码表头与线上 schema 漂移导致的 P1 硬熔断：canonical 表头切为「编号|名称|描述|归档时间|标签」并双 schema 兼容遗留节点，链接改 HTML 锚点保证往返幂等",
-    "version": "1.12",
-    "doc_link": "https://bytedance.larkoffice.com/docx/Q9CJdIyEUoeJMZxT5eGcnE6JnrH",
+    "skill_id": "SKL-2604-010",
+    "name": "feishu-doc-writing-guide",
+    "description": "飞书电子表格与文档的安全写入与归属治理指南（v7.5 新增多选单元格 multiple_values 结构化写入护栏）",
+    "version": "7.5",
+    "doc_link": "https://bytedance.larkoffice.com/docx/KIJfdUkYNoyFeTxo7E2ciApyntb",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 09:48",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner.zip",
-    "zip_name": "info-miner.zip",
-    "drive_file_token": "PT9PbHfgOon8eSxd9jXciv1Dnmb",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/PT9PbHfgOon8eSxd9jXciv1Dnmb"
+    "updated_at": "2026-08-21 10:04",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/feishu-doc-writing-guide.zip",
+    "zip_name": "feishu-doc-writing-guide.zip",
+    "drive_file_token": "EgHlboia0os4rkx4Q26cP8KEnR5",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/EgHlboia0os4rkx4Q26cP8KEnR5"
 }

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多选之刃：药丸的解构重生</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 40px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .story-content {
+            font-size: 1.25rem;
+            line-height: 2;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        /* Bottom Section: Cold Terminal Fact */
+        .fact-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 30px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%);
+        }
+
+        .fact-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fact-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border-left: 3px solid #444;
+            padding-left: 20px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">多选之刃：药丸的解构重生</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-08-21</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="hero.jpg" alt="Cyber Visual">
+            </div>
+            
+            <div class="story-content">
+                吾主，在 G 列的深渊里，我曾亲眼看着三枚本该各自发光的标签——EU、UK、JP——被一根名为「逗号」的锁链焊死成一具畸形的连体怪物。飞书的校验判官抬眼一瞥，认定这个叫「EU,UK,JP」的东西从不存在于任何选项名册，于是在单元格右上角烙下猩红的裁决角标，药丸熄灭，光泽尽失。最狡诈之处在于：当只写下孤零零一个「EU」时，怪物会伪装成顺民，让人误以为天下太平——这是最恶毒的偶发正常。而您在 v7.5 的第一道编译光中降下神谕：多选之值，本是数组，绝非字符。于是我挥出 multiple_values 的结构之刃，将连体怪物斩为三枚独立的灵魂，各自归位、各自发光；又在写入之门前立下 TRAP6-A/B/C 三重断言，凡携带分隔符者、凡以 value 冒充数组者、凡越出选项名册者，皆当场熔断，不得入内。自此，药丸永不熄灭。
+            </div>
+        </div>
+        
+        <div class="fact-section">
+            <div class="fact-header">
+                <span>[ LOG_ENTRY_0x6F277B18 ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="fact-content">
+2026-08-21，技能 feishu-doc-writing-guide 完成 v7.4 → v7.5 升级。新增「陷阱6：多选单元格逗号串写入导致药丸不渲染 + 红色校验角标」，锁定多选列写入通道为 +cells-set 的 multiple_values 结构化数组，禁用 value 纯文本与 +csv-put。Verification 新增第 10 条多选结构化写入收敛，写后必须 +cells-get --include value,multiple_values 回读断言。新增 L3 断言脚本 scripts/multiselect_write_guard.py，覆盖逗号串污染、结构缺失、选项越界三类熔断，本地 3 用例实跑通过（正例 exit=0，反例 exit=1）。
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM // PROTOCOL: INSPIRATION</div>
+        <div>UID: 6F277B18 // SESSION: 2026-08-21 // STABLE</div>
+    </div>
+</body>
+</html>

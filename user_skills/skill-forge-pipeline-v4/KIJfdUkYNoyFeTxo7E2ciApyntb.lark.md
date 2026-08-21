@@ -1,5 +1,7 @@
 # 【技能说明】飞书文档写入指南
 
+<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MDBkMDBiYTM3ODRiN2U5NjNjNGEyMzQzOTMzNDM4NWNfNGRhNzliZGU5ODRkNjkwMjU0ZGYyYzhmNmIyN2M4NThfSUQ6NzY3NjI5OTk4OTY4OTY5OTI2Nl8xNzg3Mjc3ODcyOjE3ODcyODE0NzJfVjM" mime="application/zip" size="1861427" token="EgHlboia0os4rkx4Q26cP8KEnR5"/></figure>
+
 > 📄 **文档编号**：[SYS-2604-003] 📅 **归档日期**：[2026-04-07]
 
 ---
@@ -64,7 +66,7 @@ python3 scripts/delete_ghost_block.py <document_url> <markdown_file_path> GHOST_
 
 ## 四、 附件
 
-<figure view-type="Card"><source name="feishu-doc-writing-guide_v7.1.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YmRjMjJmN2Y0ZDM3ODk0ODcwNDAwYzcyZTJlNDhhYTFfNjA0MTM0NzRjMmE1ODBhMjk0NjBiODg0MjdjNWQyMWJfSUQ6NzYzMzA5NzQwNTM3NTYzMDI4MV8xNzg2OTI2ODcxOjE3ODY5MzA0NzFfVjM" mime="application/zip" size="56401" token="Z3wibm50RoxQSyxEfXecAVHInab"/></figure>
+<figure view-type="Card"><source name="feishu-doc-writing-guide_v7.1.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=N2IyM2FhN2ZkODBlZGJiZTM1ZTA0MzAyNGE1MTg5Y2RfMGQ5ZWIxNmYxOWRiNjMzZjU1YTA4NzczMTFjMjlkYjVfSUQ6NzYzMzA5NzQwNTM3NTYzMDI4MV8xNzg3Mjc3ODY4OjE3ODcyODE0NjhfVjM" mime="application/zip" size="56401" token="Z3wibm50RoxQSyxEfXecAVHInab"/></figure>
 
 ---
 
@@ -139,4 +141,4 @@ python3 scripts/delete_ghost_block.py <document_url> <markdown_file_path> GHOST_
 5. +formula-verify 返回 status=success, total_errors=0，方可宣称修复完成。
 ```
 
-<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OGM0ZDU1NmZkMzE5NTg1ZDVlYzdjM2E1ZDdlZTVhYmRfYzg0NmFjM2I4MmU0Y2E3ZTU5YmQwMTYzOWJjZTFlMzFfSUQ6NzY3NDc5MjkwNjA5MTE3MDc0Nl8xNzg2OTI2OTc1OjE3ODY5MzA1NzVfVjM" mime="application/zip" size="1856519" token="SXvqbrTUmoxQZXxNFwycFtX3nSd"/></figure>
+<figure view-type="Card"><source name="feishu-doc-writing-guide.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MTJjOGRiNmQ4YjFlYmFkYmRiZWViZmI1MDM3MDcxOWNfMDA0NTczY2UxMGRiYmUwMjA3ZTViMWY1MWZiMDY1ODhfSUQ6NzY3NDc5MjkwNjA5MTE3MDc0Nl8xNzg3Mjc3ODY4OjE3ODcyODE0NjhfVjM" mime="application/zip" size="1856519" token="SXvqbrTUmoxQZXxNFwycFtX3nSd"/></figure>
