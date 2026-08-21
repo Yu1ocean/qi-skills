@@ -1,0 +1,16 @@
+{
+    "skill_id": "INTERVIEW-MATRIX-EVALUATOR",
+    "name": "interview-matrix-evaluator",
+    "description": "对多个候选人的 interview-hologram-scanner 标准化 JSON 做横向矩阵比较与排序决策，输出能力雷达叠图、零信任风险矩阵、录用顺位和核心权衡理由。",
+    "version": "1.2",
+    "doc_link": "https://bytedance.larkoffice.com/docx/EwMOd9gKLoEGo1xWZmAciXPXnog",
+    "date": "2026-06-02",
+    "updated_at": "2026-06-02 20:25",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/interview-matrix-evaluator",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/interview-matrix-evaluator.zip",
+    "zip_name": "interview-matrix-evaluator.zip",
+    "drive_file_token": "",
+    "drive_file_url": "https://bytedance.larkoffice.com/docx/EwMOd9gKLoEGo1xWZmAciXPXnog",
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9gskill",
+    "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g"
+}

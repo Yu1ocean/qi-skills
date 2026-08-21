@@ -1,16 +1,16 @@
 {
-    "skill_id": "EU-AM-EFFICIENCY-ANALYZER",
-    "name": "eu-am-efficiency-analyzer",
-    "description": "EU AM 效率漏斗分析器：漏斗诊断 + 白底气泡矩阵；v1.2 升级为「3 底表 + 3 阅读视图」人机分层读写同步架构，含 8 条工程护栏与 L3 薄壳入口",
+    "skill_id": "HOT-RADAR",
+    "name": "hot-radar",
+    "description": "热门视频候选集构建器，v1.2 新增 GUARD-PUB_DATE-v1 发布时间硬过滤（--time-window 真实生效、NULL/超期候选物理拦截落 DLQ、近30天软优选）",
     "version": "1.2",
-    "doc_link": "https://bytedance.my.larkoffice.com/docx/MS0DdkWzDoxNBCxopUimY9POylc",
-    "wiki_url": "https://bytedance.larkoffice.com/wiki/HEnbwa68Si9w22kyhD4cBxpEnnb",
-    "wiki_node_token": "HEnbwa68Si9w22kyhD4cBxpEnnb",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Mx2odWm5Ao0Ox3xKxlPcT9kvnHb",
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/BZNwwLtdRiA4xfkJse0c2vNFnsb",
+    "wiki_node_token": "BZNwwLtdRiA4xfkJse0c2vNFnsb",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 20:39",
-    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer",
-    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/eu-am-efficiency-analyzer.zip",
-    "zip_name": "eu-am-efficiency-analyzer.zip",
-    "drive_file_token": "Q1NXbfwAtoIVgyxZTUImNmrjyvb",
-    "drive_file_url": "https://bytedance.my.larkoffice.com/file/Q1NXbfwAtoIVgyxZTUImNmrjyvb"
+    "updated_at": "2026-08-21 20:40",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/hot-radar",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/hot-radar.zip",
+    "zip_name": "hot-radar.zip",
+    "drive_file_token": "UsRzbsgitoKSwLx8JltcJSdHnxf",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/UsRzbsgitoKSwLx8JltcJSdHnxf"
 }

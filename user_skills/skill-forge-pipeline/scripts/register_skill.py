@@ -40,6 +40,13 @@ DEFAULT_SKILL_INVENTORY_UPDATED_AT_FORMATTER = "yyyy/MM/dd"
 # published version to DEFAULT_INITIAL_VERSION (1.1) instead of
 # performing the usual +0.1 bump within the 0.x range.
 DEFAULT_INITIAL_VERSION = "1.1"
+
+# --- Cloud Publish (V5.19) 合规默认值 ---
+# 可见性默认「个人可见」，绝不默认扩大到空间可见；
+# enable-by-default 默认 false，只有用户显式要求全员可用时才允许开启。
+DEFAULT_CLOUD_SCOPE = "user"
+DEFAULT_CLOUD_ENABLE_BY_DEFAULT = False
+DEFAULT_CLOUD_PUBLISH_DLQ = ".ephemeral_pool/cloud_publish_failures.jsonl"
 DEFAULT_SSOT_SPREADSHEET_TOKEN = "ECQ0sDwmbhDex9tcUSjlkU7Bgdh"
 DEFAULT_SSOT_SHEET_NAME = "专属技能清单"
 DEFAULT_SSOT_SHEET_NAME_FALLBACKS = ["专属技能清单_Sheet"]
@@ -114,6 +121,36 @@ def run_post_forge_git_push(workspace_root: Path, skill_name: str, skill_version
             skill_version or "latest",
         ],
         "post-forge git push hook",
+    )
+
+
+def run_cloud_publish(
+    skill_dir: Path,
+    *,
+    version: str,
+    cloud_scope: str = DEFAULT_CLOUD_SCOPE,
+    enable_by_default: bool = False,
+    workspace_root: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Cloud Publish（第四步）：把技能真正上传到 Aime 云端。
+
+    根因：forge 流水线此前只 push 到 GitHub，技能始终停留在本地草稿态，
+    每次都要人工去点「上传到云端」按钮。本步骤把它固化进流水线。
+
+    走 scripts/cloud_publish.py：
+      draft 前置 -> `aime skill upload` -> `aime skill list` 云端回读断言。
+    失败不静默：标记 SKILL.md「需手动上传」+ 落死信队列 + 输出醒目 ERROR。
+    """
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from cloud_publish import cloud_publish_with_fallback  # noqa: PLC0415
+
+    return cloud_publish_with_fallback(
+        skill_dir,
+        version=version,
+        cloud_scope=cloud_scope,
+        enable_by_default=enable_by_default,
+        workspace_root=workspace_root,
     )
 
 
@@ -322,6 +359,11 @@ def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str
     if not repair_script.exists():
         raise FileNotFoundError(f"grant_doc_permissions wrapper not found: {repair_script}")
 
+    # V5.18: NO silent-WARNING fallback. The legacy `move_lark_doc` shim was removed from the
+    # runtime, and swallowing its FileNotFoundError turned this step into a permanent fake
+    # success (users received ZIP assets they could view but not manage). The grant now runs
+    # through `lark-cli drive +member-add` + `+member-list` RAW assertion; any failure must
+    # circuit-break the release per the anti-fake-success rule.
     return run_subprocess(
         [
             "python3",
@@ -332,12 +374,12 @@ def ensure_drive_asset_access_via_mcp(drive_file_url: str, email: str, perm: str
             "--perm",
             perm,
         ],
-        "repair drive asset access via MCP personal flow",
+        "grant drive asset access via lark-cli drive +member-add (with member-list RAW assertion)",
     )
 
 
-def run_subprocess(command: list[str], action: str, cwd: Optional[Path] = None) -> str:
-    result = subprocess.run(command, capture_output=True, text=True, cwd=str(cwd) if cwd else None)
+def run_subprocess(command: list[str], action: str) -> str:
+    result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(
             f"{action} failed with exit code {result.returncode}\n"
@@ -448,24 +490,64 @@ def build_ssot_spreadsheet_url(spreadsheet_token: str) -> str:
 
 def mcp_lark_download(document_url: str) -> list[Path]:
     workspace_root = get_workspace_root()
-    download_script = workspace_root / "inner_skills/lark/mcp_lark_lark_download.py"
+    download_script = workspace_root / "inner_skills/lark_download/lark_download.py"
     if not download_script.exists():
-        raise FileNotFoundError(f"Lark MCP download script not found: {download_script}")
+        raise FileNotFoundError(f"Lark download script not found: {download_script}")
 
-    output = run_subprocess(
-        [
-            "python3",
-            str(download_script),
-            json.dumps({"document_url": document_url}, ensure_ascii=False),
-        ],
-        "lark download",
-    )
+    try:
+        output = run_subprocess(
+            [
+                "python3",
+                str(download_script),
+                json.dumps({"document_url": document_url}, ensure_ascii=False),
+            ],
+            "lark download",
+        )
+    except RuntimeError as exc:
+        if "toolset lark_download not found" not in str(exc):
+            raise
+        token = document_url.rstrip("/").split("/")[-1].split("?")[0]
+        # 落点固定为本技能目录自身（由脚本位置推导），避免硬编码技能名导致改名后失效
+        fallback_path = Path(__file__).resolve().parents[1] / f"{token}.lark.md"
+        fetch_output = run_subprocess(
+            [
+                "lark-cli",
+                "docs",
+                "+fetch",
+                "--api-version",
+                "v2",
+                "--as",
+                "user",
+                "--doc",
+                document_url,
+                "--doc-format",
+                "markdown",
+                "--format",
+                "json",
+            ],
+            "lark-cli docs fetch fallback",
+        )
+        try:
+            payload = json.loads(fetch_output[fetch_output.find("{"):])
+            content = payload["data"]["document"]["content"]
+        except (json.JSONDecodeError, KeyError, TypeError) as parse_exc:
+            raise RuntimeError(f"Unable to parse lark-cli docs +fetch output: {fetch_output}") from parse_exc
+        fallback_path.write_text(content, encoding="utf-8")
+        return [fallback_path.resolve()]
 
-    # Typical output contains repeated: file_path: "..."
     paths = [Path(p).resolve() for p in re.findall(r'file_path:\s*"([^"]+)"', output)]
     if not paths:
-        # fallback: any xlsx path in output
-        paths = [Path(p).resolve() for p in re.findall(r'(/[^\s\"]+\.xlsx)', output)]
+        paths = [Path(p).resolve() for p in re.findall(r'(/[^\s\"]+\.(?:lark\.md|xlsx|xls|md))', output)]
+
+    if not paths:
+        try:
+            parsed = json.loads(output)
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, list):
+            paths = [Path(str(p)).resolve() for p in parsed if str(p).strip()]
+        elif isinstance(parsed, str) and parsed.strip():
+            paths = [Path(parsed).resolve()]
 
     if not paths:
         raise RuntimeError(f"Unable to parse downloaded file paths from output: {output}")
@@ -727,171 +809,368 @@ def ensure_skill_inventory_updated_at_formatter(row_number: int, expected_text: 
         )
 
 
-def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path) -> str:
-    """Insert the latest skill ZIP as a native File Block via lark-cli.
+def _parse_block_id_from_attach_output(attach_output: str) -> str:
+    """Extract the freshly created file block id from `docs +media-insert` output."""
 
-    v5.14: `inner_skills/lark/mcp_lark_update_lark_doc.py` is offline in the
-    runtime, so the pipeline now uses AIME's customized `lark-cli docs
-    +media-insert`. `--file` only accepts a relative path inside cwd, so the
-    command is executed from the ZIP's parent directory.
+    for match in re.finditer(r'"block_id"\s*:\s*"([^"]+)"', attach_output or ""):
+        return match.group(1)
+    return ""
+
+
+def move_block_to_doc_begin(doc_url: str, block_id: str) -> None:
+    """Relocate a top-level block to BLOCK_BEGIN (index 0, i.e. right below the title).
+
+    `lark-cli docs +media-insert` appends to the document end by default, which
+    silently breaks the pipeline contract "ZIP 文件块必须挂在标题正下方".
+    Anchoring `block_move_after` on the document root token moves the block to
+    index 0. Failure raises: no silent drift allowed.
     """
 
-    return run_subprocess(
+    document_id = parse_doc_token(doc_url)
+    run_subprocess(
         [
-            "lark-cli", "docs", "+media-insert",
-            "--doc", doc_url,
-            "--type", "file",
-            "--file", zip_path.name,
-            "--file-view", "card",
-            "--format", "json",
+            "lark-cli",
+            "docs",
+            "+update",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--command",
+            "block_move_after",
+            "--block-id",
+            document_id,
+            "--src-block-ids",
+            block_id,
         ],
-        "insert native file block via lark-cli",
-        cwd=zip_path.parent,
+        "move zip file block to doc begin",
     )
 
 
-def download_doc_markdown(doc_url: str) -> Path:
-    """Fetch the latest doc content as markdown via lark-cli docs +fetch."""
+def assert_zip_block_at_doc_begin(doc_url: str, block_id: str) -> None:
+    """Runtime gate: the first body block MUST be the newly attached file block."""
 
     output = run_subprocess(
         [
-            "lark-cli", "docs", "+fetch",
-            "--doc", doc_url,
-            "--doc-format", "markdown",
-            "--format", "json",
+            "lark-cli",
+            "docs",
+            "+fetch",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--doc-format",
+            "xml",
+            "--detail",
+            "with-ids",
+            "-q",
+            ".data.document.content",
         ],
-        "download latest skill doc",
+        "verify zip file block position",
     )
+    body = re.sub(r"^\s*<title\b[^>]*>.*?</title>", "", output.strip(), count=1, flags=re.S)
+    first_block = re.search(r'<(\w+)\s+id="([^"]+)"', body.strip())
+    if not first_block or first_block.group(2) != block_id:
+        actual = first_block.group(2) if first_block else "<none>"
+        raise RuntimeError(
+            "ZIP file block position verification FAILED: expected the first body block "
+            f"to be {block_id} (BLOCK_BEGIN, right below the title), got {actual}. "
+            "文件块回挂位置不符合契约，拒绝宣称发布成功。"
+        )
+
+
+ZIP_FIGURE_RE = re.compile(
+    r'<figure\s+id="(?P<block_id>[^"]+)"[^>]*>\s*<source\s+id="[^"]*"\s+name="(?P<file_name>[^"]*)"'
+    r'[^>]*?token="(?P<file_token>[^"]+)"',
+    re.S,
+)
+
+
+def list_doc_zip_file_blocks(doc_url: str) -> list[Dict[str, str]]:
+    """Enumerate every ZIP file block (figure/source) in the doc via `docs +fetch`.
+
+    The former `docx.v1.document_block.list` internal proxy path is no longer
+    supported (`unsupported lark method_name`), and it degraded *silently* to an
+    empty list — which is exactly how 8 stale ZIP blocks could pile up unnoticed.
+    Parsing the authoritative `--doc-format xml --detail with-ids` payload keeps
+    the enumeration on the same channel we already use for the position gate.
+    """
+
+    output = run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+fetch",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--doc-format",
+            "xml",
+            "--detail",
+            "with-ids",
+            "-q",
+            ".data.document.content",
+        ],
+        "enumerate doc zip file blocks",
+    )
+    blocks: list[Dict[str, str]] = []
+    for match in ZIP_FIGURE_RE.finditer(output):
+        file_name = match.group("file_name") or ""
+        if not file_name.lower().endswith(".zip"):
+            continue
+        blocks.append(
+            {
+                "block_id": match.group("block_id"),
+                "file_name": file_name,
+                "file_token": match.group("file_token"),
+            }
+        )
+    return blocks
+
+
+def is_own_skill_zip(file_name: str, skill_name: str) -> bool:
+    """Does this ZIP file name belong to the skill currently being published?
+
+    Accepts version-suffixed variants such as `skill-x.zip`, `skill-x_v1.2.zip`,
+    `skill-x-1.2.zip`, `skill-x (1).zip`.
+    """
+
+    name = (file_name or "").strip()
+    if not name.lower().endswith(".zip") or not skill_name:
+        return False
+    stem = name[: -len(".zip")]
+    if stem == skill_name:
+        return True
+    return bool(re.fullmatch(re.escape(skill_name) + r"[\s_\-.(]*[vV]?[\d.\-_() ]*", stem))
+
+
+def delete_doc_blocks(doc_url: str, block_ids: list[str]) -> str:
+    """Physically delete top-level blocks by id (`block_delete` supports batch)."""
+
+    if not block_ids:
+        return ""
+    return run_subprocess(
+        [
+            "lark-cli",
+            "docs",
+            "+update",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--command",
+            "block_delete",
+            "--block-id",
+            ",".join(block_ids),
+        ],
+        "delete stale zip file blocks",
+    )
+
+
+def prune_stale_zip_blocks(
+    doc_url: str,
+    skill_name: str,
+    new_block_id: str,
+) -> Dict[str, Any]:
+    """Idempotent replacement: keep exactly ONE ZIP block for this skill.
+
+    Ordering is deliberate — the caller must have already inserted, relocated and
+    asserted the NEW block before pruning, so a failed insert can never leave the
+    doc without any package. Foreign ZIP blocks (other skills) are reported only,
+    never auto-deleted: deleting someone else's asset is destructive and needs a
+    human call.
+    """
+
+    report: Dict[str, Any] = {
+        "enumerated": [],
+        "deleted": [],
+        "foreign": [],
+        "degraded": "",
+        "unique_ok": None,
+        "residual": [],
+    }
     try:
-        payload = json.loads(output)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Unable to parse docs +fetch output as JSON: {exc}\n{output[:500]}")
+        blocks = list_doc_zip_file_blocks(doc_url)
+    except Exception as exc:  # noqa: BLE001 - degrade, never break the pipeline
+        report["degraded"] = f"enumerate failed: {exc}"
+        print(
+            "⚠️ WARNING: 无法枚举文档现有 ZIP 文件块，降级为「只插入不删除」；"
+            f"旧版本文件块可能残留，请人工清理。原因：{exc}"
+        )
+        return report
 
-    data = payload.get("data") or {}
-    document = data.get("document") or {}
-    content = document.get("content") or data.get("content") or ""
-    if not content:
-        raise RuntimeError(f"docs +fetch returned empty content: {output[:500]}")
+    report["enumerated"] = blocks
+    own_stale = [
+        b for b in blocks if is_own_skill_zip(b["file_name"], skill_name) and b["block_id"] != new_block_id
+    ]
+    report["foreign"] = [b for b in blocks if not is_own_skill_zip(b["file_name"], skill_name)]
 
-    tmp_dir = Path(tempfile.mkdtemp(prefix="skill_doc_fetch_"))
-    md_path = tmp_dir / "skill_doc.lark.md"
-    md_path.write_text(content, encoding="utf-8")
-    return md_path
+    if report["foreign"]:
+        print("⚠️ 检测到非本技能的 ZIP 文件块（异物块，仅报告不自动删除，需人工确认）：")
+        for b in report["foreign"]:
+            print(f"   - block_id={b['block_id']} file={b['file_name']}")
+
+    if own_stale:
+        print(f"🧹 Deleting {len(own_stale)} stale ZIP file block(s) of {skill_name}...")
+        try:
+            delete_doc_blocks(doc_url, [b["block_id"] for b in own_stale])
+            report["deleted"] = own_stale
+        except Exception as exc:  # noqa: BLE001
+            report["degraded"] = f"delete failed: {exc}"
+            print(f"⚠️ WARNING: 旧 ZIP 文件块删除失败，需人工清理。原因：{exc}")
+    else:
+        print("ℹ️ No stale ZIP file block of this skill found; nothing to prune.")
+
+    # RAW read-after-write uniqueness assertion (report-only, never silent).
+    time.sleep(2)
+    try:
+        after = list_doc_zip_file_blocks(doc_url)
+    except Exception as exc:  # noqa: BLE001
+        report["degraded"] = f"{report['degraded']}; readback failed: {exc}".strip("; ")
+        print(f"⚠️ WARNING: 删除后回读断言失败，无法确认唯一性。原因：{exc}")
+        return report
+
+    mine = [b for b in after if is_own_skill_zip(b["file_name"], skill_name)]
+    report["residual"] = mine
+    report["unique_ok"] = len(mine) == 1 and mine[0]["block_id"] == new_block_id
+    if report["unique_ok"]:
+        print(f"✅ ZIP block uniqueness verified: exactly 1 block ({new_block_id}) for {skill_name}.")
+    else:
+        print(
+            "⚠️ WARNING: 本技能 ZIP 文件块唯一性断言未通过，残留清单如下（需人工清理）："
+        )
+        for b in mine:
+            print(f"   - block_id={b['block_id']} file={b['file_name']} token={b['file_token']}")
+    return report
+
+
+def attach_zip_to_doc_via_mcp(doc_url: str, zip_path: Path, skill_name: str = "") -> str:
+    result = subprocess.run(
+        [
+            "lark-cli",
+            "docs",
+            "+media-insert",
+            "--as",
+            "user",
+            "--doc",
+            doc_url,
+            "--file",
+            zip_path.name,
+            "--type",
+            "file",
+        ],
+        cwd=str(zip_path.resolve().parent),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"insert native file block via lark-cli failed with exit code {result.returncode}\n"
+            f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+        )
+
+    attach_output = result.stdout.strip()
+
+    # `+media-insert` appends to the document END; relocate to BLOCK_BEGIN and verify.
+    block_id = _parse_block_id_from_attach_output(attach_output)
+    if not block_id:
+        raise RuntimeError(
+            "Unable to parse the new file block_id from lark-cli media-insert output; "
+            f"cannot guarantee BLOCK_BEGIN placement.\nSTDOUT:\n{attach_output}"
+        )
+
+    print(f"🚚 Relocating zip file block {block_id} to BLOCK_BEGIN (below title)...")
+    move_block_to_doc_begin(doc_url, block_id)
+    time.sleep(2)
+    assert_zip_block_at_doc_begin(doc_url, block_id)
+    print("✅ Zip file block verified at BLOCK_BEGIN (right below the doc title).")
+
+    # Idempotent replacement instead of blind append: only after the NEW block is
+    # verified in place do we prune this skill's stale ZIP blocks.
+    effective_skill_name = skill_name or zip_path.stem
+    prune_stale_zip_blocks(doc_url, effective_skill_name, block_id)
+
+    return attach_output
+
+
+def download_doc_markdown(doc_url: str) -> Path:
+    paths = mcp_lark_download(doc_url)
+    for path in paths:
+        if path.suffix.lower() in {".md", ".lark.md"} or path.name.endswith(".lark.md"):
+            return path.resolve()
+    if paths:
+        return paths[0].resolve()
+    raise RuntimeError(f"Unable to download markdown for doc: {doc_url}")
 
 
 def sync_version_to_skill_doc_via_mcp(doc_url: str, new_version: str) -> None:
-    """Sync point #3: replace the version marker inside the Feishu skill doc.
+    """Sync point #3: replace version marker inside the Feishu skill doc.
 
-    v5.14: migrated from the offline `mcp_lark_update_lark_doc.py` to
-    `lark-cli docs +update --command str_replace`. We fetch the doc as
-    markdown, locate the first explicit version marker (e.g. `版本号：1.1`),
-    and replace only that inline text. If no marker exists we log and skip.
+    This is a best-effort update:
+    - We download the doc as .lark.md with block markers
+    - Find the first block that contains an explicit version marker
+    - Update that block via lark MCP
+
+    If no marker is found, we will log a warning and skip.
     """
 
     md_path = download_doc_markdown(doc_url)
     text = md_path.read_text(encoding="utf-8", errors="ignore")
 
-    version_re = re.compile(
-        r"(?i)((?:version|版本号|版本)\s*[:：]\s*)([vV]?\d+(?:\.\d+){1,2})"
-    )
-    match = version_re.search(text)
-    if not match:
-        print("⚠️ No explicit version marker found in doc; skip SSOT doc sync.")
-        return
+    block_re = re.compile(r"^<!--\s*(BLOCK_\d+)\s*\|\s*([^\s]+)\s*-->\s*$")
+    end_re = re.compile(r"^<!--\s*END_BLOCK_\d+\s*-->\s*$")
+    version_re = re.compile(r"(?i)((?:version|版本号|版本)\s*[:：]\s*)([vV]?\d+(?:\.\d+){1,2})")
 
-    old_text = match.group(0)
-    new_text = match.group(1) + new_version
-    if old_text == new_text:
-        print(f"📝 Doc version marker already up to date: {old_text}")
-        return
+    lines = text.splitlines()
+    i = 0
+    while i < len(lines):
+        m = block_re.match(lines[i])
+        if not m:
+            i += 1
+            continue
 
-    print(f"📝 Syncing doc version marker via lark-cli: {old_text!r} -> {new_text!r}")
-    run_subprocess(
-        [
-            "lark-cli", "docs", "+update",
-            "--doc", doc_url,
-            "--command", "str_replace",
-            "--pattern", old_text,
-            "--content", new_text,
-            "--doc-format", "markdown",
-            "--format", "json",
-        ],
-        "sync doc version marker",
-    )
+        block_number = m.group(1)
+        block_id = m.group(2)
+        i += 1
 
+        content_lines: list[str] = []
+        while i < len(lines) and not end_re.match(lines[i]):
+            content_lines.append(lines[i])
+            i += 1
 
-def list_zip_figure_blocks(doc_url: str, zip_name: str) -> list[Dict[str, str]]:
-    """List file-block (figure) ids in the doc whose source name matches zip_name."""
+        content = "\n".join(content_lines).strip("\n")
+        if version_re.search(content):
+            updated_content = version_re.sub(r"\\1" + new_version, content)
+            print(f"📝 Syncing doc version marker via lark-cli: {block_number} | {block_id}")
+            run_subprocess(
+                [
+                    "lark-cli",
+                    "docs",
+                    "+update",
+                    "--api-version",
+                    "v2",
+                    "--as",
+                    "user",
+                    "--doc",
+                    doc_url,
+                    "--command",
+                    "str_replace",
+                    "--doc-format",
+                    "markdown",
+                    "--pattern",
+                    content,
+                    "--content",
+                    updated_content,
+                ],
+                "sync doc version marker",
+            )
+            return
 
-    output = run_subprocess(
-        [
-            "lark-cli", "docs", "+fetch",
-            "--doc", doc_url,
-            "--doc-format", "xml",
-            "--detail", "with-ids",
-            "--format", "json",
-        ],
-        "list doc file blocks via lark-cli",
-    )
-    payload = json.loads(output)
-    content = ((payload.get("data") or {}).get("document") or {}).get("content", "")
+        # skip end marker
+        i += 1
 
-    blocks: list[Dict[str, str]] = []
-    for m in re.finditer(r'<figure id="([^"]+)"[^>]*>\s*<source[^>]*name="([^"]+)"[^>]*token="([^"]+)"', content):
-        if m.group(2) == zip_name:
-            blocks.append({"block_id": m.group(1), "file_name": m.group(2), "file_token": m.group(3)})
-    return blocks
-
-
-def normalize_zip_file_blocks(doc_url: str, zip_name: str, stale_block_ids: list[str]) -> str:
-    """Idempotent File Block hygiene (v5.14).
-
-    1) Move the freshly inserted ZIP block to the top of the doc (right below the title).
-    2) Physically delete stale ZIP blocks with the same file name, so the doc keeps
-       exactly one authoritative attachment instead of accumulating ghost versions.
-    """
-
-    logs: list[str] = []
-    current = list_zip_figure_blocks(doc_url, zip_name)
-    fresh = [b for b in current if b["block_id"] not in stale_block_ids]
-    if not fresh:
-        raise RuntimeError(f"No freshly inserted file block found for {zip_name}")
-
-    new_block_id = fresh[-1]["block_id"]
-    run_subprocess(
-        [
-            "lark-cli", "docs", "+update",
-            "--doc", doc_url,
-            "--command", "block_move_after",
-            "--block-id", "0",
-            "--src-block-ids", new_block_id,
-            "--format", "json",
-        ],
-        "move zip file block to doc top",
-    )
-    logs.append(f"moved fresh file block {new_block_id} to doc top")
-
-    to_delete = [b["block_id"] for b in current if b["block_id"] in stale_block_ids]
-    if to_delete:
-        run_subprocess(
-            [
-                "lark-cli", "docs", "+update",
-                "--doc", doc_url,
-                "--command", "block_delete",
-                "--block-id", ",".join(to_delete),
-                "--format", "json",
-            ],
-            "delete stale zip file blocks",
-        )
-        logs.append(f"deleted stale file blocks: {','.join(to_delete)}")
-
-    remaining = list_zip_figure_blocks(doc_url, zip_name)
-    if len(remaining) != 1:
-        raise RuntimeError(
-            f"File Block idempotency assertion failed: expected exactly 1 block for {zip_name}, got {len(remaining)}"
-        )
-    logs.append(f"assert PASS: exactly 1 file block remains ({remaining[0]['block_id']}, token={remaining[0]['file_token']})")
-    return " | ".join(logs)
+    print("⚠️ No explicit version marker found in doc; skip SSOT doc sync.")
 
 
 def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
@@ -902,68 +1181,69 @@ def verify_file_block_attached(doc_url: str, zip_name: str) -> bool:
 
 
 def move_doc_to_wiki_via_mcp(doc_url: str, wiki_node_token: str) -> Dict[str, str]:
-    """Wiki Mount Phase via lark-cli (v5.14).
+    doc_token = doc_url.rstrip("/").split("/")[-1].split("?")[0]
+    node_info_output = run_subprocess(
+        [
+            "lark-cli",
+            "wiki",
+            "+node-get",
+            "--as",
+            "user",
+            "--node-token",
+            wiki_node_token,
+            "--format",
+            "json",
+        ],
+        "resolve target wiki node",
+    )
+    try:
+        node_info = json.loads(node_info_output[node_info_output.find("{"):])
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Unable to parse target wiki node info: {node_info_output}") from exc
+    data = node_info.get("data", {}) if isinstance(node_info, dict) else {}
+    node = data.get("node", data) if isinstance(data, dict) else {}
+    space_id = str(node.get("space_id") or data.get("space_id") or "").strip()
+    if not space_id:
+        raise RuntimeError(f"Unable to resolve target wiki space id: {node_info_output}")
 
-    `inner_skills/lark/mcp_lark_move_lark_doc.py` is offline, so mounting now
-    uses `lark-cli wiki +node-get` (idempotent probe) + `lark-cli wiki +move`.
-    Already-mounted docs short-circuit to PASS instead of failing the pipeline.
-    """
+    output = run_subprocess(
+        [
+            "lark-cli",
+            "wiki",
+            "+move",
+            "--as",
+            "user",
+            "--obj-type",
+            "docx",
+            "--obj-token",
+            doc_token,
+            "--target-space-id",
+            space_id,
+            "--target-parent-token",
+            wiki_node_token,
+            "--format",
+            "json",
+        ],
+        "lark move doc to wiki",
+    )
 
-    doc_token = parse_doc_token(doc_url)
-
-    def _probe() -> Dict[str, Any]:
+    urls = re.findall(r'https?://[^\s"\'<>]+', output)
+    moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), doc_url)
+    moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+    if not moved_wiki_url:
         try:
-            raw = run_subprocess(
-                ["lark-cli", "wiki", "+node-get", "--node-token", doc_url, "--format", "json"],
-                "probe wiki node for skill doc",
-            )
-        except RuntimeError:
-            return {}
-        try:
-            body = json.loads(raw[raw.index("{"):])
-        except (ValueError, json.JSONDecodeError):
-            return {}
-        if not body.get("ok"):
-            return {}
-        return body.get("data") or {}
+            payload = json.loads(output[output.find("{"):])
+            payload_text = json.dumps(payload, ensure_ascii=False)
+            urls = re.findall(r'https?://[^\s"\'<>]+', payload_text)
+            moved_wiki_url = next((url for url in urls if "/wiki/" in url), "")
+            moved_doc_url = next((url for url in urls if "/docx/" in url or "/docs/" in url), moved_doc_url)
+        except json.JSONDecodeError:
+            pass
 
-    node = _probe()
-    if node.get("parent_node_token") == wiki_node_token:
-        node_token = node.get("node_token", "")
-        return {
-            "doc_link": doc_url,
-            "wiki_url": f"https://bytedance.larkoffice.com/wiki/{node_token}" if node_token else DEFAULT_WIKI_URL,
-            "wiki_node_token": node_token or wiki_node_token,
-            "raw_output": f"already mounted under target parent {wiki_node_token} (idempotent PASS)",
-        }
-
-    space_id = node.get("space_id", "")
-    command = [
-        "lark-cli", "wiki", "+move",
-        "--target-parent-token", wiki_node_token,
-        "--format", "json",
-    ]
-    if node.get("node_token"):
-        command += ["--node-token", node["node_token"]]
-        if space_id:
-            command += ["--target-space-id", space_id]
-    else:
-        command += ["--obj-token", doc_token, "--obj-type", "docx"]
-
-    output = run_subprocess(command, "lark move doc to wiki")
-
-    node_after = _probe()
-    if node_after.get("parent_node_token") != wiki_node_token:
-        raise RuntimeError(
-            f"Wiki Mount Phase verification failed: parent_node_token="
-            f"{node_after.get('parent_node_token')!r}, expected {wiki_node_token!r}\n{output}"
-        )
-
-    moved_node_token = node_after.get("node_token", "")
     return {
-        "doc_link": doc_url,
-        "wiki_url": f"https://bytedance.larkoffice.com/wiki/{moved_node_token}" if moved_node_token else DEFAULT_WIKI_URL,
-        "wiki_node_token": moved_node_token or wiki_node_token,
+        "doc_link": moved_doc_url,
+        "wiki_url": moved_wiki_url or f"https://bytedance.larkoffice.com/wiki/{wiki_node_token}",
+        "wiki_node_token": wiki_node_token,
         "raw_output": output,
     }
 
@@ -1008,6 +1288,11 @@ def list_doc_file_blocks(doc_url: str) -> list[Dict[str, str]]:
         path={"document_id": document_id},
         query={"page_size": "500"},
     )
+
+    if isinstance(response, dict) and response.get("code") not in (0, None):
+        # Never degrade silently: an unsupported/failed proxy call used to return an
+        # empty list, which made stale-block pruning a no-op without any signal.
+        raise RuntimeError(f"docx.v1.document_block.list failed: {response}")
 
     items = response.get("data", {}).get("items") or response.get("items") or []
     file_blocks: list[Dict[str, str]] = []
@@ -1229,6 +1514,25 @@ def main() -> int:
         action="store_true",
         help="仅执行本地打包与 metadata 生成，跳过飞书云盘上传、权限赋予、文档挂载与 SSOT 远端同步",
     )
+
+    # --- Cloud Publish (V5.19) ---
+    parser.add_argument(
+        "--cloud-scope",
+        choices=["user", "space"],
+        default=DEFAULT_CLOUD_SCOPE,
+        help=(
+            "云端发布可见性：user（默认，个人可见）/ space（空间可见）。"
+            "只有用户显式要求「空间可见/全员可用」时才允许传 space。"
+        ),
+    )
+    parser.add_argument(
+        "--enable-by-default",
+        action="store_true",
+        help=(
+            "云端发布时对空间全员默认启用（仅 --cloud-scope space 有效，默认不传）。"
+            "属于扩大可见范围的动作，必须由用户显式要求。"
+        ),
+    )
     args = parser.parse_args()
 
     workspace_root = get_workspace_root()
@@ -1308,16 +1612,15 @@ def main() -> int:
             before_blocks: list[Dict[str, str]] = []
             before_blocks_error = ""
             try:
-                before_blocks = list_zip_figure_blocks(args.path, zip_path.name)
+                before_blocks = list_doc_file_blocks(args.path)
             except Exception as exc:
                 before_blocks_error = f"before attachment snapshot failed: {exc}"
                 print(f"⚠️ Unable to list doc blocks before attachment: {exc}")
-            stale_block_ids = [b["block_id"] for b in before_blocks]
 
             print("🚀 Inserting native File Block into skill doc via Lark MCP...")
             attach_output = call_with_retry(
                 "insert file block into skill doc",
-                lambda: attach_zip_to_doc_via_mcp(args.path, zip_path),
+                lambda: attach_zip_to_doc_via_mcp(args.path, zip_path, skill_dir.name),
             )
             verified = call_with_retry(
                 "verify attached file block via lark MCP download",
@@ -1325,13 +1628,6 @@ def main() -> int:
             )
             if not verified:
                 raise RuntimeError(f"File Block verification failed for {zip_path.name}")
-
-            print("🚧 Enforcing File Block idempotency (move to top + purge stale)...")
-            normalize_log = call_with_retry(
-                "normalize zip file blocks",
-                lambda: normalize_zip_file_blocks(args.path, zip_path.name, stale_block_ids),
-            )
-            print(f"✅ {normalize_log}")
 
             print("✅ Skill doc attachment sync finished and verified.")
             if attach_output:
@@ -1359,8 +1655,7 @@ def main() -> int:
                 if wiki_mount_result.get("raw_output"):
                     print(wiki_mount_result["raw_output"])
 
-            final_zip_blocks = list_zip_figure_blocks(final_doc_link, zip_path.name)
-            drive_file_token = final_zip_blocks[0]["file_token"] if final_zip_blocks else resolve_attached_drive_file_token(
+            drive_file_token = resolve_attached_drive_file_token(
                 attach_output=attach_output,
                 before_blocks=before_blocks,
                 doc_url=final_doc_link,
@@ -1368,7 +1663,7 @@ def main() -> int:
                 before_blocks_error=before_blocks_error,
             )
             drive_file_url = build_drive_file_url(final_doc_link, drive_file_token)
-            print(f"🚀 Repairing drive asset access for {args.user_email} via MCP personal flow...")
+            print(f"🚀 Granting drive asset access (full_access) to {args.user_email} via lark-cli drive +member-add...")
             repair_output = call_with_retry(
                 "repair drive asset access via MCP personal flow",
                 lambda: ensure_drive_asset_access_via_mcp(
@@ -1376,7 +1671,7 @@ def main() -> int:
                     email=args.user_email,
                 ),
             )
-            print("✅ Drive asset access repaired.")
+            print("✅ Drive asset access granted & verified via +member-list RAW readback.")
             if repair_output:
                 print(repair_output)
 
@@ -1421,6 +1716,39 @@ def main() -> int:
     if skill_dir:
         print("🚀 Running post-forge git push hook...")
         print(run_post_forge_git_push(workspace_root, args.name, ssot_version or "latest"))
+
+        # ---------- 第四步：Cloud Publish（云端发布） ----------
+        # 顺序契约：必须在 Git Push 成功之后执行。
+        # run_post_forge_git_push 内部失败会 raise（hook 非 0 退出即熔断），
+        # 因此能走到这里就说明远端 SHA 回读断言已 PASS。
+        print("🚀 Running cloud publish (aime skill upload + cloud readback assert)...")
+        cloud_result = run_cloud_publish(
+            skill_dir,
+            version=ssot_version or "",
+            cloud_scope=args.cloud_scope,
+            enable_by_default=args.enable_by_default,
+            workspace_root=workspace_root,
+        )
+        print(cloud_result.get("log", ""))
+
+        # 云端发布结果写入 metadata（成功/失败都要如实落盘，禁止静默）
+        metadata["cloud_publish_status"] = cloud_result.get("cloud_publish_status", "")
+        metadata["cloud_scope"] = cloud_result.get("cloud_scope", "")
+        metadata["cloud_published_at"] = cloud_result.get("cloud_published_at", "")
+        if cloud_result.get("cloud_skill_id"):
+            metadata["cloud_skill_id"] = cloud_result["cloud_skill_id"]
+        if cloud_result.get("dlq_path"):
+            metadata["cloud_publish_dlq"] = cloud_result["dlq_path"]
+        if cloud_result.get("error"):
+            metadata["cloud_publish_error"] = cloud_result["error"]
+        metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=4), encoding="utf-8")
+        print(f"✅ metadata.json updated with cloud_publish_status={metadata['cloud_publish_status']}")
+
+        if str(metadata["cloud_publish_status"]).startswith("FAILED"):
+            print(
+                "❗ 云端发布未完成：技能仍是本地草稿，需要手动上传到云端才能全局生效。"
+                "详情见上方 ERROR 与死信队列。"
+            )
 
     return 0
 

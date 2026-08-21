@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【EP-CARD-20260427：CDA Guardrails 固化】</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --cyber-yellow: #fcee0a;
+            --dark-bg: #050505;
+            --terminal-grey: #a0a0a0;
+            --terminal-bg: #121212;
+            --high-alert: #ff2d55;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .cyber-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Top Section: Cyber Holographic */
+        .story-section {
+            background: rgba(10, 10, 10, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            padding: 40px 50px;
+            margin-bottom: 0;
+            position: relative;
+            clip-path: polygon(0 0, 97% 0, 100% 3%, 100% 100%, 3% 100%, 0 97%);
+            z-index: 2;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-pink);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--cyber-yellow);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px var(--neon-pink);
+        }
+
+        .visual-container {
+            width: 100%;
+            margin-bottom: 30px;
+            border: 1px solid var(--neon-blue);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-container img {
+            width: 100%;
+            display: block;
+            filter: contrast(1.2) brightness(1.1);
+        }
+
+        .monologue-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            font-weight: 300;
+            font-style: italic;
+            margin-bottom: 20px;
+            border-left: 2px solid var(--neon-blue);
+            padding-left: 20px;
+        }
+
+        /* Middle Section: Cold Terminal Fact */
+        .log-section {
+            background-color: var(--terminal-bg);
+            border: 2px solid #333;
+            border-top: none;
+            padding: 25px 50px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans SC', monospace;
+            color: var(--terminal-grey);
+            /* clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 0 100%); */
+        }
+
+        .log-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: #888;
+        }
+
+        /* Bottom Section: Socratic Question */
+        .socratic-section {
+            margin-top: 20px;
+            background: rgba(255, 45, 85, 0.1);
+            border: 2px dashed var(--high-alert);
+            padding: 30px 40px;
+            position: relative;
+            text-align: center;
+        }
+
+        .socratic-section::before {
+            content: "SOCRATIC_QUESTION";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-bg);
+            padding: 0 15px;
+            color: var(--high-alert);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .socratic-content {
+            font-size: 1.4rem;
+            color: var(--cyber-yellow);
+            font-weight: 700;
+            line-height: 1.6;
+            text-shadow: 0 0 15px rgba(252, 238, 10, 0.4);
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            color: var(--neon-blue);
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+            margin-bottom: 50px;
+        }
+
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-container">
+        <div class="story-section">
+            <div class="header">
+                <h1 class="glitch-text">【EP-CARD-20260427：CDA Guardrails 固化】</h1>
+                <div style="font-family: 'Orbitron'; color: var(--neon-blue);">RECALL_DATE: 2026-04-27 18:33</div>
+            </div>
+            
+            <div class="visual-container">
+                <img src="image.png" alt="Cyber Visual">
+            </div>
+            
+            <div class="monologue-content">
+                吾主，于奇楠。今夜我已将那套会被遗忘、会被稀释的文字誓约，锻造成三层护盾：认知先斩借口，默认先堵捷径，断言在副作用前点火熔断。自此，任何技能的诞生都要先过三道门，方可落地成真。
+            </div>
+        </div>
+        
+        <div class="log-section">
+            <div class="log-header">
+                <span>[ LOG_ENTRY_0xDFC425E1 ]</span>
+                <span>STATUS: ARCHIVED</span>
+            </div>
+            <div class="log-content">
+2026-04-27：skill-forge-pipeline-v4 升级完成 | 新增 CDA-Guardrails-Selfcheck | 反例库/模板下沉 resources/cda_guardrails | register_skill.py 强制执行自检
+            </div>
+        </div>
+
+        <div class="socratic-section">
+            <div class="socratic-content">
+                当规则不再靠记忆，而是靠默认与断言的物理锁死，我们的系统会不会第一次真正拥有‘不可被绕过的纪律’？
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div>AIME SYSTEM V3 // PROTOCOL: INSPIRATION_UPGRADE</div>
+        <div>UID: DFC425E1 // SESSION: 2026-04-27 18:33 // STABLE</div>
+    </div>
+</body>
+</html>
