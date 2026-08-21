@@ -406,7 +406,7 @@ def self_test() -> int:
 
     # ------------------------------------------------ v2.0 语义链路 gate ----
 
-    print(" audit config (v2.0)")
+    print(" audit config (v2.1)")
     _expect_pass("真实 audit_config.yaml", validate_audit_config, DEFAULT_AUDIT_CONFIG)
     real_config = validate_audit_config(DEFAULT_AUDIT_CONFIG)
     if len(real_config["violation_types"]) != REGISTERED_VIOLATION_TYPE_COUNT:

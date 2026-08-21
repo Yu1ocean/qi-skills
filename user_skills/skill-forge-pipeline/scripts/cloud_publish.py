@@ -44,8 +44,10 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -225,18 +227,28 @@ def assert_cloud_skill_present(
         )
 
     cvt = get_cloud_version_time(skill_name, aime_bin)
-    if cvt == 0:
-        raise CloudPublishError(
-            f"云端回读断言 FAIL：`{skill_name}` 的 cloudVersionTime 仍为 0，"
-            f"说明云端没有任何版本，技能仍停留在本地草稿态（假成功已被拦截）。"
-        )
-
     updated_at = int(record.get("UpdatedAt") or 0)
-    if baseline_updated_at is not None and updated_at <= baseline_updated_at:
+
+    # 权威证据 = 云端侧 UpdatedAt 推进（或首次创建出记录）。
+    # 草稿侧 cloudVersionTime 只能当**辅助信号**：真机验证表明 upload 成功后
+    # workspace 会重新生成本地草稿，此时 cloudVersionTime 会回落为 0，
+    # 若把它当硬条件会把「已真实发布」误判成失败。
+    cloud_side_advanced = (
+        baseline_updated_at is None or updated_at > baseline_updated_at
+    )
+
+    if baseline_updated_at is not None and not cloud_side_advanced:
         raise CloudPublishError(
             f"云端回读断言 FAIL：`{skill_name}` 的云端 UpdatedAt 未推进"
             f"（before={baseline_updated_at}, after={updated_at}），"
             f"本次 upload 可能没有真正写入新版本。"
+        )
+
+    if cvt == 0 and not cloud_side_advanced:
+        raise CloudPublishError(
+            f"云端回读断言 FAIL：`{skill_name}` 的 cloudVersionTime 仍为 0 且云端 "
+            f"UpdatedAt 无推进，说明云端没有任何版本，技能仍停留在本地草稿态"
+            f"（假成功已被拦截）。"
         )
 
     record["_cloud_version_time"] = cvt
@@ -456,7 +468,42 @@ def cloud_publish(
         logs.append("baseline    : 云端暂无同名记录（upload 将创建新记录）")
 
     # ---------- 2. upload ----------
-    proc = _run(upload_cmd)
+    # ---------- 2. upload（先备份，再上传；upload 后自愈复原本地目录） ----------
+    # 真机教训：`aime skill upload` 成功后会执行 "Discarding local draft"，并且是按
+    # **技能名**清理 workspace 草稿 —— 即使从暂存副本上传，真实目录 user_skills/<name>
+    # 仍会被删除（本次自举中真实发生 3 次，工作副本被回滚成云端旧版本）。因此上传前
+    # 先做完整备份，上传后若目录消失就原地复原。
+    stage_root: Optional[str] = None
+    backup_src: Optional[Path] = None
+    try:
+        stage_root = tempfile.mkdtemp(prefix="aime-cloud-publish-")
+        backup_src = Path(stage_root) / skill_dir.name
+        shutil.copytree(skill_dir, backup_src)
+        logs.append(f"backup      : 上传前已备份技能目录 -> {backup_src}")
+    except Exception as exc:  # noqa: BLE001 - 备份失败必须显式告警，不静默
+        backup_src = None
+        logs.append(
+            f"⚠️ backup   : 备份失败（{exc}）；若 upload 后目录被 draft-discard 清理，"
+            f"请手动执行 `git restore --source=HEAD -- {skill_dir}` 恢复。"
+        )
+
+    try:
+        proc = _run(upload_cmd)
+    finally:
+        if backup_src is not None and not skill_dir.exists() and backup_src.exists():
+            try:
+                shutil.copytree(backup_src, skill_dir)
+                logs.append(
+                    f"self-heal   : upload 的 draft-discard 删除了 {skill_dir}，"
+                    "已从上传前备份自动复原（内容与上传版本一致）。"
+                )
+            except Exception as exc:  # noqa: BLE001
+                logs.append(
+                    f"❌ self-heal 失败（{exc}）：{skill_dir} 已被 draft-discard 删除，"
+                    f"请手动执行 `git restore --source=HEAD -- {skill_dir}` 恢复。"
+                )
+        if stage_root:
+            shutil.rmtree(stage_root, ignore_errors=True)
     combined = f"{proc.stdout}\n{proc.stderr}".strip()
     logs.append(f"upload_cmd  : {' '.join(upload_cmd)}")
     logs.append(f"upload_rc   : {proc.returncode}")

@@ -1,0 +1,16 @@
+{
+    "skill_id": "95b1248a-7aaa-42fa-b9ef-f58492536e09",
+    "name": "info-miner",
+    "description": "从碎片线索追溯权威来源并产出结构化阅读结果，可同步沉淀到飞书文档。适用于微博/推文/短贴溯源、研究资料整理、内部分享与知识归档场景。",
+    "version": "1.8",
+    "doc_link": "https://bytedance.larkoffice.com/docx/Q9CJdIyEUoeJMZxT5eGcnE6JnrH",
+    "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
+    "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
+    "date": "2026-07-26",
+    "updated_at": "2026-07-26 12:39",
+    "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner",
+    "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/info-miner.zip",
+    "zip_name": "info-miner.zip",
+    "drive_file_token": "doxcnw0roZS3Q31wk8bKsaTKS1f",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/doxcnw0roZS3Q31wk8bKsaTKS1f"
+}

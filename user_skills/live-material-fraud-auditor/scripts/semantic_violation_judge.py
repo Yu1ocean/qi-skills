@@ -65,6 +65,11 @@ DEFAULT_MAX_TOKENS = 4096
 DEFAULT_PROGRESS_PATH = _SKILL_ROOT / "temp_data" / "judge_progress.json"
 DEFAULT_LOW_CONFIDENCE = 0.7
 
+# 注册总类数 / 默认禁用集合（v2.1：拍卖类按用户 2026-08-21 指令关闭）
+REGISTERED_VIOLATION_TYPE_COUNT = 27
+EXPECTED_DISABLED_TYPE_IDS = frozenset({"static_content", "auction_violation"})
+EXPECTED_ENABLED_TYPE_COUNT = REGISTERED_VIOLATION_TYPE_COUNT - len(EXPECTED_DISABLED_TYPE_IDS)
+
 ALLOWED_RISK_LEVELS = ("高", "中", "低")
 FALLBACK_RISK_LEVEL = "中"
 UNTRACEABLE_MARK = "⚠️[证据不可回溯]"
@@ -792,7 +797,7 @@ def self_test() -> int:
         f"disabled type set == {sorted(EXPECTED_DISABLED_TYPE_IDS)} (got {sorted(_disabled)})",
     )
     _assert(
-        len(select_enabled_types(config, None)) == EXPECTED_ENABLED_TYPE_COUNT,
+        len(select_types(config, None)) == EXPECTED_ENABLED_TYPE_COUNT,
         f"enabled type count == {EXPECTED_ENABLED_TYPE_COUNT}",
     )
     try:

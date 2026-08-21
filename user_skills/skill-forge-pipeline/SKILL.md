@@ -269,6 +269,12 @@ python3 user_skills/skill-forge-pipeline/scripts/cloud_publish.py \
 7. **失败处理（禁止静默）**：输出醒目 `ERROR`；在 `SKILL.md` 云端发布记录中标记 **`⚠️ 需手动上传`**；写死信队列 `.ephemeral_pool/cloud_publish_failures.jsonl`（含 `skill_name` / `version` / `stage` / `error` / `timestamp` / `manual_command`）；`metadata.json` 落 `cloud_publish_status=failed` + `cloud_publish_error`。
 8. **权限墙不得绕行**：若 upload 因空间权限被拒，**严禁自动切换 scope / 换空间重试**。必须提示用户「联系项目空间管理员将你加为成员」，并按第 7 条标记为需手动上传。
 9. **调试开关**：`SKIP_CLOUD_PUBLISH=1` 显式跳过整个云端发布并以 0 退出（状态记为 `skipped`）。
+10. **draft-discard 自愈（真机血泪，V5.19 自举中真实发生 3 次）**：`aime skill upload` 成功后会打印 `Discarding local draft "<name>"`，并**按技能名**清理 workspace 草稿 —— 真实目录 `user_skills/<name>/` 会被连带删除，且随后 workspace 可能从云端回填**旧版本**同名/旧名目录，等于把你刚写完的新版本工作副本抹掉。因此：
+    - `cloud_publish.py` 在 upload 前对技能目录做完整备份，upload 后若目录消失则**自动原地复原**（`self-heal` 日志），备份失败必须显式告警；
+    - 从暂存副本上传**不能**规避该行为（discard 认名不认路径），别把它当解法；
+    - `record_cloud_publish_in_skill_md()` 遇到 `SKILL.md` 已被清理时只告警不 `raise` —— 云端确已发布成功，不能因回写失败把成功反转成崩溃；
+    - 兜底恢复命令：`git restore --source=HEAD -- user_skills/<name>`。
+11. **Disabled 显式提示**：云端回读若发现 `Disabled=True`，说明「上传成功但技能未启用」，必须显式提示执行 `aime skill enable <name>`，不得当作已生效。
 
 ⚠️ **断言口径警告**：不要用 `isDraft == False` 判定上传成功。真机验证表明，只要本地仍存在同名草稿目录，`aime skill list` 里的云端记录依然是 `isDraft=True`；upload 也不会删掉本地草稿。用它断言会造成误熔断。
 
@@ -452,9 +458,9 @@ cd user_skills/skill-forge-pipeline \
 
 ## ☁️ 云端发布记录
 
-- `cloud_publish_status`: **FAILED / 需手动上传**
+- `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: ``
+- `version`: `5.19`
 - `cloud_scope`: `user`
-- `cloud_published_at`: ``
-- 备注：需手动上传（详见死信队列）
+- `cloud_published_at`: `2026-08-21 20:47`
+- `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`

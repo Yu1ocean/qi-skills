@@ -1,7 +1,7 @@
 ---
 name: live-material-fraud-auditor
-version: 2.0
-description: 对 TikTok / Pearl 等平台的直播回放做 prompt-driven 语义违规审核，覆盖 TikTok Shop 达人及内容规则白皮书的 27 类违规（含材质造假、品牌授权、假货仿冒、货不对板、虚假定价、误导折扣、夸大绝对化、医疗功效、体重管理、性健康、禁限售、赌博、赠品促销、拍卖、站外引流、刷单冒充、恶意比较、慈善、IP 侵权、非原创、AIGC、未成年人、性暗示、耸人听闻、不相关推广、前后对比、静态画面）。适用于需要产出完整逐字稿、可取证命中表与飞书审核报告的直播合规质检；覆盖视频摄入探针、60 秒分段 ASR、语义窗口判定、反幻觉证据逐字回溯、风险分级、人工复核隔离与断点续跑。
+version: 2.1
+description: 对 TikTok / Pearl 等平台的直播回放做 prompt-driven 语义违规审核，注册 TikTok Shop 达人及内容规则白皮书的 27 类违规、当前默认启用 25 类（拍卖与静态画面两类按用户指令暂不纳入审核范围；注册类型含材质造假、品牌授权、假货仿冒、货不对板、虚假定价、误导折扣、夸大绝对化、医疗功效、体重管理、性健康、禁限售、赌博、赠品促销、拍卖、站外引流、刷单冒充、恶意比较、慈善、IP 侵权、非原创、AIGC、未成年人、性暗示、耸人听闻、不相关推广、前后对比、静态画面）。适用于需要产出完整逐字稿、可取证命中表与飞书审核报告的直播合规质检；覆盖视频摄入探针、60 秒分段 ASR、语义窗口判定、反幻觉证据逐字回溯、风险分级、人工复核隔离与断点续跑。
 author: yuqinan
 ---
 
@@ -135,7 +135,7 @@ force_human_review / judge_prompt / risk_rubric），不需要改任何脚本。
 | 11 | `prohibited_restricted_goods` | 禁限售商品推广 | audio | ✅ | ⚠️ |
 | 12 | `gambling_and_gamified` | 赌博与类赌博玩法 | audio | ✅ | |
 | 13 | `giveaway_promotion_violation` | 赠品与促销违规 | audio | ✅ | |
-| 14 | `auction_violation` | 拍卖违规 | audio | ✅ | |
+| 14 | `auction_violation` | 拍卖违规 | audio | ❌ | |
 | 15 | `off_platform_diversion` | 诱导站外引流 | audio | ✅ | |
 | 16 | `fraud_traffic_manipulation` | 欺诈、刷单与冒充行为 | audio | ✅ | ⚠️ |
 | 17 | `malicious_comparison` | 恶意比较与贬低竞品 | audio | ✅ | |
@@ -149,6 +149,10 @@ force_human_review / judge_prompt / risk_rubric），不需要改任何脚本。
 | 25 | `irrelevant_promotion` | 不相关推广内容 | audio | ✅ | |
 | 26 | `before_after_comparison` | 前后效果对比展示 | audio+visual | ✅ | ⚠️ |
 | 27 | `static_content` | 静态画面内容 | **visual** | ❌ | ⚠️ |
+
+> **当前默认启用 25 / 27**。未启用：`static_content`（纯视觉维度，ASR-only 链路判不了）、
+> `auction_violation`（**拍卖类按用户 2026-08-21 指令暂不纳入审核范围**；条目与 `judge_prompt`
+> 全部保留，恢复只需把 `enabled` 改回 `true`）。
 
 **开关口径**：
 
@@ -205,7 +209,7 @@ python3 scripts/semantic_violation_judge.py \
 ```
 
 - 判定前先过 `validate_audit_config()`（`audit_guard.py --check config`），配置烂了后面全是幻觉。
-- 默认跑全部 `enabled: true` 的 26 类；`--types` 可定向复审。
+- 默认跑全部 `enabled: true` 的 25 类；`--types` 可定向复审。
 - 长任务加 `--resume`，断点落 `temp_data/judge_progress.json`。
 - 退出码：`0` 全窗判定完成；`3` 存在 `unjudged_windows`（禁止宣称全量完成）；`2` 链路硬失败。
 
@@ -264,7 +268,7 @@ python3 scripts/semantic_violation_judge.py \
 ### 9. 最终判定输出格式
 
 ```
-本次启用类型：26 / 27（static_content 未开启，纯视觉维度）
+本次启用类型：25 / 27（未启用：static_content、auction_violation）
 配置版本：config_version=2.0
 
 各类风险：
@@ -341,7 +345,7 @@ python3 scripts/risk_keyword_scanner.py --transcript t.md --out-json legacy_hits
 
 ## 合规默认值（Defaults）
 
-- 默认审核配置：`references/audit_config.yaml`（`config_version=2.0`，27 类注册 / 26 类默认启用）
+- 默认审核配置：`references/audit_config.yaml`（`config_version=2.0`，27 类注册 / 25 类默认启用；未启用：static_content、auction_violation）
 - 默认判定模型：`doubao-seed-2.0-lite-user`（llmproxy 当前唯一放行模型）
 - 默认 llmproxy 端点：`https://aime.bytedance.net/api/agents/v2/llmproxy/user/chat/completions`（body 用 `max_tokens`，`temperature=0`）
 - 默认窗口：**24 行 / 窗，overlap 3 行**
@@ -380,7 +384,7 @@ python3 scripts/risk_keyword_scanner.py --transcript t.md --out-json legacy_hits
    textTracks 为空 → 排除内置字幕，走音频 ASR。
 2. 按 60 秒切片抽 WAV，逐段 ASR 并即时追加逐字稿；末段 3–4 分钟抽出空 WAV，记为"回放无有效音频"。
 3. 实际有效覆盖 00:00:00–20:16:10（总时长 20:19:52）。
-4. audit_guard.py --check config 通过（config_version=2.0，启用 26/27 类，static_content 未开）。
+4. audit_guard.py --check config 通过（config_version=2.0，启用 25/27 类；未启用 static_content、auction_violation）。
 5. semantic_violation_judge.py 滑窗 24 行/overlap 3 判定；期间遇 429 限流，退避重试后 3 个窗口仍失败，
    切 manifest 模式由 Agent 补判后 ingest 回收，最终 unjudged_windows=[]。
 6. 命中：material_fraud 高 42 条、counterfeit 高 6 条、brand_authorization 中 8 条、
@@ -393,6 +397,16 @@ v1.x 实战记录见 [pearl-case-2026-08.md](references/pearl-case-2026-08.md)�
 
 ## 更新日志 (Changelog)
 
+- **2.1（2026-08-21）**：按用户指令收窄审核范围 —— 拍卖类不纳入当前审核。
+  - `references/audit_config.yaml` 中 `auction_violation` 的 `enabled` 由 `true` 改为 `false`，
+    并在条目注释中标注关闭原因与恢复方式。**采用「设为 false」而非物理移除**：可逆，且保留白皮书条款溯源；
+    `judge_prompt` / `risk_rubric` / `id` 一律未改，其余 26 类 enabled 状态不动。
+  - 默认启用口径由 **26 / 27 收窄为 25 / 27**，禁用集合变为 `{static_content, auction_violation}`；
+    SKILL.md 注册表、Defaults、输出格式、案例实录中的硬编码口径全量同步。
+  - `scripts/semantic_violation_judge.py` 与 `scripts/audit_guard.py` 新增常量
+    `REGISTERED_VIOLATION_TYPE_COUNT` / `EXPECTED_DISABLED_TYPE_IDS` / `EXPECTED_ENABLED_TYPE_COUNT`，
+    并在两处 `--self-test` 中新增「禁用集合 == {static_content, auction_violation}」与
+    「启用数 == 25」的物理断言 —— 口径再漂移会直接 self-test 失败，而不是静默跑偏。
 - **2.0（2026-08-21）**：架构升级为 prompt-driven 语义判定。
   - **语义判定取代关键词库**：新增 `scripts/semantic_violation_judge.py` 作为主链路；
     每类违规只用一段自然语言 `judge_prompt`，抗「换个说法就漏」的规避，扩展新类型无需改脚本。
