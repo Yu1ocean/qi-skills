@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.16
+version: 5.17
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.15)
+# 技能锻造流水线 (Forge Pipeline V5.17)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -37,6 +37,8 @@ description: 创建、升级、打包、发布并归档 Aime 自制技能。适�
 - 双轨断言失败却未写入孤儿待修复死信队列（`.ephemeral_pool/orphan_decisions.jsonl`）。
 - Archive 阶段只 append ZIP 文件块、未清理同名旧块（导致说明文档堆积历史版本 ZIP）。
 - 未做「本技能 ZIP 块数量 == 1」回读断言，就宣称文件块回挂完成。
+- Celebrate 阶段引用不存在的 V3 脚本 / 模板（`assemble_card_v3.py`、`card_template_v3.html`、`update_bitable_v3.py`），或画廊记录落到旧灵感台账 `tbly6lJBR0QYTBfW` 而非 V3 画廊 `tblHHVXl9ObjSyRw`。
+- Celebrate 画廊同步失败后静默放行（输出 "proceeding to ensure workflow continuity" 一类话术）而未熔断。
 - 自动删除了非本技能的 ZIP 文件块（异物块属他人资产，只允许报告 + 人工确认）。
 
 ## Verification（强制验收清单）
@@ -140,13 +142,32 @@ python3 scripts/cda_guardrails_selfcheck.py --skill-dir "user_skills/<target-ski
 
 - **必须产出**：技能名称、描述、包 ID、目标技能目录路径。
 
-### 2. Celebrate 庆祝（V3 赛博灵感）
+### 2. Celebrate 庆祝（赛博灵感卡片）
 
-只要技能打包成功，必须**无缝且强制**调起 `cyber-inspiration-generator` (V3)。
+只要技能打包成功，必须**无缝且强制**调起 `cyber-inspiration-generator`。
 
+- **正式入口（唯一）**：`user_skills/skill-forge-pipeline-v4/scripts/celebrate_skill.py`。该脚本在启动前执行**依赖存在性断言**，任一依赖缺失即 `raise` 熔断；画廊同步失败同样 `raise`，**禁止**再出现 "proceeding to ensure workflow continuity" 一类静默放行。
+- **依赖清单（必须真实存在，禁止引用任何 `_v3` 幽灵资产）**：
+  - `user_skills/cyber-inspiration-generator/assets/card_template.html`
+  - `user_skills/cyber-inspiration-generator/scripts/assemble_card.py`（签名：`subject story fact image_url template output`）
+  - `user_skills/cyber-inspiration-generator/scripts/capture_screenshot.py`
+  - `user_skills/cyber-inspiration-generator/scripts/sync_gallery.py`（通用化画廊同步，取代历史一次性 `sync_gallery_*.py`）
 - **视觉生成**：调用 `image-generate` 生成一张 16:9 的赛博朋克风 AI 视觉图。
-- **灵感铸造**：生成 V3 版本的赛博朋克风灵感卡片，文案需采用 Aime 护主小精灵视角的双轨剧本（小说+说明）。
-- **画廊同步**：强制将卡片元数据、截图及文案附加到 V3 画廊多维表格：`https://bytedance.larkoffice.com/base/PRbvbUyLqaeITqsXNMRcRCM5nhh?table=tblHHVXl9ObjSyRw`。
+- **灵感铸造**：文案采用 Aime 护主小精灵视角的双轨剧本（【小说】+【说明】）。
+- **画廊同步（唯一正式表）**：`base PRbvbUyLqaeITqsXNMRcRCM5nhh` / `table tblHHVXl9ObjSyRw` / 附件字段 `fldOBqrqET`，即 `https://bytedance.larkoffice.com/base/PRbvbUyLqaeITqsXNMRcRCM5nhh?table=tblHHVXl9ObjSyRw`。
+  ⚠️ `cyber-inspiration-generator/scripts/update_bitable.py` 指向的 `tbly6lJBR0QYTBfW` 是**旧灵感台账**，仅作历史兼容，严禁用于 Celebrate 画廊同步。
+- **调用示例**（`include_secrets=true`）：
+
+```bash
+python3 user_skills/skill-forge-pipeline-v4/scripts/celebrate_skill.py \
+  --name "<skill-name>" --skill-id "<SKILL-ID>-V<version>" \
+  --card-title "<卡片标题>" --skill-type "防错机制" --status "已上线" \
+  --image-url "<image_url>" --deployed-url "<deployed_url>" \
+  --story "<【小说】...>" --fact "<【说明】...>" \
+  --screenshot "screenshot.png"
+```
+
+- **验收**：必须输出 `record_id` + `table_id` + 部署 URL，并有 `+record-get` RAW 回读证据（附件字段非空）。
 
 ### 3. Archive 入库（图书馆台账 + Zip 资产发布）
 
@@ -267,6 +288,13 @@ python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py \
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
 ## 更新日志 (Changelog)
+
+- **V5.17**: 修复 Celebrate 阶段「幽灵 V3 资产 + 静默降级」缺陷。
+  - `scripts/celebrate_skill.py` 由孤儿脚本升格为 Celebrate **正式入口**：不再引用根本不存在的 `card_template_v3.html` / `assemble_card_v3.py` / `update_bitable_v3.py`，改为调用真实存在的 `assemble_card.py` + `card_template.html` + `capture_screenshot.py` + 新的 `sync_gallery.py`。
+  - 新增启动前 L3 存在性断言 `assert_dependencies_exist()`：四个依赖路径任一缺失即 `raise` 熔断；新增 `assert_official_gallery()` 拒绝写入旧灵感台账 `tbly6lJBR0QYTBfW`。
+  - 删除「Bitable sync failed, but proceeding to ensure workflow continuity」静默放行分支，所有子步骤改为 `run_or_raise`，失败即熔断。
+  - 配套：`cyber-inspiration-generator` v2.1 新增通用化 `scripts/sync_gallery.py`（参数化 + 5 条 L3 断言 + 写后 `+record-get` RAW 回读），取代每次 forge 手写一次性 `sync_gallery_*.py` 的技术债。
+  - SKILL.md Celebrate 章节写明正式入口、依赖清单、画廊表 ID 与调用示例；Red Flags 新增 2 条（引用 V3 幽灵脚本 / 画廊落旧表、画廊同步失败静默放行）。
 
 - **V5.16**: 修复 Archive 阶段 ZIP 文件块「无限 append」缺陷（说明文档堆积 8 个历史版本 ZIP）。
   - `register_skill.py` 的 ZIP 回挂链路由 append 改为**幂等替换**：新增 `list_doc_zip_file_blocks()`（走 `docs +fetch --doc-format xml --detail with-ids` 解析 `<figure><source>`，替代已失效的 `docx.v1.document_block.list` 内部代理）、`is_own_skill_zip()`（同名旧块识别，兼容 `_v1.2` / `-1.2` / ` (1)` 版本后缀变体）、`delete_doc_blocks()`（`block_delete` 批量删除）、`prune_stale_zip_blocks()`（编排 + 回读断言）。
