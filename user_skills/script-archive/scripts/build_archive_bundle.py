@@ -2,16 +2,31 @@
 import argparse
 import csv
 import json
+import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
+from created_at_resolver import (  # noqa: E402
+    LABEL_UNKNOWN,
+    SENTINEL_BROKEN_LINK,
+    assert_created_at_fields,
+    classify_freshness,
+    resolve_created_at,
+)
 
 DEFAULT_NULL = "NULL"
 LEDGER_HEADERS = [
     "record_id",
     "batch_id",
     "archived_at",
+    "created_at",
+    "freshness_status",
+    "created_at_source",
     "platform",
     "market",
     "category",
@@ -80,6 +95,7 @@ def summarize_tags(value: Any) -> str:
     return DEFAULT_NULL
 
 
+# [FIELD-CREATED_AT-v1] 创建时间字段，来源平台 publish_time，禁止删除
 def normalize_case(data: Dict[str, Any], source_json: Path, batch_id: str, idx: int) -> Dict[str, Any]:
     validate_case_payload(data)
     methodology = pick_first(data, ["可复用方法论", "methodology", "methodology_summary"])
@@ -89,10 +105,17 @@ def normalize_case(data: Dict[str, Any], source_json: Path, batch_id: str, idx: 
     video_title = pick_first(data, ["video_title", "title", "标题"])
     account_name = pick_first(data, ["account_name", "author", "账号"])
     video_url = pick_first(data, ["video_url", "source_url", "url"])
-    return {
+    # publish_time 为 NULL 时走 snowflake 反解；仍失败填 ⚠️[数据断链_待自愈]，严禁空串/None/0
+    created_at, created_at_source = resolve_created_at(
+        data, null_sentinel=SENTINEL_BROKEN_LINK
+    )
+    row = {
         "record_id": f"{batch_id}_{idx:03d}",
         "batch_id": batch_id,
         "archived_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "created_at": created_at,
+        "freshness_status": classify_freshness(created_at),
+        "created_at_source": created_at_source,
         "platform": pick_first(data, ["platform", "平台"]),
         "market": pick_first(data, ["market", "市场"]),
         "category": pick_first(data, ["category", "类目"]),
@@ -106,15 +129,24 @@ def normalize_case(data: Dict[str, Any], source_json: Path, batch_id: str, idx: 
         "experiment_summary": experiment,
         "source_json": str(source_json),
     }
+    # L3 运行时断言：created_at / freshness_status 不完整即熔断
+    assert_created_at_fields(row)
+    return row
 
 
 def build_report(cases: List[Dict[str, Any]], summary: Dict[str, Any]) -> str:
     top_tags = ", ".join(f"{k}×{v}" for k, v in summary["top_tags"].items()) or DEFAULT_NULL
+    # [FIELD-CREATED_AT-v1] 时效画像必须在报告 L1 结论区可见
+    freshness_brief = (
+        ", ".join(f"{k}×{v}" for k, v in summary["freshness_distribution"].items())
+        or LABEL_UNKNOWN
+    )
     lines = [
         "## L1 结论先行",
         "",
         f"- 本批次共归档 **{summary['case_count']}** 条视频脚本案例。",
         f"- 高频视频类型标签：**{top_tags}**。",
+        f"- 批次时效画像：**{freshness_brief}**（断链待自愈 {summary['broken_link_count']} 条）。",
         f"- 观察到的共性方法论：**{summary['methodology_brief']}**。",
         "",
         "<callout icon=\"bulb\" bgc=\"3\">",
@@ -157,6 +189,7 @@ def build_report(cases: List[Dict[str, Any]], summary: Dict[str, Any]) -> str:
             f"### 案例 {index}：{case['video_title']}",
             "",
             f"- **账号**：{case['account_name']}",
+            f"- **创建时间 / 时效**：{case['created_at']}（{case['freshness_status']}，来源 {case['created_at_source']}）",
             f"- **视频链接**：[{case['video_url']}]({case['video_url']})",
             f"- **类型标签**：{case['video_type_tags']}",
             f"- **结构 / 钩子**：{case['hook_summary']}",
@@ -169,6 +202,9 @@ def build_report(cases: List[Dict[str, Any]], summary: Dict[str, Any]) -> str:
 
 
 def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
+    # [FIELD-CREATED_AT-v1] 写盘前全量复核：任一行缺 created_at / 时效状态即熔断
+    for row in rows:
+        assert_created_at_fields(row)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=LEDGER_HEADERS)
@@ -206,11 +242,24 @@ def main() -> int:
             if tag and tag != DEFAULT_NULL:
                 tag_counter[tag] += 1
 
+    freshness_counter: Counter[str] = Counter(
+        case["freshness_status"] for case in cases
+    )
+    broken_link_count = sum(
+        1 for case in cases if case["created_at"] == SENTINEL_BROKEN_LINK
+    )
+
     summary = {
         "batch_id": batch_id,
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "case_count": len(cases),
         "top_tags": dict(tag_counter.most_common(5)),
+        # [FIELD-CREATED_AT-v1] 批次时效画像，用于快速发现历史存量堆积
+        "freshness_distribution": dict(freshness_counter),
+        "broken_link_count": broken_link_count,
+        "created_at_source_distribution": dict(
+            Counter(case["created_at_source"] for case in cases)
+        ),
         "methodology_brief": "高表现案例通常同时具备强钩子、连续推进和清晰 CTA。",
         "source_files": [str(path) for path in files],
     }
@@ -231,6 +280,9 @@ def main() -> int:
         "ledger_path": str(ledger_path.resolve()),
         "summary_path": str(summary_path.resolve()),
         "case_count": len(cases),
+        "freshness_distribution": summary["freshness_distribution"],
+        "broken_link_count": summary["broken_link_count"],
+        "created_at_source_distribution": summary["created_at_source_distribution"],
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0

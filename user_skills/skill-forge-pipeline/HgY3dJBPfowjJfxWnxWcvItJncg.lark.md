@@ -1,6 +1,6 @@
-# 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
+# 【技能说明】skill-forge-pipeline · 技能锻造流水线 (Forge Pipeline V5.19)
 
-<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZmZmN2ZkOTU2ZjA5NzY3NmM5OWU5ZDRhNTA3ZjZjNTJfMWYzMmEyMzM5ZjM1YWU2NmMyOTFhMThhOGI4YTY5NzhfSUQ6NzY3NjQ2NDEyNDY5OTg4ODYwMV8xNzg3MzE2MDg3OjE3ODczMTk2ODdfVjM" mime="application/zip" size="3020515" token="H4SxbuOICo8IKFx7h4lcpoNXnJh"/></figure>
+<figure view-type="Card"><source name="skill-forge-pipeline.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=ZTI4ODQyMmZmODRjOWNhMmE1ODlmNjM0YWNhOTg2ZTNfOTU4NjNhODQyZDBjNWQ5NjVkODI1OTAwNGU4NzJmOTdfSUQ6NzY3NjQ2Njc2ODUyODgyMTQ1OV8xNzg3MzE2NzAyOjE3ODczMjAzMDJfVjM" mime="application/zip" size="3021665" token="XUejb35Qqo8i1Wxm1Vzc3Y4pn8d"/></figure>
 
 > 📄 **文档编号**：SYS-2604-012 📅 **归档日期**：2026-04-13
 
@@ -18,12 +18,12 @@
 
 - 核心关键词：
 
-  - skill-forge-pipeline-v4
+  - skill-forge-pipeline
   - CDA Guardrails
   - Forge / Celebrate / Archive
 - 典型指令示例：
 
-> 【CDA Guardrails 固化到 skill-forge-pipeline-v4】创建/升级一个技能并完成打包发布与归档
+> 【CDA Guardrails 固化到 skill-forge-pipeline】创建/升级一个技能并完成打包发布与归档
 
 ## 一、 强制原子工作流 (Atomic Transaction)
 
@@ -72,7 +72,7 @@
 - 🧑‍💻 用户输入：
 
   ```Plain Text
-  【CDA Guardrails 固化到 skill-forge-pipeline-v4】
+  【CDA Guardrails 固化到 skill-forge-pipeline】
   
   ```
 - 🤖 标准输出：
@@ -100,14 +100,14 @@
 
 ```
 # 零副作用前置校验
-python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --dry-run --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --dry-run --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
 
 # 双轨原子写入
-python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
+python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --decision-id DEC-20260821-001 --entry-file /tmp/dec_entry.yaml
 
 # 事后巡检（只做双轨回读断言）
-python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001
+python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001
 
 # 故障注入自测（验证 raise + 死信队列链路）
-python3 user_skills/skill-forge-pipeline-v4/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001 --inject-failure mirror
+python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py --verify-only DEC-20260821-001 --inject-failure mirror
 ```
