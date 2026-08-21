@@ -2,15 +2,15 @@
     "skill_id": "SKILL-FORGE-PIPELINE",
     "name": "skill-forge-pipeline-v4",
     "description": "自动化技能创建、升级、打包发布与归档流水线（含 CDA Guardrails 自检与双轨原子写入护栏）",
-    "version": "5.16",
+    "version": "5.15",
     "doc_link": "https://bytedance.larkoffice.com/docx/HgY3dJBPfowjJfxWnxWcvItJncg",
     "wiki_url": "https://bytedance.larkoffice.com/wiki/GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "wiki_node_token": "GU0ewkyaGi4i5nkwBtNcM3aPn9g",
     "date": "2026-08-21",
-    "updated_at": "2026-08-21 18:16",
+    "updated_at": "2026-08-21 18:17",
     "skill_dir": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4",
     "zip_path": "/workspace/iris_19f7e856-22a9-491e-b611-5e5c09e9e419/user_skills/skill-forge-pipeline-v4.zip",
     "zip_name": "skill-forge-pipeline-v4.zip",
-    "drive_file_token": "PezVbYUyPoAcVNxi6QzcL8sHn4b",
-    "drive_file_url": "https://bytedance.larkoffice.com/file/PezVbYUyPoAcVNxi6QzcL8sHn4b"
+    "drive_file_token": "Pv8pb2EqUohusCxnUmXctrScnNg",
+    "drive_file_url": "https://bytedance.larkoffice.com/file/Pv8pb2EqUohusCxnUmXctrScnNg"
 }

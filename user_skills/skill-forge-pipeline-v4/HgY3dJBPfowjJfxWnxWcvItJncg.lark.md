@@ -1,5 +1,7 @@
 # 【技能说明】自动化技能创建与归档流水线 (Forge Pipeline V4)
 
+<figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OWM3MjMwMjJmMWE3ZTI5MGVmZjllYzBhOTVmNTNmMWVfMDlhZjAyYjI1OTYwZWE3ZjExMWYwZWY1NzM2OTZiZTdfSUQ6NzY3NjQyNjk4ODMyMTQ0Mjc1Ml8xNzg3MzA3NDQwOjE3ODczMTEwNDBfVjM" mime="application/zip" size="2992417" token="Pv8pb2EqUohusCxnUmXctrScnNg"/></figure>
+
 <figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=Y2MwMTk0YTRjNmQ1MWNhZTBlYmMwY2Y5ZmVmZmQ5YzNfMTlmYmQ1NjU3Njk0YjQ4M2ZkNzg1ZjJjMjE5ZjRhYjZfSUQ6NzY3NjQyNjc4NTc2MTc0MTc5M18xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2992393" token="PezVbYUyPoAcVNxi6QzcL8sHn4b"/></figure>
 
 <figure view-type="Card"><source name="skill-forge-pipeline-v4.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MGE0M2RhODY5ZTEzNjEzYTNhM2EwY2VhZjA4Y2FjYzhfYTRkNWM0NDk0OWFlNmI4NjQzMjVmZTIxOWJkODc0YjdfSUQ6NzY3NDg3NTE2OTUyMTA5MzkyMl8xNzg3MzA3MzkzOjE3ODczMTA5OTNfVjM" mime="application/zip" size="2953585" token="T3nsb2CdzoeJfLxeXQ5c8qlonge"/></figure>

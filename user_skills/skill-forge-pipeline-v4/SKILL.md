@@ -1,6 +1,6 @@
 ---
 name: skill-forge-pipeline-v4
-version: 5.16
+version: 5.15
 description: 创建、升级、打包、发布并归档 Aime 自制技能。适用于新技能锻造、既有技能迭代、技能上线发布和台账归档场景。
 ---
 
