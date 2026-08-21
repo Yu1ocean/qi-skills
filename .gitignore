@@ -88,3 +88,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# ---------- 已废弃的双活目录（v5.19 起更名为 skill-forge-pipeline，禁止再次入库） ----------
+user_skills/skill-forge-pipeline-v4/
