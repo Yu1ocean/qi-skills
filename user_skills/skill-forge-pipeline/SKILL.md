@@ -1,10 +1,10 @@
 ---
 name: skill-forge-pipeline
-version: 5.22
+version: 5.23
 description: 创建、升级、打包、发布、归档并上传到 Aime 云端的自制技能锻造流水线。适用于新技能锻造、既有技能迭代、技能上线发布、云端发布与台账归档场景。
 ---
 
-# 技能锻造流水线 (Forge Pipeline V5.22)
+# 技能锻造流水线 (Forge Pipeline V5.23)
 
 本技能负责 Aime 系统中技能的创建、修改与自动化部署。它通过集成 `aime-skill-creator`、`cyber-inspiration-generator`、`omni-asset-archiver` 与飞书高权限挂载链路，确保每一个技能的生命周期都得到完整记录。
 
@@ -30,6 +30,12 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - “说明文档正文标题里的版本号是给人看的，跟代码版本不一致也没啥影响。”
 - “文档里没找到版本标识，打一句 warning 跳过就行。”
 - “`v1.6.1` 就当 `1.6` 处理吧，patch 位没人在意。”
+- “说明文档我全量重渲染一遍最省事，人工写的案例回头让他们再补。”
+- “踩坑记录看着过时了，顺手清一清更整洁。”
+- “这文档没有 Zone 锚点标题，那就按老规矩全量覆盖吧。”
+- “Preserve Zone 我只是 update 了一下措辞，没删算保留吧。”
+- “Changelog 我直接覆盖成最新一条，历史版本没人看。”
+- “Zone 断言失败大概是接口抖动，重试不了就先跳过。”
 
 ## Red Flags（危险信号）
 
@@ -66,6 +72,12 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
 - **说明文档正文/标题版本号仍是旧版（如 V5.19），却宣称版本已同步** —— 没有做正文版本回读断言。
 - 文档版本同步链路走到「未找到版本标识 → 打 WARNING → skip」的静默分支（必须改为 `raise`）。
 - 版本号归一化时丢掉 patch 位（`v1.6.1` → `1.6`），导致三段版本被静默降级。
+- **对飞书说明文档执行「全量覆盖」或「整篇重渲染」** —— 会抹平 Preserve Zone 的人工沉淀（使用案例 / 踩坑 / 注意事项）。
+- 对 Preserve Zone 内的 block 执行任何 `block_delete` / `block_replace` / `str_replace`。
+- 更新 Changelog 时采用覆盖而非追加，导致历史版本条目丢失。
+- 老文档缺失 Zone 锚点标题时，**猜测**边界并照旧覆盖，而不是安全降级（末尾补建锚点 + 显式告知）。
+- 三分区写入后没有 RAW 回读断言（锚点各 1 次 + Preserve 正文存在性），或断言失败后降级为 WARNING 继续。
+- 写入前没有先 `docs +fetch --detail with-ids` 读取真实结构，就直接下发 block 级写指令。
 
 ## Verification（强制验收清单）
 
@@ -91,6 +103,14 @@ description: 创建、升级、打包、发布、归档并上传到 Aime 云端�
     仅凭 upload 退出码宣称成功视为 P1 假成功缺陷。上传失败必须标记「需手动上传」+ 落死信队列 + 输出醒目 ERROR，禁止静默跳过。
 14. **说明文档正文版本回读断言验收（V5.20 新增）**：SSOT 版本写回 `SKILL.md` 之后，必须调用 `assert_doc_body_version_synced(doc_url, new_version)`：重新下载说明文档 → 提取**标题内嵌版本**（`(... Vx.y[.z])`）与**带标签版本**（`version: x.y` / `版本号：x.y` / `` `version`: `x.y` ``）→ 断言全部等于本次锻造版本。任一处仍为旧版、或全文找不到任何版本标识，都必须 `raise GuardrailViolation` 并标记 **【文档版本未同步】**，禁止静默成功。该断言执行两次：写入后（sleep 2s）+ Wiki Mount 之后（防止搬家把旧版本带回）。
     ⚠️ 断言口径不得使用 `isDraft == False`：真机验证表明只要本地存在同名草稿目录，`skill list` 就会把记录标成 `isDraft=True`，主站点 upload 后也不会丢弃本地草稿，用它断言会误熔断。
+
+15. **飞书说明文档三分区验收（V5.23 新增）**：任何对飞书技能说明文档的写入/更新，必须按 Zone 分区执行且留下回读证据：
+    - ① **写前读真实结构**：先 `lark-cli docs +fetch --doc-format xml --detail with-ids` 拿到带 block id 的结构，再决定写法；禁止盲写。
+    - ② **Overwrite Zone**（头部版本信息框 / 触发词 / 接口契约）从 `SKILL.md` 重新渲染覆盖；每个待删 block 必须先经 `ZoneMap.zone_of()` 断言归属 Overwrite Zone，否则 `raise`。
+    - ③ **Preserve Zone**（使用案例 / 踩坑记录 / 注意事项 / 人工补充背景）**一律不 update、不 delete**。
+    - ④ **Append Zone**（更新日志）只在末尾追加本版本条目，禁止覆盖历史条目。
+    - ⑤ **RAW 回读断言**：两个锚点标题各出现**恰好 1 次**；写前采样的 Preserve Zone 正文在回读结果中**仍然存在**。任一不满足即 `raise GuardrailViolation`，禁止静默 WARNING。
+    - ⑥ 老文档无锚点时必须**安全降级**（末尾补建锚点章节 + 日志显式告知 `[ZONE-DEGRADED]`），绝不误删既有正文。
 
 ## 适用场景
 
@@ -378,7 +398,100 @@ python3 user_skills/skill-forge-pipeline/scripts/dual_track_atomic_write.py \
 
 > 所有调用必须设置 `include_secrets=true`；飞书读写一律走 MCP / `lark-cli` 链路，严禁裸调 OpenAPI。
 
+## 飞书说明文档三分区策略 (Doc Zone Strategy) — V5.23
+
+### 为什么要分区
+
+forge 每次发布都会更新飞书技能说明文档。V5.22 之前只有两种形态：**全量覆盖**或**纯 append**，两者都缺失「哪些区域可覆盖、哪些必须保留」的语义：
+
+- 全量覆盖 → 人工写的使用案例 / 踩坑 / 注意事项被机器抹平，沉淀资产永久丢失；
+- 纯 append → 版本号、触发词、接口契约永远堆叠旧版，读者分不清哪份是现行版本。
+
+**核心设计原则（两套事实来源，各管一段）**：
+
+- **飞书文档是「对人」的**：使用案例、踩坑记录、注意事项、人工补充背景是**人写的沉淀资产**，forge 不得覆盖。
+- **`SKILL.md` 是「对机器」的 SSOT**：版本号、描述、触发词、接口契约由 `SKILL.md` 渲染，飞书文档对应章节可被安全覆盖。
+
+### Zone 定义
+
+| Zone | 内容 | forge 行为 |
+|---|---|---|
+| **Overwrite Zone** | 头部版本信息高亮框（版本号 / 描述 / 更新时间）、触发词章节、接口契约 / 参数说明 | 每次 forge 从 `SKILL.md` 重新渲染并覆盖对应 block |
+| **Preserve Zone** | 使用案例、踩坑记录、注意事项、人工补充背景 | **不 update / 不 delete**，云端原内容原样保留 |
+| **Append Zone** | 更新日志 Changelog / 版本历史 | 末尾**追加**新版本条目，不覆盖旧条目 |
+
+### Zone 边界锚点（固定标题，不可随意改动）
+
+- Overwrite Zone 结束 / Preserve Zone 开始：`## 📝 使用案例 & 踩坑记录`
+- Preserve Zone 结束 / Append Zone 开始：`## 📋 更新日志`
+
+```
+<文档开头> ... Overwrite Zone ...
+## 📝 使用案例 & 踩坑记录      <- Preserve Zone 开始
+... Preserve Zone ...
+## 📋 更新日志                <- Append Zone 开始
+... Append Zone ... <文档结尾>
+```
+
+### 执行契约（`scripts/doc_zone_manager.py`）
+
+唯一入口 `sync_doc_zones()`，由 `register_skill.py` 在「版本标识同步之后、Wiki Mount 之前」自动调用。顺序不可颠倒：
+
+1. **读真实结构**：`fetch_zone_map()` → `lark-cli docs +fetch --doc-format xml --detail with-ids`，解析成有序顶层 block 列表（`<ul>`/`<ol>` 自身无 id，按 `<li>` 展开）。**禁止盲写**。
+2. **采样 Preserve Zone**：`ZoneMap.preserve_samples()` 取最多 8 条人工正文，作为写后存在性断言的基准。
+3. **补建缺失锚点（安全降级）**：`ensure_zone_anchors()` 只做 `append`，绝不 delete / 不重排既有正文，并打印 `[ZONE-DEGRADED]` 显式告知。
+4. **覆盖 Overwrite Zone**：`update_overwrite_zone()` 按 h2 章节整段重建；**每个待删 block 都必须先经 `ZoneMap.zone_of()` 断言归属 Overwrite Zone**，否则 `raise` —— 这是防止误伤 Preserve Zone 的最后一道闸门。
+5. **追加 Changelog**：`append_changelog_entry()` + `build_changelog_entry_from_skill_md()`（文案取自 `SKILL.md` 更新日志，SSOT 原则）。
+6. **等 2s → RAW 回读断言**：`assert_zone_integrity()`。
+
+### 零信任断言（L3 熔断）
+
+`assert_zone_integrity()` 必须同时满足，否则 `raise GuardrailViolation`：
+
+1. 两个锚点标题在文档中**各出现恰好 1 次**（多出 = 重复补建，缺失 = 误删）；
+2. 写前采样的 Preserve Zone 正文在回读结果中**仍然存在**（存在性断言，空白归一化后比对）。
+
+**禁止**降级为 WARNING 后继续宣称成功。
+
+### 老文档兼容（安全降级）
+
+存量文档没有锚点标题时，**绝不猜测边界、绝不删除既有正文**：`resolve_zones()` 会把整篇标记为不可动的 Preserve Zone（`overwrite` 为空），仅在末尾补建缺失锚点章节（Preserve Zone 写入占位提示 `[待补充使用案例]`），并在日志与 `.forge_receipt.json` 的 `doc_zone_degraded` 字段中显式记录降级原因。锚点**重复**或**顺序颠倒**同样视为边界不可信 → 降级且不改写 Overwrite Zone（重复锚点属人工介入范畴，不自动删除）。
+
+### 调用示例
+
+```bash
+# 只读：打印三个 Zone 的边界划分（零副作用，排查降级原因首选）
+python3 scripts/doc_zone_manager.py --doc "<doc_url>" --skill-dir . --dry-run
+
+# 事后巡检：只做三分区回读断言
+python3 scripts/doc_zone_manager.py --doc "<doc_url>" --skill-dir . --verify-only
+
+# 手动补跑三分区同步
+python3 scripts/doc_zone_manager.py --doc "<doc_url>" --skill-dir . \
+  --version "5.23" --changelog-entry "- **V5.23**：新增三分区策略。"
+
+# 新建文档：先产出带 Zone 锚点的骨架，再交给 `lark-cli docs +create` 导入
+python3 scripts/register_skill.py --name x --desc y --path z \
+  --skill-dir "user_skills/<skill>" --emit-new-doc-markdown /tmp/skeleton.md
+
+# 离线自检（纯函数，不触网）
+python3 scripts/test_doc_zones.py
+```
+
+> 调试开关：`--skip-doc-zones`（正式发布默认必须执行，它同时承担 Preserve Zone 的保护断言）。
+
 ## 更新日志 (Changelog)
+
+- **V5.23**: 新增「飞书说明文档三分区（Zone）策略」，终结 forge 覆盖人工沉淀的风险。
+  - **根因**：说明文档写入逻辑此前只有「全量覆盖」或「纯 append」两种形态，没有区分可覆盖区与人工沉淀区。全量覆盖会抹平人工写的使用案例 / 踩坑 / 注意事项；纯 append 又让版本号、触发词、接口契约堆叠旧版无人收敛。
+  - **设计原则**：飞书文档是「对人」的（人工沉淀不可覆盖）；`SKILL.md` 是「对机器」的 SSOT（版本 / 描述 / 触发词 / 接口契约由它渲染，文档对应章节可覆盖）。
+  - 新增 `scripts/doc_zone_manager.py`：以固定标题锚点（`## 📝 使用案例 & 踩坑记录` / `## 📋 更新日志`）切分 Overwrite / Preserve / Append 三区；`sync_doc_zones()` 为唯一编排入口，`update_overwrite_zone()` 对每个待删 block 强制 `ZoneMap.zone_of()` 归属断言（越界即 `raise`），Preserve Zone 一律不 update / 不 delete，Changelog 只追加。
+  - L3 断言 `assert_zone_integrity()`：两个锚点各出现**恰好 1 次** + 写前采样的 Preserve Zone 正文在 RAW 回读中**仍然存在**；任一不满足即 `raise GuardrailViolation`，禁止静默 WARNING。
+  - 老文档兼容：无锚点 / 锚点重复 / 顺序颠倒一律**安全降级** —— 整篇视为不可动 Preserve Zone，仅末尾补建缺失锚点章节，打印 `[ZONE-DEGRADED]` 并落 `.forge_receipt.json` 的 `doc_zone_degraded`，绝不误删既有正文。
+  - 新建文档路径：`register_skill.py --emit-new-doc-markdown` 产出「Overwrite → Preserve（占位 `[待补充使用案例]`）→ Append」三分区骨架，让文档出生即合规。
+  - `register_skill.py`：接入 `sync_doc_zones()`（版本标识同步之后、Wiki Mount 之前），新增 `--skip-doc-zones` 调试开关，metadata 落 `doc_zone_synced` / `doc_zone_sync` / `doc_zone_degraded`。
+  - 健壮性踩坑：Preserve 锚点标题自带 `&`，附件 `href` 也常带未转义 `&`，严格 XML 解析必崩 → 新增 `sanitize_doc_xml()` 把非法实体的裸 `&` 补成 `&amp;`；`SKILL.md` 的文档模板骨架里本就写着 `## 🔑 触发词`，故 `extract_skill_md_section()` 必须先 `_strip_fenced_blocks()` 剔除围栏，否则会把模板占位符灌进飞书文档。
+  - 新增 `scripts/test_doc_zones.py` 离线自检（25 例全绿）：覆盖边界切分、老文档降级、锚点重复 / 顺序颠倒、标题空格与 `&` 变体、非法 XML 熔断、围栏剔除。
 
 - **V5.22**: 收紧 `is_own_skill_zip()` 的版本后缀匹配，杜绝跨技能 ZIP 块误删。此前 `<父名>-v4.zip` 会被宽松正则判为父技能自身旧块，若未来出现「同名前缀的独立技能」与父技能共享同一说明文档，父技能 forge 会静默删除该独立技能的 ZIP 块。现要求剥离技能名前缀后的剩余后缀必须为空 / 带点号的纯数字版本（`_5.21`、`_v5.22`）/ `(1)` 去重后缀 / `_latest` 白名单；任何含字母语义的后缀（`-v4`、`_v4`、`-beta`、`_old`）一律判为「异物块，只报告不删除」。新增 `scripts/test_is_own_skill_zip.py` 自检（9 例全绿）。
 

@@ -17,6 +17,18 @@ from urllib.parse import quote, urlparse
 
 import requests
 
+# --- 三分区（Zone）策略执行器（V5.23） ---
+# 飞书说明文档写入必须区分 Overwrite / Preserve / Append 三个区域：
+# 人工沉淀的使用案例与踩坑记录（Preserve Zone）永不被 forge 覆盖。
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from doc_zone_manager import (  # noqa: E402
+    APPEND_ANCHOR_TITLE,
+    PRESERVE_ANCHOR_TITLE,
+    build_changelog_entry_from_skill_md,
+    build_new_doc_markdown,
+    sync_doc_zones,
+)
+
 DEFAULT_EMAIL = "yuqinan@bytedance.com"
 DEFAULT_OPEN_API_BASE = "https://fsopen.bytedance.net"
 DEFAULT_UPLOAD_API_BASE = "https://open.feishu.cn"
@@ -1600,6 +1612,7 @@ def extract_metadata(
     wiki_url: str = "",
     wiki_node_token: str = "",
     doc_version_sync: Optional[Dict[str, Any]] = None,
+    doc_zone_sync: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     now = datetime.datetime.now()
     return {
@@ -1619,6 +1632,10 @@ def extract_metadata(
         "drive_file_url": drive_file_url or "",
         "doc_version_synced": bool(doc_version_sync),
         "doc_version_sync": doc_version_sync or {},
+        # 三分区（Zone）同步结果（V5.23）：含降级标记与回读断言证据
+        "doc_zone_synced": bool(doc_zone_sync),
+        "doc_zone_sync": doc_zone_sync or {},
+        "doc_zone_degraded": (doc_zone_sync or {}).get("degraded", ""),
     }
 
 
@@ -1686,6 +1703,22 @@ def main() -> int:
         action="store_true",
         help="调试用：跳过说明文档版本标识同步。",
     )
+    parser.add_argument(
+        "--emit-new-doc-markdown",
+        metavar="OUT_PATH",
+        help=(
+            "新建文档场景：把三分区骨架（Overwrite -> Preserve 占位 -> Append）"
+            "渲染成 Markdown 落到指定路径，供 `lark-cli docs +create` 导入后即刻具备 Zone 锚点。"
+        ),
+    )
+    parser.add_argument(
+        "--skip-doc-zones",
+        action="store_true",
+        help=(
+            "调试用：跳过飞书说明文档三分区（Overwrite/Preserve/Append）同步。"
+            "正式发布默认必须执行 —— 它同时承担 Preserve Zone 人工沉淀的保护断言。"
+        ),
+    )
 
     parser.add_argument(
         "--skip-remote",
@@ -1715,6 +1748,24 @@ def main() -> int:
 
     workspace_root = get_workspace_root()
     skill_dir = (workspace_root / args.skill_dir).resolve() if args.skill_dir else None
+
+    # 新建文档场景：先产出带三分区锚点的骨架，再交给 `docs +create` 导入。
+    # 这样文档「出生即合规」，后续迭代不必再走老文档降级补锚点的路径。
+    if args.emit_new_doc_markdown:
+        if not skill_dir:
+            raise RuntimeError("--emit-new-doc-markdown requires --skill-dir")
+        skeleton_version = args.new_version or read_skill_version_from_skill_md(skill_dir)
+        skeleton = build_new_doc_markdown(
+            skill_dir,
+            normalize_version_text(skeleton_version),
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        )
+        out_path = Path(args.emit_new_doc_markdown).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(skeleton, encoding="utf-8")
+        print(f"✅ 三分区新建文档骨架已生成：{out_path}")
+        print(f"   Zone 锚点：『{PRESERVE_ANCHOR_TITLE}』/『{APPEND_ANCHOR_TITLE}』")
+        return 0
     zip_path: Optional[Path] = None
     drive_file_token = ""
     drive_file_url = ""
@@ -1722,6 +1773,7 @@ def main() -> int:
     wiki_url = ""
     wiki_node_token = ""
     doc_version_sync: Optional[Dict[str, Any]] = None
+    doc_zone_sync: Optional[Dict[str, Any]] = None
 
     # SSOT version (X.Y)
     ssot_version = ""
@@ -1818,6 +1870,33 @@ def main() -> int:
                     lambda: sync_version_to_skill_doc_via_mcp(args.path, ssot_version),
                 )
 
+            # ---------- 三分区（Zone）同步（V5.23） ----------
+            # 顺序契约：必须在版本标识同步之后、Wiki Mount 之前。
+            #   * Overwrite Zone -> 从 SKILL.md 重新渲染覆盖（版本框 / 触发词 / 接口契约）
+            #   * Preserve Zone  -> 一律不动（人工沉淀的使用案例与踩坑记录）
+            #   * Append Zone    -> 末尾追加本版本 Changelog 条目
+            # 写后 RAW 回读断言：两个锚点各出现恰好 1 次 + Preserve 正文存在性断言。
+            if ssot_version and (not args.skip_doc_zones):
+                print("🧭 三分区策略：同步飞书说明文档 Zone...")
+                changelog_entry = build_changelog_entry_from_skill_md(skill_dir, ssot_version)
+                doc_zone_sync = call_with_retry(
+                    "sync skill doc zones (overwrite/preserve/append)",
+                    lambda: sync_doc_zones(
+                        args.path,
+                        skill_dir,
+                        ssot_version,
+                        datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        changelog_entry,
+                    ),
+                )
+                if doc_zone_sync.get("degraded"):
+                    print(
+                        "⚠️ [ZONE-DEGRADED] 本次三分区同步发生降级（老文档缺锚点或边界不可信）："
+                        f"{doc_zone_sync['degraded']}"
+                    )
+            elif args.skip_doc_zones:
+                print("⚠️ 三分区同步被 --skip-doc-zones 跳过（调试用）。")
+
             if args.skip_wiki_mount:
                 print("⚠️ Wiki Mount Phase skipped by --skip-wiki-mount (debug only).")
             else:
@@ -1874,6 +1953,7 @@ def main() -> int:
         wiki_url,
         wiki_node_token,
         doc_version_sync,
+        doc_zone_sync,
     )
 
     if (

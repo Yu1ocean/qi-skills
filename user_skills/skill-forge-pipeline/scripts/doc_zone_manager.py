@@ -597,6 +597,24 @@ def append_changelog_entry(doc_url: str, entry: str) -> str:
     )
 
 
+def build_changelog_entry_from_skill_md(skill_dir: Path, version: str) -> str:
+    """从 SKILL.md 的「更新日志」章节取出本版本条目，作为 Append Zone 的追加内容。
+
+    SSOT 原则：Changelog 文案由 `SKILL.md` 提供，飞书文档只负责承载与追加。
+    找不到本版本条目时退化为一行发布记录（仍然是追加，不覆盖历史）。
+    """
+
+    section = extract_skill_md_section(read_skill_md(skill_dir), "更新日志")
+    if section:
+        needle = re.compile(
+            r"^[-*]\s*\*{0,2}V?" + re.escape(version) + r"\*{0,2}\s*[:：]", re.I
+        )
+        for line in section.splitlines():
+            if needle.match(line.strip()):
+                return line.strip()
+    return f"- **V{version}**：forge 流水线发布（详见 SKILL.md 更新日志）。"
+
+
 # --------------------------------------------------------------------------- #
 # L3 零信任断言
 # --------------------------------------------------------------------------- #
