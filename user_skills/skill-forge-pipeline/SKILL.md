@@ -495,7 +495,7 @@ cd user_skills/skill-forge-pipeline \
 
 - `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `skill-forge-pipeline`
-- `version`: `5.21`
+- `version`: `5.22`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 21:54`
+- `cloud_published_at`: `2026-08-21 22:13`
 - `cloud_skill_id`: `899c40be-6e8b-4386-9040-8438a1095efc`
