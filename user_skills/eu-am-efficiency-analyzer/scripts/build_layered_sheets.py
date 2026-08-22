@@ -41,12 +41,12 @@ URL = "https://bytedance.my.larkoffice.com/sheets/RvpVsoUODhqCXJt4rFgm1M6ky2e"
 # ---- 不可触碰的 sheet（白名单外一律不写）
 PROTECTED = {"历史入驻", "AM分析", "分析基盘_阅读视图"}
 
-SHEET_FULL = "全量底表"
-SHEET_AM = "全量_AM招商推进"
-SHEET_BD = "BD底表"
-VIEW_FULL = "全量_阅读视图"
-VIEW_AM = "AM招商推进_阅读视图"
-VIEW_BD = "BD_阅读视图"
+SHEET_FULL = "【1.全量底表】"
+SHEET_AM = "【2.AM底表】"
+SHEET_BD = "【3.BD底表】"
+VIEW_FULL = "【1.全量看板】"
+VIEW_AM = "【2.AM看板】"
+VIEW_BD = "【3.BD看板】"
 
 # (底表名, 阅读视图名, 筛选口径 key)
 LAYERS = [
@@ -380,11 +380,17 @@ def qa_header(sheet: str, header: list[str]) -> dict:
                       + ("" if not diffs else " | " + "; ".join(diffs[:5]))}
 
 
-def qa_null(sheet: str, header: list[str], matrix: list[list], require_bd: bool) -> dict:
+def qa_null(sheet: str, header: list[str], matrix: list[list], require_bd: bool,
+            null_cols: list[str] | None = None) -> dict:
+    """G7: 空值率断言仅适用于 AM 相关底表；全量/BD 底表的 负责AM 高空值率是源数据事实，不构成 FAIL。"""
     idx = {c: i for i, c in enumerate(header)}
     n = len(matrix) or 1
     ok, details = True, []
-    for col in QA_NULL_COLS:
+    if null_cols is None:
+        null_cols = QA_NULL_COLS
+    if not null_cols:
+        details.append("负责AM/AM优先级 空值率断言按 G7 豁免（源数据事实，非 FAIL）")
+    for col in null_cols:
         if col not in idx:
             details.append(f"{col} 字段不存在 -> SKIP")
             continue
@@ -488,7 +494,8 @@ def main() -> int:
             log(f"--- 质检底表 {sb} ---")
             qa.append(qa_rowcount(sb, len(s["rows"])))
             qa.append(qa_header(sb, header))
-            qa.append(qa_null(sb, header, s["matrix"], require_bd=(sb == SHEET_BD)))
+            qa.append(qa_null(sb, header, s["matrix"], require_bd=(sb == SHEET_BD),
+                              null_cols=(QA_NULL_COLS if sb == SHEET_AM else [])))
             qa.append(qa_raw(sb, header, s["matrix"]))
 
     if args.layer in ("view", "all"):
