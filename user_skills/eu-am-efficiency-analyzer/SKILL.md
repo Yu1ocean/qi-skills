@@ -2,7 +2,7 @@
 name: eu-am-efficiency-analyzer
 description: EU AM（EU 招商商务）效率漏斗分析器。从飞书分层读写架构（3底表+3阅读视图）读取分析基盘，计算各 AM 的线索量/有意愿数/主口径入驻数/备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。
 author: 于奇楠
-version: 1.2.4
+version: 1.2.3
 ---
 
 # EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.2
@@ -256,7 +256,7 @@ cd user_skills/eu-am-efficiency-analyzer && python3 scripts/render_bubble_matrix
 
 - `cloud_publish_status`: **SUCCESS**
 - `skill_name`: `eu-am-efficiency-analyzer`
-- `version`: `1.2`
+- `version`: `1.2.4`
 - `cloud_scope`: `user`
-- `cloud_published_at`: `2026-08-21 21:30`
+- `cloud_published_at`: `2026-08-22 20:10`
 - `cloud_skill_id`: `3b6bdf3f-82e1-481b-945a-ec801dec95a9`

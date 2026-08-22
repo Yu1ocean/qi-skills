@@ -1,12 +1,12 @@
-# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.2.4 技能说明
+# EU AM 效率漏斗分析器 (eu-am-efficiency-analyzer) v1.2.3 技能说明
 
-<figure view-type="Card"><source name="eu-am-efficiency-analyzer.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OTM1NzI5YjliZmZlM2FjNmJmZWE1ZmM3ZmJiNTZlNGJfNDkxMTk1ZjgyNWJlZWRjNzBkOTlhZTFlZDc0OTE0YTBfSUQ6NzY3NjgyNzAwMzc5NzkxNzMwMV8xNzg3NDAwNTc3OjE3ODc0MDQxNzdfVjM" mime="application/zip" size="45991" token="WUtqbHckboaahoxX6WCmdMVSyEc"/></figure>
+<figure view-type="Card"><source name="eu-am-efficiency-analyzer.zip" href="https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OWYzYWFkMDZiZmY2MzY1MWYzNzlhN2M5YWMzMTA5YmVfOGQ1MzQ5ODc4MDNjMDM3ZDA0MmU1NWYzMzcyYThmZTlfSUQ6NzY3NjgyNzM5MTQzNTUwOTM2NV8xNzg3NDAwNjY3OjE3ODc0MDQyNjdfVjM" mime="application/zip" size="46707" token="ESy9b9ifloEbyFx3QDfm4Xznyqg"/></figure>
 
 > 🤖 **本区块由 forge 流水线自动生成（Overwrite Zone），请勿手工编辑**  
 > **技能名称**：`eu-am-efficiency-analyzer`  
-> **版本号**：1.2.4  
+> **版本号**：1.2.3  
 > **描述**：EU AM（EU 招商商务）效率漏斗分析器。从飞书分层读写架构（3底表+3阅读视图）读取分析基盘，计算各 AM 的线索量/有意愿数/主口径入驻数/备用口径入驻数，输出漏斗阶段与段转化诊断、瓶颈定位与对标提升量化，并渲染白底气泡矩阵（ECharts HTML + PNG，全行业总览 + 分行业 Tab、四象限、中位数分界线），附带完整口径说明。  
-> **更新时间**：2026-08-22 20:09
+> **更新时间**：2026-08-22 20:11
 
 ## 📌 技能简介
 
@@ -68,7 +68,7 @@
 
 **能力归属如实说明**：漏斗阶段诊断能力内聚在 `scripts/am_analysis_core.py`；本技能不存在独立的 `funnel_stage_analyzer.py`（源项目磁盘上亦无该文件）。`scripts/run_funnel_diagnosis.py` 是围绕 `run_diagnosis` 新写的薄封装 CLI，并非从旧文件迁移。
 
-## 🔄 数据源同步链路（v1.2.4 新增）
+## 🔄 数据源同步链路（v1.2.3 新增）
 
 真实数据源（多维表格）：[EU AM 源表](https://bytedance.my.larkoffice.com/base/MPN9bUhBTaUsgcsrN92m2Oq0yde?table=tbl5IlstItZOpInx&view=vewm2HQxRS)（base_token=MPN9bUhBTaUsgcsrN92m2Oq0yde，table_id=tbl5IlstItZOpInx）
 
@@ -82,7 +82,7 @@
 
 真机验证：源 8496 行 → 明细_分析基盘 1423 行 / 历史入驻 1832 行，三项质检全 PASS，幂等连跑两次结果一致。
 
-## 🗂 分层读写架构：3 底表 + 3 阅读视图（v1.2.4 新增）
+## 🗂 分层读写架构：3 底表 + 3 阅读视图（v1.2.3 新增）
 
 自 v1.2 起，数据同步从「1 底表 + 1 阅读视图」升级为**人机分层读写**架构：底表层给机器（106 列全字段、每日幂等覆盖），阅读层给人（38 列固定表头、公式动态引用）。
 
@@ -191,3 +191,4 @@ python3 scripts/layered_sync_entry.py --cache <records.ndjson>   # 复用本地�
 > 📌 此区域为更新日志区（Append Zone），forge 每次发布后自动追加，请勿手动修改已有条目。
 
 - **V1.2.4**：forge 流水线发布（详见 SKILL.md 更新日志）。
+- **V1.2.3**：forge 流水线发布（详见 SKILL.md 更新日志）。
